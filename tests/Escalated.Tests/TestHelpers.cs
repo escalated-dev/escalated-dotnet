@@ -2,6 +2,7 @@ using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Events;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -13,6 +14,7 @@ public static class TestHelpers
     {
         var options = new DbContextOptionsBuilder<EscalatedDbContext>()
             .UseInMemoryDatabase(dbName ?? Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         var context = new EscalatedDbContext(options);
