@@ -72,19 +72,34 @@ public class AssignmentServiceTests
 
         db.Tickets.Add(new Ticket
         {
-            Subject = "Open 1", Reference = "ESC-00001", Status = TicketStatus.Open,
-            Priority = TicketPriority.Medium, AssignedTo = 1, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            Subject = "Open 1",
+            Reference = "ESC-00001",
+            Status = TicketStatus.Open,
+            Priority = TicketPriority.Medium,
+            AssignedTo = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         });
         db.Tickets.Add(new Ticket
         {
-            Subject = "Open 2", Reference = "ESC-00002", Status = TicketStatus.InProgress,
-            Priority = TicketPriority.Medium, AssignedTo = 1, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            Subject = "Open 2",
+            Reference = "ESC-00002",
+            Status = TicketStatus.InProgress,
+            Priority = TicketPriority.Medium,
+            AssignedTo = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         });
         db.Tickets.Add(new Ticket
         {
-            Subject = "Resolved", Reference = "ESC-00003", Status = TicketStatus.Resolved,
-            Priority = TicketPriority.Medium, AssignedTo = 1, ResolvedAt = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            Subject = "Resolved",
+            Reference = "ESC-00003",
+            Status = TicketStatus.Resolved,
+            Priority = TicketPriority.Medium,
+            AssignedTo = 1,
+            ResolvedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

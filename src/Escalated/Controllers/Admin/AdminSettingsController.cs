@@ -247,7 +247,12 @@ public class AdminSettingsController : ControllerBase
     {
         return Ok(await _db.ApiTokens.Select(t => new
         {
-            t.Id, t.Name, t.Abilities, t.LastUsedAt, t.ExpiresAt, t.CreatedAt
+            t.Id,
+            t.Name,
+            t.Abilities,
+            t.LastUsedAt,
+            t.ExpiresAt,
+            t.CreatedAt
         }).ToListAsync());
     }
 
