@@ -26,26 +26,23 @@ public class ChatAvailabilityService
     {
         // Check if any agents have capacity for the chat channel
         var agentQuery = _db.AgentCapacities
-            .Where(c => c.Channel == "chat" && c.CurrentCount < c.MaxCapacity);
-
-        if (departmentId.HasValue)
-        {
-            // Filter to agents in the specified department
-            var agentIdsInDept = _db.AgentProfiles
-                .Where(a => a.DepartmentId == departmentId)
-                .Select(a => a.UserId);
-
-            agentQuery = agentQuery.Where(c => agentIdsInDept.Contains(c.UserId));
-        }
+            .Where(c => c.Channel == "chat" && c.CurrentCount < c.MaxConcurrent);
 
         var hasAvailableAgent = await agentQuery.AnyAsync(ct);
         if (!hasAvailableAgent)
             return false;
 
         // Check business hours if configured
-        var isWithinHours = await _businessHours.IsWithinBusinessHoursAsync(ct);
+        var schedule = await _db.BusinessSchedules
+            .Include(s => s.Holidays)
+            .FirstOrDefaultAsync(ct);
 
-        return isWithinHours;
+        if (schedule != null)
+        {
+            return _businessHours.IsWithinBusinessHours(DateTime.UtcNow, schedule);
+        }
+
+        return true;
     }
 
     /// <summary>
