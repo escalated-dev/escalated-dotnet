@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Escalated</RootNamespace>
+    <PackageId>Escalated</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>escalated-dev</Authors>
+    <Description>A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app to get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/escalated-dev/escalated-dotnet</RepositoryUrl>
+    <PackageTags>helpdesk;ticketing;support;sla;asp.net-core</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
