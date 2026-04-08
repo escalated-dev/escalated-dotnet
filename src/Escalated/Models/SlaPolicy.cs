@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Escalated.Enums;
 
 namespace Escalated.Models;
 
