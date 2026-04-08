@@ -50,6 +50,8 @@ public class EscalatedDbContext : DbContext
     public DbSet<SavedView> SavedViews => Set<SavedView>();
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<ArticleCategory> ArticleCategories => Set<ArticleCategory>();
+    public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
+    public DbSet<ChatRoutingRule> ChatRoutingRules => Set<ChatRoutingRule>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -342,6 +344,23 @@ public class EscalatedDbContext : DbContext
             e.ToTable($"{prefix}article_categories");
             e.HasIndex(c => c.Slug).IsUnique();
             e.HasOne(c => c.Parent).WithMany(c => c.Children).HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ChatSession>(e =>
+        {
+            e.ToTable($"{prefix}chat_sessions");
+            e.HasIndex(s => s.TicketId);
+            e.HasIndex(s => s.Status);
+            e.HasIndex(s => s.AgentId);
+            e.HasOne(s => s.Ticket).WithMany().HasForeignKey(s => s.TicketId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.Department).WithMany().HasForeignKey(s => s.DepartmentId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ChatRoutingRule>(e =>
+        {
+            e.ToTable($"{prefix}chat_routing_rules");
+            e.HasIndex(r => r.Priority);
+            e.HasOne(r => r.Department).WithMany().HasForeignKey(r => r.DepartmentId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

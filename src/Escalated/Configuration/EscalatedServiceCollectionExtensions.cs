@@ -55,9 +55,15 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<KnowledgeBaseService>();
         services.AddScoped<SavedViewService>();
         services.AddScoped<SideConversationService>();
+        services.AddScoped<ChatSessionService>();
+        services.AddScoped<ChatRoutingService>();
+        services.AddScoped<ChatAvailabilityService>();
 
         // Register the snooze background service
         services.AddHostedService<TicketSnoozeBackgroundService>();
+
+        // Register the chat cleanup background service
+        services.AddHostedService<ChatCleanupBackgroundService>();
 
         return services;
     }
