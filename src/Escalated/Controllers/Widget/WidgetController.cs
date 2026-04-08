@@ -1,4 +1,5 @@
 using Escalated.Data;
+using Escalated.Enums;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
