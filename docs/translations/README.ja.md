@@ -15,66 +15,66 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-# Escalated for ASP.NET Core
+# Escalated - ASP.NET Core向け
 
 [![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
 [![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app -- get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+ASP.NET Core向けのフル機能を備えた埋め込み可能なサポートチケットシステム。任意のアプリに追加するだけで、SLA追跡、エスカレーションルール、エージェントワークフロー、カスタマーポータルを備えた完全なヘルプデスクを利用できます。外部サービスは不要です。
 
-> **[escalated.dev](https://escalated.dev)** -- Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** -- 詳細、デモ、CloudとSelf-Hostedオプションの比較はこちら。
 
 ## 機能
 
-- **Ticket lifecycle** -- Create, assign, reply, resolve, close, reopen with configurable status transitions
-- **SLA engine** -- Per-priority response and resolution targets, business hours calculation, automatic breach detection
-- **Escalation rules** -- Condition-based rules that auto-escalate, reprioritize, reassign, or notify
-- **Automations** -- Time-based rules with conditions and actions
-- **Agent dashboard** -- Ticket queue with filters, bulk actions, internal notes, canned responses
-- **Customer portal** -- Self-service ticket creation, replies, and status tracking
-- **Admin panel** -- Manage departments, SLA policies, escalation rules, tags, and more
-- **Macros and canned responses** -- Batch actions and reusable reply templates
-- **Custom fields** -- Dynamic metadata with conditional display logic
-- **Knowledge base** -- Articles, categories, search, and feedback
-- **File attachments** -- Upload support with configurable storage and size limits
-- **Activity timeline** -- Full audit log of every action on every ticket
-- **Webhooks** -- HMAC-SHA256 signed with retry logic
-- **API tokens** -- Bearer auth with ability-based scoping
-- **Roles and permissions** -- Fine-grained access control
-- **Audit logging** -- All mutations tracked with old/new values
-- **Import system** -- Multi-step wizard with pluggable adapters
-- **Side conversations** -- Internal team threads on tickets
-- **Ticket merging and linking** -- Merge duplicate tickets and relate issues
-- **Ticket splitting** -- Split a reply into a new ticket
-- **Ticket snooze** -- Snooze until a future date with auto-wake background service
-- **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Saved views** -- Personal and shared filter presets
-- **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
-- **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
-- **Capacity management** -- Per-agent workload limits by channel
-- **Skill-based routing** -- Match agents to tickets by skill tags
-- **CSAT ratings** -- Satisfaction surveys on resolved tickets
-- **2FA** -- TOTP setup and verification with recovery codes
-- **Guest access** -- Anonymous ticket creation with magic token lookup
-- **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+- **チケットのライフサイクル** -- 設定可能なステータス遷移による作成、割り当て、返信、解決、クローズ、再オープン
+- **SLAエンジン** -- 優先度別の応答・解決目標、営業時間計算、自動違反検出
+- **エスカレーションルール** -- 自動的にエスカレート、優先度変更、再割り当て、通知する条件ベースのルール
+- **自動化** -- 条件とアクションを持つ時間ベースのルール
+- **エージェントダッシュボード** -- フィルター、一括操作、内部メモ、定型応答付きのチケットキュー
+- **カスタマーポータル** -- セルフサービスのチケット作成、返信、ステータス追跡
+- **管理パネル** -- 部門、SLAポリシー、エスカレーションルール、タグなどの管理
+- **マクロと定型応答** -- バッチアクションと再利用可能な返信テンプレート
+- **カスタムフィールド** -- 条件付き表示ロジックを持つ動的メタデータ
+- **ナレッジベース** -- 記事、カテゴリ、検索、フィードバック
+- **ファイル添付** -- 設定可能なストレージとサイズ制限付きのアップロードサポート
+- **アクティビティタイムライン** -- すべてのチケットのすべてのアクションの完全な監査ログ
+- **Webhooks** -- リトライロジック付きHMAC-SHA256署名
+- **APIトークン** -- 能力ベースのスコーピング付きBearer認証
+- **ロールと権限** -- きめ細かなアクセス制御
+- **監査ログ** -- 旧値/新値付きですべての変更を記録
+- **インポートシステム** -- プラグ可能なアダプター付きの多段階ウィザード
+- **サイドカンバセーション** -- チケット上の内部チームスレッド
+- **チケットの統合とリンク** -- 重複チケットの統合と問題の関連付け
+- **チケットの分割** -- 返信を新しいチケットに分割
+- **チケットのスヌーズ** -- バックグラウンドのウェイクサービス付きで将来の日付までスヌーズ
+- **メールスレッディング** -- 正しいスレッディングのためのIn-Reply-To/References/Message-IDヘッダー
+- **保存済みビュー** -- 個人および共有のフィルタープリセット
+- **埋め込み可能なウィジェットAPI** -- KB検索、ゲストチケット、ステータス照会用のパブリックエンドポイント
+- **リアルタイム更新** -- ライブチケット更新用のSignalRハブ（オプトイン）
+- **キャパシティ管理** -- チャネル別のエージェントごとのワークロード制限
+- **スキルベースルーティング** -- スキルタグによるエージェントとチケットのマッチング
+- **CSAT評価** -- 解決済みチケットの満足度調査
+- **2FA** -- リカバリーコード付きTOTPセットアップと検証
+- **ゲストアクセス** -- マジックトークン検索による匿名チケット作成
+- **Inertia.js + Vue 3 UI** -- [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)経由の共有フロントエンド
 
 ## 要件
 
 - .NET 8.0+
 - Entity Framework Core 8.0+
-- SQL Server, SQLite, or PostgreSQL
-- Node.js 18+ (for frontend assets)
+- SQL Server、SQLite、またはPostgreSQL
+- Node.js 18+（フロントエンドアセット用）
 
 ## クイックスタート
 
-### 1. Install the Package
+### 1. パッケージをインストール
 
 ```bash
 dotnet add package Escalated
 ```
 
-### 2. Register Services
+### 2. サービスを登録
 
 ```csharp
 // Program.cs
@@ -95,7 +95,7 @@ app.MapEscalated();
 app.Run();
 ```
 
-### 3. Configure
+### 3. 設定
 
 ```json
 // appsettings.json
@@ -124,110 +124,110 @@ app.Run();
 }
 ```
 
-### 4. Run Migrations
+### 4. マイグレーションを実行
 
 ```bash
 dotnet ef migrations add InitialEscalated --context EscalatedDbContext
 dotnet ef database update --context EscalatedDbContext
 ```
 
-Visit `/support` -- you're live.
+`/support`にアクセス -- 稼働開始です。
 
 ## フロントエンド統合
 
-Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package. Integrate with Inertia.js for seamless SPA rendering inside your existing layout.
+Escalatedは、npmパッケージ[`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)を通じてVueコンポーネントライブラリとデフォルトページを提供します。Inertia.jsと統合して、既存のレイアウト内でシームレスなSPAレンダリングを実現します。
 
 ```bash
 npm install @escalated-dev/escalated
 ```
 
-## Architecture
+## アーキテクチャ
 
 ```
 src/Escalated/
-  Models/           # 40+ EF Core entity models
-  Data/             # EscalatedDbContext with full relationship mapping
-  Services/         # Business logic (ticket, SLA, merge, split, snooze, etc.)
+  Models/           # 40以上のEF Coreエンティティモデル
+  Data/             # 完全なリレーションシップマッピング付きEscalatedDbContext
+  Services/         # ビジネスロジック（チケット、SLA、統合、分割、スヌーズなど）
   Controllers/
-    Admin/          # Admin panel API (CRUD for all settings)
-    Agent/          # Agent ticket queue and actions
-    Customer/       # Customer self-service portal
-    Widget/         # Public widget API (KB search, guest tickets)
-  Middleware/       # API token auth, permissions, rate limiting
-  Events/           # Domain events (TicketCreated, SlaBreached, etc.)
-  Notifications/    # Email notification interfaces and templates
-  Configuration/    # DI registration, options, endpoint mapping
-  Hubs/             # SignalR hub for real-time updates
-  Enums/            # TicketStatus, TicketPriority, ActivityType
+    Admin/          # 管理パネルAPI（全設定のCRUD）
+    Agent/          # チケットキューとエージェントアクション
+    Customer/       # カスタマーセルフサービスポータル
+    Widget/         # パブリックウィジェットAPI（KB検索、ゲストチケット）
+  Middleware/       # APIトークン認証、権限、レート制限
+  Events/           # ドメインイベント（TicketCreated、SlaBreachedなど）
+  Notifications/    # メール通知インターフェースとテンプレート
+  Configuration/    # DI登録、オプション、エンドポイントマッピング
+  Hubs/             # リアルタイム更新用SignalRハブ
+  Enums/            # TicketStatus、TicketPriority、ActivityType
 ```
 
-## Models
+## モデル
 
-Escalated includes 40+ EF Core entities covering the full helpdesk domain:
+Escalatedには、ヘルプデスクドメイン全体をカバーする40以上のEF Coreエンティティが含まれています：
 
-| Category | Models |
+| カテゴリ | モデル |
 |----------|--------|
-| Core | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
+| コア | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
 | SLA | SlaPolicy, EscalationRule, BusinessSchedule, Holiday, Automation |
-| Agents | AgentProfile, AgentCapacity, Skill, AgentSkill |
-| Messaging | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
-| Admin | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
-| Custom | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
-| Import | ImportJob, ImportSourceMap |
-| Config | EscalatedSettings, SavedView |
-| Knowledge Base | Article, ArticleCategory |
+| エージェント | AgentProfile, AgentCapacity, Skill, AgentSkill |
+| メッセージング | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
+| 管理 | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
+| カスタム | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
+| インポート | ImportJob, ImportSourceMap |
+| 設定 | EscalatedSettings, SavedView |
+| ナレッジベース | Article, ArticleCategory |
 
-All models have proper relationships, indexes, and query filters configured in `EscalatedDbContext`.
+`EscalatedDbContext`ですべてのモデルに適切なリレーションシップ、インデックス、クエリフィルターが設定されています。
 
-## Services
+## サービス
 
-| Service | Responsibility |
+| サービス | 責務 |
 |---------|---------------|
-| `TicketService` | Full ticket CRUD, status transitions, replies, tags, departments |
-| `SlaService` | Policy attachment, breach detection, warning checks, first response recording |
-| `AssignmentService` | Agent assignment, unassignment, auto-assign by workload |
-| `EscalationService` | Evaluate condition-based rules, execute escalation actions |
-| `AutomationRunner` | Time-based automation evaluation and action execution |
-| `MacroService` | Apply macro action sequences to tickets |
-| `TicketMergeService` | Merge source into target with reply transfer |
-| `TicketSplitService` | Split a reply into a new linked ticket |
-| `TicketSnoozeService` | Snooze/unsnooze with background wake service |
-| `WebhookDispatcher` | HMAC-signed webhook delivery with retry logic |
-| `CapacityService` | Per-agent concurrent ticket limits |
-| `SkillRoutingService` | Match agents by skills to ticket tags |
-| `BusinessHoursCalculator` | Business hours date math with holiday support |
-| `TwoFactorService` | TOTP secret generation, verification, recovery codes |
-| `AuditLogService` | Log and query entity mutations |
-| `KnowledgeBaseService` | Article/category CRUD, search, feedback |
-| `SavedViewService` | Personal and shared filter presets |
-| `SideConversationService` | Internal threaded conversations on tickets |
-| `ImportService` | Multi-step import with pluggable adapters |
-| `SettingsService` | Key-value settings store |
+| `TicketService` | チケットの完全なCRUD、ステータス遷移、返信、タグ、部門 |
+| `SlaService` | ポリシー割り当て、違反検出、警告チェック、初回応答記録 |
+| `AssignmentService` | エージェント割り当て、割り当て解除、ワークロードによる自動割り当て |
+| `EscalationService` | 条件ベースのルール評価、エスカレーションアクションの実行 |
+| `AutomationRunner` | 時間ベースの自動化評価とアクション実行 |
+| `MacroService` | チケットへのマクロアクションシーケンスの適用 |
+| `TicketMergeService` | 返信転送付きでソースをターゲットに統合 |
+| `TicketSplitService` | 返信を新しいリンクされたチケットに分割 |
+| `TicketSnoozeService` | バックグラウンドウェイクサービス付きのスヌーズ/解除 |
+| `WebhookDispatcher` | リトライロジック付きHMAC署名webhook配信 |
+| `CapacityService` | エージェントあたりの同時チケット制限 |
+| `SkillRoutingService` | スキルによるエージェントとチケットタグのマッチング |
+| `BusinessHoursCalculator` | 祝日対応の営業時間日付計算 |
+| `TwoFactorService` | TOTPシークレット生成、検証、リカバリーコード |
+| `AuditLogService` | エンティティの変更のログ記録とクエリ |
+| `KnowledgeBaseService` | 記事/カテゴリのCRUD、検索、フィードバック |
+| `SavedViewService` | 個人および共有のフィルタープリセット |
+| `SideConversationService` | チケット上の内部スレッドカンバセーション |
+| `ImportService` | プラグ可能なアダプター付きの多段階インポート |
+| `SettingsService` | キーバリュー設定ストア |
 
 ## イベント
 
-Every ticket action dispatches a domain event:
+すべてのチケットアクションはドメインイベントを発行します：
 
-| Event | When |
+| イベント | タイミング |
 |-------|------|
-| `TicketCreatedEvent` | New ticket created |
-| `TicketStatusChangedEvent` | Status transition |
-| `TicketAssignedEvent` | Agent assigned |
-| `TicketUnassignedEvent` | Agent removed |
-| `ReplyCreatedEvent` | Public reply added |
-| `InternalNoteAddedEvent` | Agent note added |
-| `SlaBreachedEvent` | SLA deadline missed |
-| `SlaWarningEvent` | SLA deadline approaching |
-| `TicketEscalatedEvent` | Ticket escalated |
-| `TicketResolvedEvent` | Ticket resolved |
-| `TicketClosedEvent` | Ticket closed |
-| `TicketReopenedEvent` | Ticket reopened |
-| `TicketPriorityChangedEvent` | Priority changed |
-| `DepartmentChangedEvent` | Department changed |
-| `TagAddedEvent` | Tag added |
-| `TagRemovedEvent` | Tag removed |
+| `TicketCreatedEvent` | 新しいチケットが作成された |
+| `TicketStatusChangedEvent` | ステータス遷移 |
+| `TicketAssignedEvent` | エージェントが割り当てられた |
+| `TicketUnassignedEvent` | エージェントが削除された |
+| `ReplyCreatedEvent` | 公開返信が追加された |
+| `InternalNoteAddedEvent` | エージェントメモが追加された |
+| `SlaBreachedEvent` | SLA期限超過 |
+| `SlaWarningEvent` | SLA期限が接近中 |
+| `TicketEscalatedEvent` | チケットがエスカレートされた |
+| `TicketResolvedEvent` | チケットが解決された |
+| `TicketClosedEvent` | チケットがクローズされた |
+| `TicketReopenedEvent` | チケットが再オープンされた |
+| `TicketPriorityChangedEvent` | 優先度が変更された |
+| `DepartmentChangedEvent` | 部門が変更された |
+| `TagAddedEvent` | タグが追加された |
+| `TagRemovedEvent` | タグが削除された |
 
-Implement `IEscalatedEventDispatcher` to receive these events in your host application:
+ホストアプリケーションでこれらのイベントを受信するには`IEscalatedEventDispatcher`を実装してください：
 
 ```csharp
 public class MyEventHandler : IEscalatedEventDispatcher
@@ -245,71 +245,71 @@ public class MyEventHandler : IEscalatedEventDispatcher
 services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 ```
 
-## API Endpoints
+## APIエンドポイント
 
-### Customer
+### カスタマー
 
-| Method | Route | Description |
+| メソッド | ルート | 説明 |
 |--------|-------|-------------|
-| GET | `/support/tickets` | List customer tickets |
-| POST | `/support/tickets` | Create ticket |
-| GET | `/support/tickets/{id}` | View ticket |
-| POST | `/support/tickets/{id}/reply` | Reply to ticket |
-| POST | `/support/tickets/{id}/close` | Close ticket |
-| POST | `/support/tickets/{id}/reopen` | Reopen ticket |
+| GET | `/support/tickets` | カスタマーチケットの一覧 |
+| POST | `/support/tickets` | チケットを作成 |
+| GET | `/support/tickets/{id}` | チケットを表示 |
+| POST | `/support/tickets/{id}/reply` | チケットに返信 |
+| POST | `/support/tickets/{id}/close` | チケットをクローズ |
+| POST | `/support/tickets/{id}/reopen` | チケットを再オープン |
 
-### Agent
+### エージェント
 
-| Method | Route | Description |
+| メソッド | ルート | 説明 |
 |--------|-------|-------------|
-| GET | `/support/agent/tickets` | Ticket queue with filters |
-| GET | `/support/agent/tickets/{id}` | Ticket detail |
-| POST | `/support/agent/tickets/{id}/reply` | Reply |
-| POST | `/support/agent/tickets/{id}/note` | Internal note |
-| POST | `/support/agent/tickets/{id}/assign` | Assign agent |
-| POST | `/support/agent/tickets/{id}/status` | Change status |
-| POST | `/support/agent/tickets/{id}/priority` | Change priority |
-| POST | `/support/agent/tickets/{id}/macro` | Apply macro |
-| POST | `/support/agent/tickets/bulk` | Bulk actions |
-| GET | `/support/agent/tickets/dashboard` | Agent workload |
+| GET | `/support/agent/tickets` | フィルター付きチケットキュー |
+| GET | `/support/agent/tickets/{id}` | チケット詳細 |
+| POST | `/support/agent/tickets/{id}/reply` | 返信 |
+| POST | `/support/agent/tickets/{id}/note` | 内部メモ |
+| POST | `/support/agent/tickets/{id}/assign` | エージェントを割り当て |
+| POST | `/support/agent/tickets/{id}/status` | ステータスを変更 |
+| POST | `/support/agent/tickets/{id}/priority` | 優先度を変更 |
+| POST | `/support/agent/tickets/{id}/macro` | マクロを適用 |
+| POST | `/support/agent/tickets/bulk` | 一括操作 |
+| GET | `/support/agent/tickets/dashboard` | エージェントのワークロード |
 
-### Admin
+### 管理
 
-| Method | Route | Description |
+| メソッド | ルート | 説明 |
 |--------|-------|-------------|
-| GET/POST | `/support/admin/departments` | Manage departments |
-| GET/POST | `/support/admin/tags` | Manage tags |
-| GET/POST | `/support/admin/sla-policies` | Manage SLA policies |
-| GET/POST | `/support/admin/escalation-rules` | Manage escalation rules |
-| GET/POST | `/support/admin/webhooks` | Manage webhooks |
-| GET/POST | `/support/admin/api-tokens` | Manage API tokens |
-| GET/POST | `/support/admin/macros` | Manage macros |
-| GET/POST | `/support/admin/automations` | Manage automations |
-| GET/POST | `/support/admin/custom-fields` | Manage custom fields |
-| GET/POST | `/support/admin/business-hours` | Business schedules |
-| GET/POST | `/support/admin/skills` | Manage skills |
-| GET/POST | `/support/admin/roles` | Manage roles |
-| GET | `/support/admin/audit-logs` | Query audit logs |
-| GET/POST | `/support/admin/settings` | App settings |
-| POST | `/support/admin/tickets/{id}/merge` | Merge tickets |
-| POST | `/support/admin/tickets/{id}/split` | Split ticket |
-| POST | `/support/admin/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/support/admin/tickets/{id}/link` | Link tickets |
+| GET/POST | `/support/admin/departments` | 部門を管理 |
+| GET/POST | `/support/admin/tags` | タグを管理 |
+| GET/POST | `/support/admin/sla-policies` | SLAポリシーを管理 |
+| GET/POST | `/support/admin/escalation-rules` | エスカレーションルールを管理 |
+| GET/POST | `/support/admin/webhooks` | Webhooksを管理 |
+| GET/POST | `/support/admin/api-tokens` | APIトークンを管理 |
+| GET/POST | `/support/admin/macros` | マクロを管理 |
+| GET/POST | `/support/admin/automations` | 自動化を管理 |
+| GET/POST | `/support/admin/custom-fields` | カスタムフィールドを管理 |
+| GET/POST | `/support/admin/business-hours` | 営業時間 |
+| GET/POST | `/support/admin/skills` | スキルを管理 |
+| GET/POST | `/support/admin/roles` | ロールを管理 |
+| GET | `/support/admin/audit-logs` | 監査ログを照会 |
+| GET/POST | `/support/admin/settings` | アプリ設定 |
+| POST | `/support/admin/tickets/{id}/merge` | チケットを統合 |
+| POST | `/support/admin/tickets/{id}/split` | チケットを分割 |
+| POST | `/support/admin/tickets/{id}/snooze` | チケットをスヌーズ |
+| POST | `/support/admin/tickets/{id}/link` | チケットをリンク |
 
-### Widget (Public)
+### ウィジェット（パブリック）
 
-| Method | Route | Description |
+| メソッド | ルート | 説明 |
 |--------|-------|-------------|
-| GET | `/support/widget/kb/search` | Search knowledge base |
-| POST | `/support/widget/tickets` | Create guest ticket |
-| GET | `/support/widget/tickets/{token}` | Lookup by guest token |
-| POST | `/support/widget/tickets/{token}/reply` | Guest reply |
-| POST | `/support/widget/tickets/{token}/rate` | Submit CSAT rating |
-| POST | `/support/widget/kb/articles/{id}/feedback` | Article feedback |
+| GET | `/support/widget/kb/search` | ナレッジベースを検索 |
+| POST | `/support/widget/tickets` | ゲストチケットを作成 |
+| GET | `/support/widget/tickets/{token}` | ゲストトークンで検索 |
+| POST | `/support/widget/tickets/{token}/reply` | ゲスト返信 |
+| POST | `/support/widget/tickets/{token}/rate` | CSAT評価を送信 |
+| POST | `/support/widget/kb/articles/{id}/feedback` | 記事フィードバック |
 
-## Real-time Updates
+## リアルタイム更新
 
-Enable SignalR for live ticket updates:
+ライブチケット更新のためにSignalRを有効にします：
 
 ```json
 {
@@ -324,26 +324,26 @@ Enable SignalR for live ticket updates:
 app.MapHub<EscalatedHub>("/support/hub");
 ```
 
-Clients join ticket-specific groups to receive updates:
+クライアントはチケット固有のグループに参加して更新を受信します：
 
 ```javascript
 connection.invoke("JoinTicket", ticketId);
 connection.on("TicketUpdated", (data) => { /* handle */ });
 ```
 
-## Middleware
+## ミドルウェア
 
-### API Token Authentication
+### APIトークン認証
 
-Protect API endpoints with bearer token authentication:
+Bearerトークン認証でAPIエンドポイントを保護します：
 
 ```csharp
 app.UseMiddleware<ApiTokenAuthMiddleware>();
 ```
 
-Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
+トークンはSHA-256ハッシュとして保存されます。管理APIエンドポイント経由でトークンを作成してください。
 
-### Rate Limiting
+### レート制限
 
 ```csharp
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
@@ -355,26 +355,26 @@ app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 s
 dotnet test
 ```
 
-Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
-- Ticket CRUD and status transitions
-- SLA breach detection and warnings
-- Ticket split, merge, and snooze
-- Assignment and workload calculation
-- Webhook subscription matching
-- 2FA secret generation and verification
-- Capacity management
-- Model validation and enum behavior
+テストはxUnitとMoqおよびEF Core InMemoryプロバイダーを使用しています。カバレッジには以下が含まれます：
+- チケットのCRUDとステータス遷移
+- SLA違反検出と警告
+- チケットの分割、統合、スヌーズ
+- 割り当てとワークロード計算
+- Webhookサブスクリプションマッチング
+- 2FAシークレットの生成と検証
+- キャパシティ管理
+- モデルバリデーションとenum動作
 
-## 他のフレームワーク向け
+## 他のフレームワーク向けも提供
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 package
-- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core package (you are here)
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composerパッケージ
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Railsエンジン
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django再利用可能アプリ
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6パッケージ
+- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Coreパッケージ（現在のページ）
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UIコンポーネント
 
-Same architecture, same Vue UI -- for every major backend framework.
+同じアーキテクチャ、同じVue UI -- すべての主要バックエンドフレームワーク向け。
 
 ## ライセンス
 

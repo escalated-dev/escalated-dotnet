@@ -15,66 +15,66 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-# Escalated for ASP.NET Core
+# ASP.NET Core için Escalated
 
 [![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
 [![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app -- get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+ASP.NET Core için tam özellikli, gömülebilir bir destek bilet sistemi. Herhangi bir uygulamaya ekleyin -- SLA takibi, yükseltme kuralları, temsilci iş akışları ve müşteri portalı ile eksiksiz bir yardım masası elde edin. Harici hizmet gerekmez.
 
-> **[escalated.dev](https://escalated.dev)** -- Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** -- Daha fazla bilgi edinin, demoları görüntüleyin ve Cloud ile Self-Hosted seçeneklerini karşılaştırın.
 
 ## Özellikler
 
-- **Ticket lifecycle** -- Create, assign, reply, resolve, close, reopen with configurable status transitions
-- **SLA engine** -- Per-priority response and resolution targets, business hours calculation, automatic breach detection
-- **Escalation rules** -- Condition-based rules that auto-escalate, reprioritize, reassign, or notify
-- **Automations** -- Time-based rules with conditions and actions
-- **Agent dashboard** -- Ticket queue with filters, bulk actions, internal notes, canned responses
-- **Customer portal** -- Self-service ticket creation, replies, and status tracking
-- **Admin panel** -- Manage departments, SLA policies, escalation rules, tags, and more
-- **Macros and canned responses** -- Batch actions and reusable reply templates
-- **Custom fields** -- Dynamic metadata with conditional display logic
-- **Knowledge base** -- Articles, categories, search, and feedback
-- **File attachments** -- Upload support with configurable storage and size limits
-- **Activity timeline** -- Full audit log of every action on every ticket
-- **Webhooks** -- HMAC-SHA256 signed with retry logic
-- **API tokens** -- Bearer auth with ability-based scoping
-- **Roles and permissions** -- Fine-grained access control
-- **Audit logging** -- All mutations tracked with old/new values
-- **Import system** -- Multi-step wizard with pluggable adapters
-- **Side conversations** -- Internal team threads on tickets
-- **Ticket merging and linking** -- Merge duplicate tickets and relate issues
-- **Ticket splitting** -- Split a reply into a new ticket
-- **Ticket snooze** -- Snooze until a future date with auto-wake background service
-- **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Saved views** -- Personal and shared filter presets
-- **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
-- **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
-- **Capacity management** -- Per-agent workload limits by channel
-- **Skill-based routing** -- Match agents to tickets by skill tags
-- **CSAT ratings** -- Satisfaction surveys on resolved tickets
-- **2FA** -- TOTP setup and verification with recovery codes
-- **Guest access** -- Anonymous ticket creation with magic token lookup
-- **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+- **Bilet yaşam döngüsü** -- Yapılandırılabilir durum geçişleri ile oluşturma, atama, yanıtlama, çözme, kapatma, yeniden açma
+- **SLA motoru** -- Önceliğe göre yanıt ve çözüm hedefleri, iş saatleri hesaplaması, otomatik ihlal tespiti
+- **Yükseltme kuralları** -- Otomatik olarak yükselten, yeniden önceliklendiren, yeniden atayan veya bildirim gönderen koşul tabanlı kurallar
+- **Otomasyonlar** -- Koşullar ve eylemler içeren zaman tabanlı kurallar
+- **Temsilci paneli** -- Filtreler, toplu işlemler, dahili notlar, hazır yanıtlar içeren bilet kuyruğu
+- **Müşteri portalı** -- Self-servis bilet oluşturma, yanıtlar ve durum takibi
+- **Yönetim paneli** -- Departmanları, SLA politikalarını, yükseltme kurallarını, etiketleri ve daha fazlasını yönetin
+- **Makrolar ve hazır yanıtlar** -- Toplu eylemler ve yeniden kullanılabilir yanıt şablonları
+- **Özel alanlar** -- Koşullu görüntüleme mantığına sahip dinamik meta veriler
+- **Bilgi tabanı** -- Makaleler, kategoriler, arama ve geri bildirim
+- **Dosya ekleri** -- Yapılandırılabilir depolama ve boyut limitleri ile yükleme desteği
+- **Etkinlik zaman çizelgesi** -- Her biletteki her eylemin tam denetim günlüğü
+- **Webhooks** -- Yeniden deneme mantığı ile HMAC-SHA256 imzalı
+- **API token'ları** -- Yetenek tabanlı kapsam ile Bearer kimlik doğrulaması
+- **Roller ve izinler** -- İnce taneli erişim kontrolü
+- **Denetim günlüğü** -- Eski/yeni değerlerle tüm değişiklikler kaydedilir
+- **İçe aktarma sistemi** -- Takılabilir adaptörlerle çok adımlı sihirbaz
+- **Yan konuşmalar** -- Biletlerdeki dahili ekip başlıkları
+- **Bilet birleştirme ve bağlama** -- Tekrarlanan biletleri birleştirme ve sorunları ilişkilendirme
+- **Bilet bölme** -- Bir yanıtı yeni bir bilete ayırma
+- **Bilet erteleme** -- Arka plan uyandırma servisi ile gelecekteki bir tarihe kadar erteleme
+- **E-posta zincirleme** -- Doğru zincirleme için In-Reply-To/References/Message-ID başlıkları
+- **Kaydedilmiş görünümler** -- Kişisel ve paylaşılan filtre ön ayarları
+- **Gömülebilir widget API'si** -- KB arama, misafir biletleri, durum sorgulama için genel uç noktalar
+- **Gerçek zamanlı güncellemeler** -- Canlı bilet güncellemeleri için SignalR hub'ları (opsiyonel)
+- **Kapasite yönetimi** -- Kanal başına temsilci iş yükü limitleri
+- **Beceri tabanlı yönlendirme** -- Beceri etiketlerine göre temsilcileri biletlerle eşleştirme
+- **CSAT değerlendirmeleri** -- Çözülen biletlerde memnuniyet anketleri
+- **2FA** -- Kurtarma kodları ile TOTP kurulumu ve doğrulaması
+- **Misafir erişimi** -- Sihirli token araması ile anonim bilet oluşturma
+- **Inertia.js + Vue 3 UI** -- [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) üzerinden paylaşılan frontend
 
 ## Gereksinimler
 
 - .NET 8.0+
 - Entity Framework Core 8.0+
-- SQL Server, SQLite, or PostgreSQL
-- Node.js 18+ (for frontend assets)
+- SQL Server, SQLite veya PostgreSQL
+- Node.js 18+ (frontend kaynakları için)
 
 ## Hızlı Başlangıç
 
-### 1. Install the Package
+### 1. Paketi Yükleyin
 
 ```bash
 dotnet add package Escalated
 ```
 
-### 2. Register Services
+### 2. Servisleri Kaydedin
 
 ```csharp
 // Program.cs
@@ -95,7 +95,7 @@ app.MapEscalated();
 app.Run();
 ```
 
-### 3. Configure
+### 3. Yapılandırın
 
 ```json
 // appsettings.json
@@ -124,110 +124,110 @@ app.Run();
 }
 ```
 
-### 4. Run Migrations
+### 4. Migrasyonları Çalıştırın
 
 ```bash
 dotnet ef migrations add InitialEscalated --context EscalatedDbContext
 dotnet ef database update --context EscalatedDbContext
 ```
 
-Visit `/support` -- you're live.
+`/support` adresini ziyaret edin -- hazır.
 
 ## Frontend Entegrasyonu
 
-Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package. Integrate with Inertia.js for seamless SPA rendering inside your existing layout.
+Escalated, npm paketi [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) aracılığıyla bir Vue bileşen kütüphanesi ve varsayılan sayfalar sunar. Mevcut düzeninizde sorunsuz SPA oluşturma için Inertia.js ile entegre edin.
 
 ```bash
 npm install @escalated-dev/escalated
 ```
 
-## Architecture
+## Mimari
 
 ```
 src/Escalated/
-  Models/           # 40+ EF Core entity models
-  Data/             # EscalatedDbContext with full relationship mapping
-  Services/         # Business logic (ticket, SLA, merge, split, snooze, etc.)
+  Models/           # 40'tan fazla EF Core varlık modeli
+  Data/             # Tam ilişki eşlemesi ile EscalatedDbContext
+  Services/         # İş mantığı (bilet, SLA, birleştirme, bölme, erteleme, vb.)
   Controllers/
-    Admin/          # Admin panel API (CRUD for all settings)
-    Agent/          # Agent ticket queue and actions
-    Customer/       # Customer self-service portal
-    Widget/         # Public widget API (KB search, guest tickets)
-  Middleware/       # API token auth, permissions, rate limiting
-  Events/           # Domain events (TicketCreated, SlaBreached, etc.)
-  Notifications/    # Email notification interfaces and templates
-  Configuration/    # DI registration, options, endpoint mapping
-  Hubs/             # SignalR hub for real-time updates
+    Admin/          # Yönetim paneli API'si (tüm ayarlar için CRUD)
+    Agent/          # Bilet kuyruğu ve temsilci eylemleri
+    Customer/       # Müşteri self-servis portalı
+    Widget/         # Genel widget API'si (KB arama, misafir biletleri)
+  Middleware/       # API token kimlik doğrulaması, izinler, hız sınırlaması
+  Events/           # Alan olayları (TicketCreated, SlaBreached, vb.)
+  Notifications/    # E-posta bildirim arayüzleri ve şablonları
+  Configuration/    # DI kaydı, seçenekler, uç nokta eşlemesi
+  Hubs/             # Gerçek zamanlı güncellemeler için SignalR hub'ı
   Enums/            # TicketStatus, TicketPriority, ActivityType
 ```
 
-## Models
+## Modeller
 
-Escalated includes 40+ EF Core entities covering the full helpdesk domain:
+Escalated, tam yardım masası alanını kapsayan 40'tan fazla EF Core varlığı içerir:
 
-| Category | Models |
+| Kategori | Modeller |
 |----------|--------|
-| Core | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
+| Çekirdek | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
 | SLA | SlaPolicy, EscalationRule, BusinessSchedule, Holiday, Automation |
-| Agents | AgentProfile, AgentCapacity, Skill, AgentSkill |
-| Messaging | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
-| Admin | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
-| Custom | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
-| Import | ImportJob, ImportSourceMap |
-| Config | EscalatedSettings, SavedView |
-| Knowledge Base | Article, ArticleCategory |
+| Temsilciler | AgentProfile, AgentCapacity, Skill, AgentSkill |
+| Mesajlaşma | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
+| Yönetim | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
+| Özel | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
+| İçe Aktarma | ImportJob, ImportSourceMap |
+| Yapılandırma | EscalatedSettings, SavedView |
+| Bilgi Tabanı | Article, ArticleCategory |
 
-All models have proper relationships, indexes, and query filters configured in `EscalatedDbContext`.
+Tüm modeller `EscalatedDbContext`'te doğru şekilde yapılandırılmış ilişkilere, dizinlere ve sorgu filtrelerine sahiptir.
 
-## Services
+## Servisler
 
-| Service | Responsibility |
+| Servis | Sorumluluk |
 |---------|---------------|
-| `TicketService` | Full ticket CRUD, status transitions, replies, tags, departments |
-| `SlaService` | Policy attachment, breach detection, warning checks, first response recording |
-| `AssignmentService` | Agent assignment, unassignment, auto-assign by workload |
-| `EscalationService` | Evaluate condition-based rules, execute escalation actions |
-| `AutomationRunner` | Time-based automation evaluation and action execution |
-| `MacroService` | Apply macro action sequences to tickets |
-| `TicketMergeService` | Merge source into target with reply transfer |
-| `TicketSplitService` | Split a reply into a new linked ticket |
-| `TicketSnoozeService` | Snooze/unsnooze with background wake service |
-| `WebhookDispatcher` | HMAC-signed webhook delivery with retry logic |
-| `CapacityService` | Per-agent concurrent ticket limits |
-| `SkillRoutingService` | Match agents by skills to ticket tags |
-| `BusinessHoursCalculator` | Business hours date math with holiday support |
-| `TwoFactorService` | TOTP secret generation, verification, recovery codes |
-| `AuditLogService` | Log and query entity mutations |
-| `KnowledgeBaseService` | Article/category CRUD, search, feedback |
-| `SavedViewService` | Personal and shared filter presets |
-| `SideConversationService` | Internal threaded conversations on tickets |
-| `ImportService` | Multi-step import with pluggable adapters |
-| `SettingsService` | Key-value settings store |
+| `TicketService` | Tam bilet CRUD, durum geçişleri, yanıtlar, etiketler, departmanlar |
+| `SlaService` | Politika ekleme, ihlal tespiti, uyarı kontrolü, ilk yanıt kaydı |
+| `AssignmentService` | Temsilci atama, atama kaldırma, iş yüküne göre otomatik atama |
+| `EscalationService` | Koşul tabanlı kural değerlendirmesi, yükseltme eylemlerinin yürütülmesi |
+| `AutomationRunner` | Zaman tabanlı otomasyon değerlendirmesi ve eylem yürütme |
+| `MacroService` | Biletlere makro eylem dizileri uygulama |
+| `TicketMergeService` | Kaynak yanıt aktarımı ile hedefe birleştirme |
+| `TicketSplitService` | Yanıtı yeni bağlantılı bir bilete ayırma |
+| `TicketSnoozeService` | Arka plan uyandırma servisi ile erteleme/uyandırma |
+| `WebhookDispatcher` | Yeniden deneme mantığı ile HMAC imzalı webhook teslimi |
+| `CapacityService` | Temsilci başına eşzamanlı bilet limitleri |
+| `SkillRoutingService` | Becerilere göre temsilcileri bilet etiketleriyle eşleştirme |
+| `BusinessHoursCalculator` | Tatil desteğiyle iş saatleri tarih hesaplaması |
+| `TwoFactorService` | TOTP gizli anahtar oluşturma, doğrulama, kurtarma kodları |
+| `AuditLogService` | Varlık mutasyonlarını günlüğe kaydetme ve sorgulama |
+| `KnowledgeBaseService` | Makale/kategori CRUD, arama, geri bildirim |
+| `SavedViewService` | Kişisel ve paylaşılan filtre ön ayarları |
+| `SideConversationService` | Biletlerdeki dahili zincirlenmiş konuşmalar |
+| `ImportService` | Takılabilir adaptörlerle çok adımlı içe aktarma |
+| `SettingsService` | Anahtar-değer ayar deposu |
 
 ## Olaylar
 
-Every ticket action dispatches a domain event:
+Her bilet eylemi bir alan olayı yayar:
 
-| Event | When |
+| Olay | Ne Zaman |
 |-------|------|
-| `TicketCreatedEvent` | New ticket created |
-| `TicketStatusChangedEvent` | Status transition |
-| `TicketAssignedEvent` | Agent assigned |
-| `TicketUnassignedEvent` | Agent removed |
-| `ReplyCreatedEvent` | Public reply added |
-| `InternalNoteAddedEvent` | Agent note added |
-| `SlaBreachedEvent` | SLA deadline missed |
-| `SlaWarningEvent` | SLA deadline approaching |
-| `TicketEscalatedEvent` | Ticket escalated |
-| `TicketResolvedEvent` | Ticket resolved |
-| `TicketClosedEvent` | Ticket closed |
-| `TicketReopenedEvent` | Ticket reopened |
-| `TicketPriorityChangedEvent` | Priority changed |
-| `DepartmentChangedEvent` | Department changed |
-| `TagAddedEvent` | Tag added |
-| `TagRemovedEvent` | Tag removed |
+| `TicketCreatedEvent` | Yeni bilet oluşturuldu |
+| `TicketStatusChangedEvent` | Durum geçişi |
+| `TicketAssignedEvent` | Temsilci atandı |
+| `TicketUnassignedEvent` | Temsilci kaldırıldı |
+| `ReplyCreatedEvent` | Genel yanıt eklendi |
+| `InternalNoteAddedEvent` | Temsilci notu eklendi |
+| `SlaBreachedEvent` | SLA süresi aşıldı |
+| `SlaWarningEvent` | SLA süresi yaklaşıyor |
+| `TicketEscalatedEvent` | Bilet yükseltildi |
+| `TicketResolvedEvent` | Bilet çözüldü |
+| `TicketClosedEvent` | Bilet kapatıldı |
+| `TicketReopenedEvent` | Bilet yeniden açıldı |
+| `TicketPriorityChangedEvent` | Öncelik değiştirildi |
+| `DepartmentChangedEvent` | Departman değiştirildi |
+| `TagAddedEvent` | Etiket eklendi |
+| `TagRemovedEvent` | Etiket kaldırıldı |
 
-Implement `IEscalatedEventDispatcher` to receive these events in your host application:
+Bu olayları ana uygulamanızda almak için `IEscalatedEventDispatcher` uygulayın:
 
 ```csharp
 public class MyEventHandler : IEscalatedEventDispatcher
@@ -245,71 +245,71 @@ public class MyEventHandler : IEscalatedEventDispatcher
 services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 ```
 
-## API Endpoints
+## API Uç Noktaları
 
-### Customer
+### Müşteri
 
-| Method | Route | Description |
+| Yöntem | Yol | Açıklama |
 |--------|-------|-------------|
-| GET | `/support/tickets` | List customer tickets |
-| POST | `/support/tickets` | Create ticket |
-| GET | `/support/tickets/{id}` | View ticket |
-| POST | `/support/tickets/{id}/reply` | Reply to ticket |
-| POST | `/support/tickets/{id}/close` | Close ticket |
-| POST | `/support/tickets/{id}/reopen` | Reopen ticket |
+| GET | `/support/tickets` | Müşteri biletlerini listele |
+| POST | `/support/tickets` | Bilet oluştur |
+| GET | `/support/tickets/{id}` | Bileti görüntüle |
+| POST | `/support/tickets/{id}/reply` | Bilete yanıt ver |
+| POST | `/support/tickets/{id}/close` | Bileti kapat |
+| POST | `/support/tickets/{id}/reopen` | Bileti yeniden aç |
 
-### Agent
+### Temsilci
 
-| Method | Route | Description |
+| Yöntem | Yol | Açıklama |
 |--------|-------|-------------|
-| GET | `/support/agent/tickets` | Ticket queue with filters |
-| GET | `/support/agent/tickets/{id}` | Ticket detail |
-| POST | `/support/agent/tickets/{id}/reply` | Reply |
-| POST | `/support/agent/tickets/{id}/note` | Internal note |
-| POST | `/support/agent/tickets/{id}/assign` | Assign agent |
-| POST | `/support/agent/tickets/{id}/status` | Change status |
-| POST | `/support/agent/tickets/{id}/priority` | Change priority |
-| POST | `/support/agent/tickets/{id}/macro` | Apply macro |
-| POST | `/support/agent/tickets/bulk` | Bulk actions |
-| GET | `/support/agent/tickets/dashboard` | Agent workload |
+| GET | `/support/agent/tickets` | Filtreli bilet kuyruğu |
+| GET | `/support/agent/tickets/{id}` | Bilet detayı |
+| POST | `/support/agent/tickets/{id}/reply` | Yanıtla |
+| POST | `/support/agent/tickets/{id}/note` | Dahili not |
+| POST | `/support/agent/tickets/{id}/assign` | Temsilci ata |
+| POST | `/support/agent/tickets/{id}/status` | Durumu değiştir |
+| POST | `/support/agent/tickets/{id}/priority` | Önceliği değiştir |
+| POST | `/support/agent/tickets/{id}/macro` | Makro uygula |
+| POST | `/support/agent/tickets/bulk` | Toplu işlemler |
+| GET | `/support/agent/tickets/dashboard` | Temsilci iş yükü |
 
-### Admin
+### Yönetim
 
-| Method | Route | Description |
+| Yöntem | Yol | Açıklama |
 |--------|-------|-------------|
-| GET/POST | `/support/admin/departments` | Manage departments |
-| GET/POST | `/support/admin/tags` | Manage tags |
-| GET/POST | `/support/admin/sla-policies` | Manage SLA policies |
-| GET/POST | `/support/admin/escalation-rules` | Manage escalation rules |
-| GET/POST | `/support/admin/webhooks` | Manage webhooks |
-| GET/POST | `/support/admin/api-tokens` | Manage API tokens |
-| GET/POST | `/support/admin/macros` | Manage macros |
-| GET/POST | `/support/admin/automations` | Manage automations |
-| GET/POST | `/support/admin/custom-fields` | Manage custom fields |
-| GET/POST | `/support/admin/business-hours` | Business schedules |
-| GET/POST | `/support/admin/skills` | Manage skills |
-| GET/POST | `/support/admin/roles` | Manage roles |
-| GET | `/support/admin/audit-logs` | Query audit logs |
-| GET/POST | `/support/admin/settings` | App settings |
-| POST | `/support/admin/tickets/{id}/merge` | Merge tickets |
-| POST | `/support/admin/tickets/{id}/split` | Split ticket |
-| POST | `/support/admin/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/support/admin/tickets/{id}/link` | Link tickets |
+| GET/POST | `/support/admin/departments` | Departmanları yönet |
+| GET/POST | `/support/admin/tags` | Etiketleri yönet |
+| GET/POST | `/support/admin/sla-policies` | SLA politikalarını yönet |
+| GET/POST | `/support/admin/escalation-rules` | Yükseltme kurallarını yönet |
+| GET/POST | `/support/admin/webhooks` | Webhook'ları yönet |
+| GET/POST | `/support/admin/api-tokens` | API token'larını yönet |
+| GET/POST | `/support/admin/macros` | Makroları yönet |
+| GET/POST | `/support/admin/automations` | Otomasyonları yönet |
+| GET/POST | `/support/admin/custom-fields` | Özel alanları yönet |
+| GET/POST | `/support/admin/business-hours` | İş saatleri |
+| GET/POST | `/support/admin/skills` | Becerileri yönet |
+| GET/POST | `/support/admin/roles` | Rolleri yönet |
+| GET | `/support/admin/audit-logs` | Denetim günlüklerini sorgula |
+| GET/POST | `/support/admin/settings` | Uygulama ayarları |
+| POST | `/support/admin/tickets/{id}/merge` | Biletleri birleştir |
+| POST | `/support/admin/tickets/{id}/split` | Bileti böl |
+| POST | `/support/admin/tickets/{id}/snooze` | Bileti ertele |
+| POST | `/support/admin/tickets/{id}/link` | Biletleri bağla |
 
-### Widget (Public)
+### Widget (Genel)
 
-| Method | Route | Description |
+| Yöntem | Yol | Açıklama |
 |--------|-------|-------------|
-| GET | `/support/widget/kb/search` | Search knowledge base |
-| POST | `/support/widget/tickets` | Create guest ticket |
-| GET | `/support/widget/tickets/{token}` | Lookup by guest token |
-| POST | `/support/widget/tickets/{token}/reply` | Guest reply |
-| POST | `/support/widget/tickets/{token}/rate` | Submit CSAT rating |
-| POST | `/support/widget/kb/articles/{id}/feedback` | Article feedback |
+| GET | `/support/widget/kb/search` | Bilgi tabanında ara |
+| POST | `/support/widget/tickets` | Misafir bileti oluştur |
+| GET | `/support/widget/tickets/{token}` | Misafir tokeni ile ara |
+| POST | `/support/widget/tickets/{token}/reply` | Misafir yanıtı |
+| POST | `/support/widget/tickets/{token}/rate` | CSAT değerlendirmesi gönder |
+| POST | `/support/widget/kb/articles/{id}/feedback` | Makale geri bildirimi |
 
-## Real-time Updates
+## Gerçek Zamanlı Güncellemeler
 
-Enable SignalR for live ticket updates:
+Canlı bilet güncellemeleri için SignalR'ı etkinleştirin:
 
 ```json
 {
@@ -324,7 +324,7 @@ Enable SignalR for live ticket updates:
 app.MapHub<EscalatedHub>("/support/hub");
 ```
 
-Clients join ticket-specific groups to receive updates:
+İstemciler güncellemeleri almak için bilete özel gruplara katılır:
 
 ```javascript
 connection.invoke("JoinTicket", ticketId);
@@ -333,48 +333,48 @@ connection.on("TicketUpdated", (data) => { /* handle */ });
 
 ## Middleware
 
-### API Token Authentication
+### API Token Kimlik Doğrulaması
 
-Protect API endpoints with bearer token authentication:
+API uç noktalarını Bearer token kimlik doğrulaması ile koruyun:
 
 ```csharp
 app.UseMiddleware<ApiTokenAuthMiddleware>();
 ```
 
-Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
+Token'lar SHA-256 hash olarak saklanır. Yönetim API uç noktası üzerinden token oluşturun.
 
-### Rate Limiting
+### Hız Sınırlaması
 
 ```csharp
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
 ```
 
-## Test
+## Testler
 
 ```bash
 dotnet test
 ```
 
-Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
-- Ticket CRUD and status transitions
-- SLA breach detection and warnings
-- Ticket split, merge, and snooze
-- Assignment and workload calculation
-- Webhook subscription matching
-- 2FA secret generation and verification
-- Capacity management
-- Model validation and enum behavior
+Testler xUnit, Moq ve EF Core InMemory sağlayıcısı kullanır. Kapsam şunları içerir:
+- Bilet CRUD ve durum geçişleri
+- SLA ihlal tespiti ve uyarılar
+- Bilet bölme, birleştirme ve erteleme
+- Atama ve iş yükü hesaplaması
+- Webhook abonelik eşleştirme
+- 2FA gizli anahtar oluşturma ve doğrulama
+- Kapasite yönetimi
+- Model doğrulama ve enum davranışı
 
-## Şunlar İçin de Mevcut
+## Diğer Platformlarda da Mevcut
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 package
-- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core package (you are here)
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer paketi
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails motoru
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Yeniden kullanılabilir Django uygulaması
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 paketi
+- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core paketi (buradasınız)
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI bileşenleri
 
-Same architecture, same Vue UI -- for every major backend framework.
+Aynı mimari, aynı Vue UI -- tüm büyük backend framework'leri için.
 
 ## Lisans
 

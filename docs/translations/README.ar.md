@@ -15,66 +15,66 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-# Escalated for ASP.NET Core
+# Escalated لـ ASP.NET Core
 
 [![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
 [![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app -- get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+نظام تذاكر دعم كامل الميزات وقابل للتضمين لـ ASP.NET Core. أضفه إلى أي تطبيق واحصل على مكتب مساعدة كامل مع تتبع SLA وقواعد التصعيد وسير عمل الوكلاء وبوابة العملاء. لا حاجة لخدمات خارجية.
 
-> **[escalated.dev](https://escalated.dev)** -- Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** -- تعرف على المزيد، شاهد العروض التوضيحية، وقارن بين خيارات Cloud و Self-Hosted.
 
 ## الميزات
 
-- **Ticket lifecycle** -- Create, assign, reply, resolve, close, reopen with configurable status transitions
-- **SLA engine** -- Per-priority response and resolution targets, business hours calculation, automatic breach detection
-- **Escalation rules** -- Condition-based rules that auto-escalate, reprioritize, reassign, or notify
-- **Automations** -- Time-based rules with conditions and actions
-- **Agent dashboard** -- Ticket queue with filters, bulk actions, internal notes, canned responses
-- **Customer portal** -- Self-service ticket creation, replies, and status tracking
-- **Admin panel** -- Manage departments, SLA policies, escalation rules, tags, and more
-- **Macros and canned responses** -- Batch actions and reusable reply templates
-- **Custom fields** -- Dynamic metadata with conditional display logic
-- **Knowledge base** -- Articles, categories, search, and feedback
-- **File attachments** -- Upload support with configurable storage and size limits
-- **Activity timeline** -- Full audit log of every action on every ticket
-- **Webhooks** -- HMAC-SHA256 signed with retry logic
-- **API tokens** -- Bearer auth with ability-based scoping
-- **Roles and permissions** -- Fine-grained access control
-- **Audit logging** -- All mutations tracked with old/new values
-- **Import system** -- Multi-step wizard with pluggable adapters
-- **Side conversations** -- Internal team threads on tickets
-- **Ticket merging and linking** -- Merge duplicate tickets and relate issues
-- **Ticket splitting** -- Split a reply into a new ticket
-- **Ticket snooze** -- Snooze until a future date with auto-wake background service
-- **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Saved views** -- Personal and shared filter presets
-- **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
-- **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
-- **Capacity management** -- Per-agent workload limits by channel
-- **Skill-based routing** -- Match agents to tickets by skill tags
-- **CSAT ratings** -- Satisfaction surveys on resolved tickets
-- **2FA** -- TOTP setup and verification with recovery codes
-- **Guest access** -- Anonymous ticket creation with magic token lookup
-- **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+- **دورة حياة التذكرة** -- إنشاء، تعيين، رد، حل، إغلاق، إعادة فتح مع انتقالات حالة قابلة للتهيئة
+- **محرك SLA** -- أهداف الاستجابة والحل حسب الأولوية، حساب ساعات العمل، كشف تلقائي للانتهاكات
+- **قواعد التصعيد** -- قواعد قائمة على الشروط تقوم بالتصعيد وإعادة الترتيب وإعادة التعيين أو الإشعار تلقائياً
+- **الأتمتة** -- قواعد قائمة على الوقت مع شروط وإجراءات
+- **لوحة تحكم الوكيل** -- قائمة انتظار التذاكر مع فلاتر، إجراءات جماعية، ملاحظات داخلية، ردود جاهزة
+- **بوابة العملاء** -- إنشاء تذاكر ذاتية الخدمة، ردود، وتتبع الحالة
+- **لوحة الإدارة** -- إدارة الأقسام، سياسات SLA، قواعد التصعيد، العلامات والمزيد
+- **الماكرو والردود الجاهزة** -- إجراءات مجمعة وقوالب رد قابلة لإعادة الاستخدام
+- **حقول مخصصة** -- بيانات وصفية ديناميكية مع منطق عرض شرطي
+- **قاعدة المعرفة** -- مقالات، فئات، بحث، وتغذية راجعة
+- **مرفقات الملفات** -- دعم الرفع مع تخزين قابل للتهيئة وحدود الحجم
+- **الجدول الزمني للنشاط** -- سجل تدقيق كامل لكل إجراء على كل تذكرة
+- **Webhooks** -- موقعة بـ HMAC-SHA256 مع منطق إعادة المحاولة
+- **رموز API** -- مصادقة Bearer مع نطاق قائم على القدرات
+- **الأدوار والصلاحيات** -- تحكم دقيق في الوصول
+- **سجل التدقيق** -- تسجيل جميع التغييرات مع القيم القديمة/الجديدة
+- **نظام الاستيراد** -- معالج متعدد الخطوات مع محولات قابلة للتوصيل
+- **المحادثات الجانبية** -- سلاسل نقاش داخلية للفريق على التذاكر
+- **دمج وربط التذاكر** -- دمج التذاكر المكررة وربط المشكلات
+- **تقسيم التذاكر** -- تقسيم رد إلى تذكرة جديدة
+- **تأجيل التذاكر** -- تأجيل حتى تاريخ مستقبلي مع خدمة إيقاظ في الخلفية
+- **ترابط البريد الإلكتروني** -- عناوين In-Reply-To/References/Message-ID للترابط الصحيح
+- **العروض المحفوظة** -- إعدادات فلاتر مسبقة شخصية ومشتركة
+- **API القطعة القابلة للتضمين** -- نقاط نهاية عامة للبحث في قاعدة المعرفة، تذاكر الضيوف، استعلام الحالة
+- **تحديثات فورية** -- محاور SignalR لتحديثات التذاكر المباشرة (اختياري)
+- **إدارة السعة** -- حدود عبء العمل لكل وكيل حسب القناة
+- **التوجيه القائم على المهارات** -- مطابقة الوكلاء مع التذاكر حسب علامات المهارات
+- **تقييمات CSAT** -- استطلاعات الرضا على التذاكر المحلولة
+- **2FA** -- إعداد والتحقق من TOTP مع رموز الاسترداد
+- **وصول الضيوف** -- إنشاء تذاكر مجهولة مع البحث بالرمز السحري
+- **Inertia.js + Vue 3 UI** -- واجهة أمامية مشتركة عبر [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 
 ## المتطلبات
 
 - .NET 8.0+
 - Entity Framework Core 8.0+
-- SQL Server, SQLite, or PostgreSQL
-- Node.js 18+ (for frontend assets)
+- SQL Server أو SQLite أو PostgreSQL
+- Node.js 18+ (لموارد الواجهة الأمامية)
 
 ## البدء السريع
 
-### 1. Install the Package
+### 1. تثبيت الحزمة
 
 ```bash
 dotnet add package Escalated
 ```
 
-### 2. Register Services
+### 2. تسجيل الخدمات
 
 ```csharp
 // Program.cs
@@ -95,7 +95,7 @@ app.MapEscalated();
 app.Run();
 ```
 
-### 3. Configure
+### 3. التهيئة
 
 ```json
 // appsettings.json
@@ -124,110 +124,110 @@ app.Run();
 }
 ```
 
-### 4. Run Migrations
+### 4. تشغيل عمليات الترحيل
 
 ```bash
 dotnet ef migrations add InitialEscalated --context EscalatedDbContext
 dotnet ef database update --context EscalatedDbContext
 ```
 
-Visit `/support` -- you're live.
+قم بزيارة `/support` -- النظام يعمل الآن.
 
 ## تكامل الواجهة الأمامية
 
-Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package. Integrate with Inertia.js for seamless SPA rendering inside your existing layout.
+يوفر Escalated مكتبة مكونات Vue وصفحات افتراضية عبر حزمة npm [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated). ادمج مع Inertia.js لعرض SPA سلس داخل تخطيطك الحالي.
 
 ```bash
 npm install @escalated-dev/escalated
 ```
 
-## Architecture
+## البنية المعمارية
 
 ```
 src/Escalated/
-  Models/           # 40+ EF Core entity models
-  Data/             # EscalatedDbContext with full relationship mapping
-  Services/         # Business logic (ticket, SLA, merge, split, snooze, etc.)
+  Models/           # أكثر من 40 نموذج كيان EF Core
+  Data/             # EscalatedDbContext مع تعيين كامل للعلاقات
+  Services/         # منطق الأعمال (التذاكر، SLA، الدمج، التقسيم، التأجيل، إلخ)
   Controllers/
-    Admin/          # Admin panel API (CRUD for all settings)
-    Agent/          # Agent ticket queue and actions
-    Customer/       # Customer self-service portal
-    Widget/         # Public widget API (KB search, guest tickets)
-  Middleware/       # API token auth, permissions, rate limiting
-  Events/           # Domain events (TicketCreated, SlaBreached, etc.)
-  Notifications/    # Email notification interfaces and templates
-  Configuration/    # DI registration, options, endpoint mapping
-  Hubs/             # SignalR hub for real-time updates
-  Enums/            # TicketStatus, TicketPriority, ActivityType
+    Admin/          # API لوحة الإدارة (CRUD لجميع الإعدادات)
+    Agent/          # قائمة انتظار التذاكر وإجراءات الوكيل
+    Customer/       # بوابة الخدمة الذاتية للعملاء
+    Widget/         # API القطعة العامة (بحث قاعدة المعرفة، تذاكر الضيوف)
+  Middleware/       # مصادقة رمز API، الصلاحيات، تحديد المعدل
+  Events/           # أحداث المجال (TicketCreated، SlaBreached، إلخ)
+  Notifications/    # واجهات وقوالب إشعارات البريد الإلكتروني
+  Configuration/    # تسجيل DI، الخيارات، تعيين نقاط النهاية
+  Hubs/             # محور SignalR للتحديثات الفورية
+  Enums/            # TicketStatus، TicketPriority، ActivityType
 ```
 
-## Models
+## النماذج
 
-Escalated includes 40+ EF Core entities covering the full helpdesk domain:
+يتضمن Escalated أكثر من 40 كيان EF Core تغطي مجال مكتب المساعدة بالكامل:
 
-| Category | Models |
+| الفئة | النماذج |
 |----------|--------|
-| Core | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
+| الأساسي | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
 | SLA | SlaPolicy, EscalationRule, BusinessSchedule, Holiday, Automation |
-| Agents | AgentProfile, AgentCapacity, Skill, AgentSkill |
-| Messaging | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
-| Admin | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
-| Custom | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
-| Import | ImportJob, ImportSourceMap |
-| Config | EscalatedSettings, SavedView |
-| Knowledge Base | Article, ArticleCategory |
+| الوكلاء | AgentProfile, AgentCapacity, Skill, AgentSkill |
+| المراسلة | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
+| الإدارة | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
+| مخصص | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
+| الاستيراد | ImportJob, ImportSourceMap |
+| التهيئة | EscalatedSettings, SavedView |
+| قاعدة المعرفة | Article, ArticleCategory |
 
-All models have proper relationships, indexes, and query filters configured in `EscalatedDbContext`.
+جميع النماذج تحتوي على علاقات وفهارس وفلاتر استعلام مُهيأة بشكل صحيح في `EscalatedDbContext`.
 
-## Services
+## الخدمات
 
-| Service | Responsibility |
+| الخدمة | المسؤولية |
 |---------|---------------|
-| `TicketService` | Full ticket CRUD, status transitions, replies, tags, departments |
-| `SlaService` | Policy attachment, breach detection, warning checks, first response recording |
-| `AssignmentService` | Agent assignment, unassignment, auto-assign by workload |
-| `EscalationService` | Evaluate condition-based rules, execute escalation actions |
-| `AutomationRunner` | Time-based automation evaluation and action execution |
-| `MacroService` | Apply macro action sequences to tickets |
-| `TicketMergeService` | Merge source into target with reply transfer |
-| `TicketSplitService` | Split a reply into a new linked ticket |
-| `TicketSnoozeService` | Snooze/unsnooze with background wake service |
-| `WebhookDispatcher` | HMAC-signed webhook delivery with retry logic |
-| `CapacityService` | Per-agent concurrent ticket limits |
-| `SkillRoutingService` | Match agents by skills to ticket tags |
-| `BusinessHoursCalculator` | Business hours date math with holiday support |
-| `TwoFactorService` | TOTP secret generation, verification, recovery codes |
-| `AuditLogService` | Log and query entity mutations |
-| `KnowledgeBaseService` | Article/category CRUD, search, feedback |
-| `SavedViewService` | Personal and shared filter presets |
-| `SideConversationService` | Internal threaded conversations on tickets |
-| `ImportService` | Multi-step import with pluggable adapters |
-| `SettingsService` | Key-value settings store |
+| `TicketService` | CRUD كامل للتذاكر، انتقالات الحالة، الردود، العلامات، الأقسام |
+| `SlaService` | إرفاق السياسات، كشف الانتهاكات، فحص التحذيرات، تسجيل الاستجابة الأولى |
+| `AssignmentService` | تعيين الوكلاء، إلغاء التعيين، التعيين التلقائي حسب عبء العمل |
+| `EscalationService` | تقييم القواعد القائمة على الشروط، تنفيذ إجراءات التصعيد |
+| `AutomationRunner` | تقييم الأتمتة القائمة على الوقت وتنفيذ الإجراءات |
+| `MacroService` | تطبيق تسلسلات إجراءات الماكرو على التذاكر |
+| `TicketMergeService` | دمج المصدر في الهدف مع نقل الردود |
+| `TicketSplitService` | تقسيم رد إلى تذكرة مرتبطة جديدة |
+| `TicketSnoozeService` | تأجيل/إيقاظ مع خدمة إيقاظ في الخلفية |
+| `WebhookDispatcher` | تسليم webhooks موقعة بـ HMAC مع منطق إعادة المحاولة |
+| `CapacityService` | حدود التذاكر المتزامنة لكل وكيل |
+| `SkillRoutingService` | مطابقة الوكلاء حسب المهارات مع علامات التذاكر |
+| `BusinessHoursCalculator` | حسابات تواريخ ساعات العمل مع دعم العطلات |
+| `TwoFactorService` | توليد أسرار TOTP، التحقق، رموز الاسترداد |
+| `AuditLogService` | تسجيل واستعلام تغييرات الكيانات |
+| `KnowledgeBaseService` | CRUD المقالات/الفئات، البحث، التغذية الراجعة |
+| `SavedViewService` | إعدادات فلاتر مسبقة شخصية ومشتركة |
+| `SideConversationService` | محادثات داخلية مترابطة على التذاكر |
+| `ImportService` | استيراد متعدد الخطوات مع محولات قابلة للتوصيل |
+| `SettingsService` | مخزن إعدادات مفتاح-قيمة |
 
 ## الأحداث
 
-Every ticket action dispatches a domain event:
+كل إجراء على التذكرة يُصدر حدث مجال:
 
-| Event | When |
+| الحدث | متى |
 |-------|------|
-| `TicketCreatedEvent` | New ticket created |
-| `TicketStatusChangedEvent` | Status transition |
-| `TicketAssignedEvent` | Agent assigned |
-| `TicketUnassignedEvent` | Agent removed |
-| `ReplyCreatedEvent` | Public reply added |
-| `InternalNoteAddedEvent` | Agent note added |
-| `SlaBreachedEvent` | SLA deadline missed |
-| `SlaWarningEvent` | SLA deadline approaching |
-| `TicketEscalatedEvent` | Ticket escalated |
-| `TicketResolvedEvent` | Ticket resolved |
-| `TicketClosedEvent` | Ticket closed |
-| `TicketReopenedEvent` | Ticket reopened |
-| `TicketPriorityChangedEvent` | Priority changed |
-| `DepartmentChangedEvent` | Department changed |
-| `TagAddedEvent` | Tag added |
-| `TagRemovedEvent` | Tag removed |
+| `TicketCreatedEvent` | تذكرة جديدة تم إنشاؤها |
+| `TicketStatusChangedEvent` | انتقال الحالة |
+| `TicketAssignedEvent` | تم تعيين وكيل |
+| `TicketUnassignedEvent` | تم إزالة الوكيل |
+| `ReplyCreatedEvent` | تمت إضافة رد عام |
+| `InternalNoteAddedEvent` | تمت إضافة ملاحظة الوكيل |
+| `SlaBreachedEvent` | تم تجاوز موعد SLA |
+| `SlaWarningEvent` | موعد SLA يقترب |
+| `TicketEscalatedEvent` | تم تصعيد التذكرة |
+| `TicketResolvedEvent` | تم حل التذكرة |
+| `TicketClosedEvent` | تم إغلاق التذكرة |
+| `TicketReopenedEvent` | تم إعادة فتح التذكرة |
+| `TicketPriorityChangedEvent` | تم تغيير الأولوية |
+| `DepartmentChangedEvent` | تم تغيير القسم |
+| `TagAddedEvent` | تمت إضافة علامة |
+| `TagRemovedEvent` | تمت إزالة علامة |
 
-Implement `IEscalatedEventDispatcher` to receive these events in your host application:
+نفّذ `IEscalatedEventDispatcher` لاستقبال هذه الأحداث في تطبيقك المضيف:
 
 ```csharp
 public class MyEventHandler : IEscalatedEventDispatcher
@@ -245,71 +245,71 @@ public class MyEventHandler : IEscalatedEventDispatcher
 services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 ```
 
-## API Endpoints
+## نقاط نهاية API
 
-### Customer
+### العميل
 
-| Method | Route | Description |
+| الطريقة | المسار | الوصف |
 |--------|-------|-------------|
-| GET | `/support/tickets` | List customer tickets |
-| POST | `/support/tickets` | Create ticket |
-| GET | `/support/tickets/{id}` | View ticket |
-| POST | `/support/tickets/{id}/reply` | Reply to ticket |
-| POST | `/support/tickets/{id}/close` | Close ticket |
-| POST | `/support/tickets/{id}/reopen` | Reopen ticket |
+| GET | `/support/tickets` | عرض قائمة تذاكر العميل |
+| POST | `/support/tickets` | إنشاء تذكرة |
+| GET | `/support/tickets/{id}` | عرض التذكرة |
+| POST | `/support/tickets/{id}/reply` | الرد على التذكرة |
+| POST | `/support/tickets/{id}/close` | إغلاق التذكرة |
+| POST | `/support/tickets/{id}/reopen` | إعادة فتح التذكرة |
 
-### Agent
+### الوكيل
 
-| Method | Route | Description |
+| الطريقة | المسار | الوصف |
 |--------|-------|-------------|
-| GET | `/support/agent/tickets` | Ticket queue with filters |
-| GET | `/support/agent/tickets/{id}` | Ticket detail |
-| POST | `/support/agent/tickets/{id}/reply` | Reply |
-| POST | `/support/agent/tickets/{id}/note` | Internal note |
-| POST | `/support/agent/tickets/{id}/assign` | Assign agent |
-| POST | `/support/agent/tickets/{id}/status` | Change status |
-| POST | `/support/agent/tickets/{id}/priority` | Change priority |
-| POST | `/support/agent/tickets/{id}/macro` | Apply macro |
-| POST | `/support/agent/tickets/bulk` | Bulk actions |
-| GET | `/support/agent/tickets/dashboard` | Agent workload |
+| GET | `/support/agent/tickets` | قائمة انتظار التذاكر مع فلاتر |
+| GET | `/support/agent/tickets/{id}` | تفاصيل التذكرة |
+| POST | `/support/agent/tickets/{id}/reply` | الرد |
+| POST | `/support/agent/tickets/{id}/note` | ملاحظة داخلية |
+| POST | `/support/agent/tickets/{id}/assign` | تعيين وكيل |
+| POST | `/support/agent/tickets/{id}/status` | تغيير الحالة |
+| POST | `/support/agent/tickets/{id}/priority` | تغيير الأولوية |
+| POST | `/support/agent/tickets/{id}/macro` | تطبيق ماكرو |
+| POST | `/support/agent/tickets/bulk` | إجراءات جماعية |
+| GET | `/support/agent/tickets/dashboard` | عبء عمل الوكيل |
 
-### Admin
+### الإدارة
 
-| Method | Route | Description |
+| الطريقة | المسار | الوصف |
 |--------|-------|-------------|
-| GET/POST | `/support/admin/departments` | Manage departments |
-| GET/POST | `/support/admin/tags` | Manage tags |
-| GET/POST | `/support/admin/sla-policies` | Manage SLA policies |
-| GET/POST | `/support/admin/escalation-rules` | Manage escalation rules |
-| GET/POST | `/support/admin/webhooks` | Manage webhooks |
-| GET/POST | `/support/admin/api-tokens` | Manage API tokens |
-| GET/POST | `/support/admin/macros` | Manage macros |
-| GET/POST | `/support/admin/automations` | Manage automations |
-| GET/POST | `/support/admin/custom-fields` | Manage custom fields |
-| GET/POST | `/support/admin/business-hours` | Business schedules |
-| GET/POST | `/support/admin/skills` | Manage skills |
-| GET/POST | `/support/admin/roles` | Manage roles |
-| GET | `/support/admin/audit-logs` | Query audit logs |
-| GET/POST | `/support/admin/settings` | App settings |
-| POST | `/support/admin/tickets/{id}/merge` | Merge tickets |
-| POST | `/support/admin/tickets/{id}/split` | Split ticket |
-| POST | `/support/admin/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/support/admin/tickets/{id}/link` | Link tickets |
+| GET/POST | `/support/admin/departments` | إدارة الأقسام |
+| GET/POST | `/support/admin/tags` | إدارة العلامات |
+| GET/POST | `/support/admin/sla-policies` | إدارة سياسات SLA |
+| GET/POST | `/support/admin/escalation-rules` | إدارة قواعد التصعيد |
+| GET/POST | `/support/admin/webhooks` | إدارة webhooks |
+| GET/POST | `/support/admin/api-tokens` | إدارة رموز API |
+| GET/POST | `/support/admin/macros` | إدارة الماكرو |
+| GET/POST | `/support/admin/automations` | إدارة الأتمتة |
+| GET/POST | `/support/admin/custom-fields` | إدارة الحقول المخصصة |
+| GET/POST | `/support/admin/business-hours` | ساعات العمل |
+| GET/POST | `/support/admin/skills` | إدارة المهارات |
+| GET/POST | `/support/admin/roles` | إدارة الأدوار |
+| GET | `/support/admin/audit-logs` | استعلام سجلات التدقيق |
+| GET/POST | `/support/admin/settings` | إعدادات التطبيق |
+| POST | `/support/admin/tickets/{id}/merge` | دمج التذاكر |
+| POST | `/support/admin/tickets/{id}/split` | تقسيم التذكرة |
+| POST | `/support/admin/tickets/{id}/snooze` | تأجيل التذكرة |
+| POST | `/support/admin/tickets/{id}/link` | ربط التذاكر |
 
-### Widget (Public)
+### القطعة (عام)
 
-| Method | Route | Description |
+| الطريقة | المسار | الوصف |
 |--------|-------|-------------|
-| GET | `/support/widget/kb/search` | Search knowledge base |
-| POST | `/support/widget/tickets` | Create guest ticket |
-| GET | `/support/widget/tickets/{token}` | Lookup by guest token |
-| POST | `/support/widget/tickets/{token}/reply` | Guest reply |
-| POST | `/support/widget/tickets/{token}/rate` | Submit CSAT rating |
-| POST | `/support/widget/kb/articles/{id}/feedback` | Article feedback |
+| GET | `/support/widget/kb/search` | البحث في قاعدة المعرفة |
+| POST | `/support/widget/tickets` | إنشاء تذكرة ضيف |
+| GET | `/support/widget/tickets/{token}` | البحث برمز الضيف |
+| POST | `/support/widget/tickets/{token}/reply` | رد الضيف |
+| POST | `/support/widget/tickets/{token}/rate` | إرسال تقييم CSAT |
+| POST | `/support/widget/kb/articles/{id}/feedback` | تغذية راجعة للمقال |
 
-## Real-time Updates
+## التحديثات الفورية
 
-Enable SignalR for live ticket updates:
+فعّل SignalR لتحديثات التذاكر المباشرة:
 
 ```json
 {
@@ -324,57 +324,57 @@ Enable SignalR for live ticket updates:
 app.MapHub<EscalatedHub>("/support/hub");
 ```
 
-Clients join ticket-specific groups to receive updates:
+ينضم العملاء إلى مجموعات خاصة بالتذاكر لاستقبال التحديثات:
 
 ```javascript
 connection.invoke("JoinTicket", ticketId);
 connection.on("TicketUpdated", (data) => { /* handle */ });
 ```
 
-## Middleware
+## البرمجيات الوسيطة
 
-### API Token Authentication
+### مصادقة رمز API
 
-Protect API endpoints with bearer token authentication:
+احمِ نقاط نهاية API بمصادقة رمز Bearer:
 
 ```csharp
 app.UseMiddleware<ApiTokenAuthMiddleware>();
 ```
 
-Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
+يتم تخزين الرموز كتجزئات SHA-256. أنشئ الرموز عبر نقطة نهاية إدارة API.
 
-### Rate Limiting
+### تحديد المعدل
 
 ```csharp
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
 ```
 
-## الاختبار
+## الاختبارات
 
 ```bash
 dotnet test
 ```
 
-Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
-- Ticket CRUD and status transitions
-- SLA breach detection and warnings
-- Ticket split, merge, and snooze
-- Assignment and workload calculation
-- Webhook subscription matching
-- 2FA secret generation and verification
-- Capacity management
-- Model validation and enum behavior
+تستخدم الاختبارات xUnit مع Moq وموفر InMemory لـ EF Core. تشمل التغطية:
+- CRUD التذاكر وانتقالات الحالة
+- كشف انتهاكات SLA والتحذيرات
+- تقسيم ودمج وتأجيل التذاكر
+- التعيين وحساب عبء العمل
+- مطابقة اشتراكات webhook
+- توليد والتحقق من أسرار 2FA
+- إدارة السعة
+- التحقق من النماذج وسلوك التعدادات
 
 ## متوفر أيضاً لـ
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 package
-- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core package (you are here)
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- حزمة Composer لـ Laravel
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- محرك Ruby on Rails
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- تطبيق Django قابل لإعادة الاستخدام
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- حزمة AdonisJS v6
+- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- حزمة ASP.NET Core (أنت هنا)
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- مكونات واجهة Vue 3 + Inertia.js
 
-Same architecture, same Vue UI -- for every major backend framework.
+نفس البنية المعمارية، نفس واجهة Vue -- لجميع أطر العمل الخلفية الرئيسية.
 
 ## الرخصة
 
