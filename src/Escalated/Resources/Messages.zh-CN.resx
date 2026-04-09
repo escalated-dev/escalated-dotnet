@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+  <data name="Status_Open" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>处理中</value>
+  </data>
+  <data name="Status_WaitingOnCustomer" xml:space="preserve">
+    <value>等待客户</value>
+  </data>
+  <data name="Status_WaitingOnAgent" xml:space="preserve">
+    <value>等待客服</value>
+  </data>
+  <data name="Status_Escalated" xml:space="preserve">
+    <value>已升级</value>
+  </data>
+  <data name="Status_Resolved" xml:space="preserve">
+    <value>已解决</value>
+  </data>
+  <data name="Status_Closed" xml:space="preserve">
+    <value>已关闭</value>
+  </data>
+  <data name="Status_Reopened" xml:space="preserve">
+    <value>已重开</value>
+  </data>
+  <data name="Status_Snoozed" xml:space="preserve">
+    <value>已暂停</value>
+  </data>
+  <data name="Status_Unsnoozed" xml:space="preserve">
+    <value>已恢复</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>低</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>中</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>高</value>
+  </data>
+  <data name="Priority_Urgent" xml:space="preserve">
+    <value>紧急</value>
+  </data>
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>严重</value>
+  </data>
+  <data name="Activity_StatusChanged" xml:space="preserve">
+    <value>状态变更</value>
+  </data>
+  <data name="Activity_Assigned" xml:space="preserve">
+    <value>已分配</value>
+  </data>
+  <data name="Activity_Unassigned" xml:space="preserve">
+    <value>未分配</value>
+  </data>
+  <data name="Activity_PriorityChanged" xml:space="preserve">
+    <value>优先级变更</value>
+  </data>
+  <data name="Activity_TagAdded" xml:space="preserve">
+    <value>标签已添加</value>
+  </data>
+  <data name="Activity_TagRemoved" xml:space="preserve">
+    <value>标签已移除</value>
+  </data>
+  <data name="Activity_SlaBreached" xml:space="preserve">
+    <value>SLA已违反</value>
+  </data>
+  <data name="Activity_Replied" xml:space="preserve">
+    <value>已回复</value>
+  </data>
+  <data name="Activity_NoteAdded" xml:space="preserve">
+    <value>备注已添加</value>
+  </data>
+  <data name="Activity_DepartmentChanged" xml:space="preserve">
+    <value>部门变更</value>
+  </data>
+  <data name="Activity_TicketSplit" xml:space="preserve">
+    <value>工单已拆分</value>
+  </data>
+  <data name="Message_ReplySent" xml:space="preserve">
+    <value>回复已发送。</value>
+  </data>
+  <data name="Message_TicketAssigned" xml:space="preserve">
+    <value>工单已分配。</value>
+  </data>
+  <data name="Message_StatusUpdated" xml:space="preserve">
+    <value>状态已更新。</value>
+  </data>
+  <data name="Message_PriorityUpdated" xml:space="preserve">
+    <value>优先级已更新。</value>
+  </data>
+  <data name="Message_TagsUpdated" xml:space="preserve">
+    <value>标签已更新。</value>
+  </data>
+  <data name="Message_DepartmentUpdated" xml:space="preserve">
+    <value>部门已更新。</value>
+  </data>
+  <data name="Message_TicketCreated" xml:space="preserve">
+    <value>工单创建成功。</value>
+  </data>
+  <data name="Message_TicketClosed" xml:space="preserve">
+    <value>工单已关闭。</value>
+  </data>
+  <data name="Message_TicketReopened" xml:space="preserve">
+    <value>工单已重新打开。</value>
+  </data>
+  <data name="Message_SettingsUpdated" xml:space="preserve">
+    <value>设置已更新。</value>
+  </data>
+  <data name="Message_AccessDenied" xml:space="preserve">
+    <value>访问被拒绝。</value>
+  </data>
+  <data name="Message_NotFound" xml:space="preserve">
+    <value>未找到请求的资源。</value>
+  </data>
+</root>

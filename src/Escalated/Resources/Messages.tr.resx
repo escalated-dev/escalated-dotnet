@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+  <data name="Status_Open" xml:space="preserve">
+    <value>Acik</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>Devam ediyor</value>
+  </data>
+  <data name="Status_WaitingOnCustomer" xml:space="preserve">
+    <value>Musteri bekleniyor</value>
+  </data>
+  <data name="Status_WaitingOnAgent" xml:space="preserve">
+    <value>Temsilci bekleniyor</value>
+  </data>
+  <data name="Status_Escalated" xml:space="preserve">
+    <value>Eskalasyon yapildi</value>
+  </data>
+  <data name="Status_Resolved" xml:space="preserve">
+    <value>Cozuldu</value>
+  </data>
+  <data name="Status_Closed" xml:space="preserve">
+    <value>Kapatildi</value>
+  </data>
+  <data name="Status_Reopened" xml:space="preserve">
+    <value>Yeniden acildi</value>
+  </data>
+  <data name="Status_Snoozed" xml:space="preserve">
+    <value>Ertelendi</value>
+  </data>
+  <data name="Status_Unsnoozed" xml:space="preserve">
+    <value>Erteleme kaldirildi</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>Dusuk</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>Orta</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>Yuksek</value>
+  </data>
+  <data name="Priority_Urgent" xml:space="preserve">
+    <value>Acil</value>
+  </data>
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>Kritik</value>
+  </data>
+  <data name="Activity_StatusChanged" xml:space="preserve">
+    <value>Durum degisti</value>
+  </data>
+  <data name="Activity_Assigned" xml:space="preserve">
+    <value>Atandi</value>
+  </data>
+  <data name="Activity_Unassigned" xml:space="preserve">
+    <value>Atanmamis</value>
+  </data>
+  <data name="Activity_PriorityChanged" xml:space="preserve">
+    <value>Oncelik degisti</value>
+  </data>
+  <data name="Activity_TagAdded" xml:space="preserve">
+    <value>Etiket eklendi</value>
+  </data>
+  <data name="Activity_TagRemoved" xml:space="preserve">
+    <value>Etiket kaldirildi</value>
+  </data>
+  <data name="Activity_SlaBreached" xml:space="preserve">
+    <value>SLA ihlal edildi</value>
+  </data>
+  <data name="Activity_Replied" xml:space="preserve">
+    <value>Yanitlandi</value>
+  </data>
+  <data name="Activity_NoteAdded" xml:space="preserve">
+    <value>Not eklendi</value>
+  </data>
+  <data name="Activity_DepartmentChanged" xml:space="preserve">
+    <value>Departman degisti</value>
+  </data>
+  <data name="Activity_TicketSplit" xml:space="preserve">
+    <value>Destek talebi bolundu</value>
+  </data>
+  <data name="Message_ReplySent" xml:space="preserve">
+    <value>Yanit gonderildi.</value>
+  </data>
+  <data name="Message_TicketAssigned" xml:space="preserve">
+    <value>Destek talebi atandi.</value>
+  </data>
+  <data name="Message_StatusUpdated" xml:space="preserve">
+    <value>Durum guncellendi.</value>
+  </data>
+  <data name="Message_PriorityUpdated" xml:space="preserve">
+    <value>Oncelik guncellendi.</value>
+  </data>
+  <data name="Message_TagsUpdated" xml:space="preserve">
+    <value>Etiketler guncellendi.</value>
+  </data>
+  <data name="Message_DepartmentUpdated" xml:space="preserve">
+    <value>Departman guncellendi.</value>
+  </data>
+  <data name="Message_TicketCreated" xml:space="preserve">
+    <value>Destek talebi basariyla olusturuldu.</value>
+  </data>
+  <data name="Message_TicketClosed" xml:space="preserve">
+    <value>Destek talebi kapatildi.</value>
+  </data>
+  <data name="Message_TicketReopened" xml:space="preserve">
+    <value>Destek talebi yeniden acildi.</value>
+  </data>
+  <data name="Message_SettingsUpdated" xml:space="preserve">
+    <value>Ayarlar guncellendi.</value>
+  </data>
+  <data name="Message_AccessDenied" xml:space="preserve">
+    <value>Erisim reddedildi.</value>
+  </data>
+  <data name="Message_NotFound" xml:space="preserve">
+    <value>Kaynak bulunamadi.</value>
+  </data>
+</root>

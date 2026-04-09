@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+  <data name="Status_Open" xml:space="preserve">
+    <value>Открыта</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>В работе</value>
+  </data>
+  <data name="Status_WaitingOnCustomer" xml:space="preserve">
+    <value>Ожидание клиента</value>
+  </data>
+  <data name="Status_WaitingOnAgent" xml:space="preserve">
+    <value>Ожидание агента</value>
+  </data>
+  <data name="Status_Escalated" xml:space="preserve">
+    <value>Эскалирована</value>
+  </data>
+  <data name="Status_Resolved" xml:space="preserve">
+    <value>Решена</value>
+  </data>
+  <data name="Status_Closed" xml:space="preserve">
+    <value>Закрыта</value>
+  </data>
+  <data name="Status_Reopened" xml:space="preserve">
+    <value>Переоткрыта</value>
+  </data>
+  <data name="Status_Snoozed" xml:space="preserve">
+    <value>Отложена</value>
+  </data>
+  <data name="Status_Unsnoozed" xml:space="preserve">
+    <value>Восстановлена</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>Низкий</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>Средний</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>Высокий</value>
+  </data>
+  <data name="Priority_Urgent" xml:space="preserve">
+    <value>Срочный</value>
+  </data>
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>Критический</value>
+  </data>
+  <data name="Activity_StatusChanged" xml:space="preserve">
+    <value>Статус изменен</value>
+  </data>
+  <data name="Activity_Assigned" xml:space="preserve">
+    <value>Назначена</value>
+  </data>
+  <data name="Activity_Unassigned" xml:space="preserve">
+    <value>Не назначена</value>
+  </data>
+  <data name="Activity_PriorityChanged" xml:space="preserve">
+    <value>Приоритет изменен</value>
+  </data>
+  <data name="Activity_TagAdded" xml:space="preserve">
+    <value>Тег добавлен</value>
+  </data>
+  <data name="Activity_TagRemoved" xml:space="preserve">
+    <value>Тег удален</value>
+  </data>
+  <data name="Activity_SlaBreached" xml:space="preserve">
+    <value>SLA нарушен</value>
+  </data>
+  <data name="Activity_Replied" xml:space="preserve">
+    <value>Ответ</value>
+  </data>
+  <data name="Activity_NoteAdded" xml:space="preserve">
+    <value>Заметка добавлена</value>
+  </data>
+  <data name="Activity_DepartmentChanged" xml:space="preserve">
+    <value>Отдел изменен</value>
+  </data>
+  <data name="Activity_TicketSplit" xml:space="preserve">
+    <value>Заявка разделена</value>
+  </data>
+  <data name="Message_ReplySent" xml:space="preserve">
+    <value>Ответ отправлен.</value>
+  </data>
+  <data name="Message_TicketAssigned" xml:space="preserve">
+    <value>Заявка назначена.</value>
+  </data>
+  <data name="Message_StatusUpdated" xml:space="preserve">
+    <value>Статус обновлен.</value>
+  </data>
+  <data name="Message_PriorityUpdated" xml:space="preserve">
+    <value>Приоритет обновлен.</value>
+  </data>
+  <data name="Message_TagsUpdated" xml:space="preserve">
+    <value>Теги обновлены.</value>
+  </data>
+  <data name="Message_DepartmentUpdated" xml:space="preserve">
+    <value>Отдел обновлен.</value>
+  </data>
+  <data name="Message_TicketCreated" xml:space="preserve">
+    <value>Заявка успешно создана.</value>
+  </data>
+  <data name="Message_TicketClosed" xml:space="preserve">
+    <value>Заявка закрыта.</value>
+  </data>
+  <data name="Message_TicketReopened" xml:space="preserve">
+    <value>Заявка переоткрыта.</value>
+  </data>
+  <data name="Message_SettingsUpdated" xml:space="preserve">
+    <value>Настройки обновлены.</value>
+  </data>
+  <data name="Message_AccessDenied" xml:space="preserve">
+    <value>Доступ запрещен.</value>
+  </data>
+  <data name="Message_NotFound" xml:space="preserve">
+    <value>Ресурс не найден.</value>
+  </data>
+</root>

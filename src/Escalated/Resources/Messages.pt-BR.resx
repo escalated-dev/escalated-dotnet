@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+  <data name="Status_Open" xml:space="preserve">
+    <value>Aberto</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>Em andamento</value>
+  </data>
+  <data name="Status_WaitingOnCustomer" xml:space="preserve">
+    <value>Aguardando cliente</value>
+  </data>
+  <data name="Status_WaitingOnAgent" xml:space="preserve">
+    <value>Aguardando agente</value>
+  </data>
+  <data name="Status_Escalated" xml:space="preserve">
+    <value>Escalado</value>
+  </data>
+  <data name="Status_Resolved" xml:space="preserve">
+    <value>Resolvido</value>
+  </data>
+  <data name="Status_Closed" xml:space="preserve">
+    <value>Fechado</value>
+  </data>
+  <data name="Status_Reopened" xml:space="preserve">
+    <value>Reaberto</value>
+  </data>
+  <data name="Status_Snoozed" xml:space="preserve">
+    <value>Adiado</value>
+  </data>
+  <data name="Status_Unsnoozed" xml:space="preserve">
+    <value>Reativado</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>Baixa</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>Media</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>Alta</value>
+  </data>
+  <data name="Priority_Urgent" xml:space="preserve">
+    <value>Urgente</value>
+  </data>
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>Critica</value>
+  </data>
+  <data name="Activity_StatusChanged" xml:space="preserve">
+    <value>Status alterado</value>
+  </data>
+  <data name="Activity_Assigned" xml:space="preserve">
+    <value>Atribuido</value>
+  </data>
+  <data name="Activity_Unassigned" xml:space="preserve">
+    <value>Nao atribuido</value>
+  </data>
+  <data name="Activity_PriorityChanged" xml:space="preserve">
+    <value>Prioridade alterada</value>
+  </data>
+  <data name="Activity_TagAdded" xml:space="preserve">
+    <value>Tag adicionada</value>
+  </data>
+  <data name="Activity_TagRemoved" xml:space="preserve">
+    <value>Tag removida</value>
+  </data>
+  <data name="Activity_SlaBreached" xml:space="preserve">
+    <value>SLA violado</value>
+  </data>
+  <data name="Activity_Replied" xml:space="preserve">
+    <value>Respondido</value>
+  </data>
+  <data name="Activity_NoteAdded" xml:space="preserve">
+    <value>Nota adicionada</value>
+  </data>
+  <data name="Activity_DepartmentChanged" xml:space="preserve">
+    <value>Departamento alterado</value>
+  </data>
+  <data name="Activity_TicketSplit" xml:space="preserve">
+    <value>Chamado dividido</value>
+  </data>
+  <data name="Message_ReplySent" xml:space="preserve">
+    <value>Resposta enviada.</value>
+  </data>
+  <data name="Message_TicketAssigned" xml:space="preserve">
+    <value>Chamado atribuido.</value>
+  </data>
+  <data name="Message_StatusUpdated" xml:space="preserve">
+    <value>Status atualizado.</value>
+  </data>
+  <data name="Message_PriorityUpdated" xml:space="preserve">
+    <value>Prioridade atualizada.</value>
+  </data>
+  <data name="Message_TagsUpdated" xml:space="preserve">
+    <value>Tags atualizadas.</value>
+  </data>
+  <data name="Message_DepartmentUpdated" xml:space="preserve">
+    <value>Departamento atualizado.</value>
+  </data>
+  <data name="Message_TicketCreated" xml:space="preserve">
+    <value>Chamado criado com sucesso.</value>
+  </data>
+  <data name="Message_TicketClosed" xml:space="preserve">
+    <value>Chamado fechado.</value>
+  </data>
+  <data name="Message_TicketReopened" xml:space="preserve">
+    <value>Chamado reaberto.</value>
+  </data>
+  <data name="Message_SettingsUpdated" xml:space="preserve">
+    <value>Configuracoes atualizadas.</value>
+  </data>
+  <data name="Message_AccessDenied" xml:space="preserve">
+    <value>Acesso negado.</value>
+  </data>
+  <data name="Message_NotFound" xml:space="preserve">
+    <value>Recurso nao encontrado.</value>
+  </data>
+</root>

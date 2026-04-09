@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+  <data name="Status_Open" xml:space="preserve">
+    <value>オープン</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>対応中</value>
+  </data>
+  <data name="Status_WaitingOnCustomer" xml:space="preserve">
+    <value>顧客待ち</value>
+  </data>
+  <data name="Status_WaitingOnAgent" xml:space="preserve">
+    <value>エージェント待ち</value>
+  </data>
+  <data name="Status_Escalated" xml:space="preserve">
+    <value>エスカレーション済み</value>
+  </data>
+  <data name="Status_Resolved" xml:space="preserve">
+    <value>解決済み</value>
+  </data>
+  <data name="Status_Closed" xml:space="preserve">
+    <value>クローズ</value>
+  </data>
+  <data name="Status_Reopened" xml:space="preserve">
+    <value>再開</value>
+  </data>
+  <data name="Status_Snoozed" xml:space="preserve">
+    <value>スヌーズ</value>
+  </data>
+  <data name="Status_Unsnoozed" xml:space="preserve">
+    <value>スヌーズ解除</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>低</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>中</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>高</value>
+  </data>
+  <data name="Priority_Urgent" xml:space="preserve">
+    <value>緊急</value>
+  </data>
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>重大</value>
+  </data>
+  <data name="Activity_StatusChanged" xml:space="preserve">
+    <value>ステータス変更</value>
+  </data>
+  <data name="Activity_Assigned" xml:space="preserve">
+    <value>割り当て済み</value>
+  </data>
+  <data name="Activity_Unassigned" xml:space="preserve">
+    <value>未割り当て</value>
+  </data>
+  <data name="Activity_PriorityChanged" xml:space="preserve">
+    <value>優先度変更</value>
+  </data>
+  <data name="Activity_TagAdded" xml:space="preserve">
+    <value>タグ追加</value>
+  </data>
+  <data name="Activity_TagRemoved" xml:space="preserve">
+    <value>タグ削除</value>
+  </data>
+  <data name="Activity_SlaBreached" xml:space="preserve">
+    <value>SLA違反</value>
+  </data>
+  <data name="Activity_Replied" xml:space="preserve">
+    <value>返信済み</value>
+  </data>
+  <data name="Activity_NoteAdded" xml:space="preserve">
+    <value>メモ追加</value>
+  </data>
+  <data name="Activity_DepartmentChanged" xml:space="preserve">
+    <value>部門変更</value>
+  </data>
+  <data name="Activity_TicketSplit" xml:space="preserve">
+    <value>チケット分割</value>
+  </data>
+  <data name="Message_ReplySent" xml:space="preserve">
+    <value>返信を送信しました。</value>
+  </data>
+  <data name="Message_TicketAssigned" xml:space="preserve">
+    <value>チケットを割り当てました。</value>
+  </data>
+  <data name="Message_StatusUpdated" xml:space="preserve">
+    <value>ステータスを更新しました。</value>
+  </data>
+  <data name="Message_PriorityUpdated" xml:space="preserve">
+    <value>優先度を更新しました。</value>
+  </data>
+  <data name="Message_TagsUpdated" xml:space="preserve">
+    <value>タグを更新しました。</value>
+  </data>
+  <data name="Message_DepartmentUpdated" xml:space="preserve">
+    <value>部門を更新しました。</value>
+  </data>
+  <data name="Message_TicketCreated" xml:space="preserve">
+    <value>チケットを正常に作成しました。</value>
+  </data>
+  <data name="Message_TicketClosed" xml:space="preserve">
+    <value>チケットをクローズしました。</value>
+  </data>
+  <data name="Message_TicketReopened" xml:space="preserve">
+    <value>チケットを再開しました。</value>
+  </data>
+  <data name="Message_SettingsUpdated" xml:space="preserve">
+    <value>設定を更新しました。</value>
+  </data>
+  <data name="Message_AccessDenied" xml:space="preserve">
+    <value>アクセスが拒否されました。</value>
+  </data>
+  <data name="Message_NotFound" xml:space="preserve">
+    <value>リクエストされたリソースが見つかりません。</value>
+  </data>
+</root>

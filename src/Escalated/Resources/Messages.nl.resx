@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+  <data name="Status_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>In behandeling</value>
+  </data>
+  <data name="Status_WaitingOnCustomer" xml:space="preserve">
+    <value>Wachten op klant</value>
+  </data>
+  <data name="Status_WaitingOnAgent" xml:space="preserve">
+    <value>Wachten op medewerker</value>
+  </data>
+  <data name="Status_Escalated" xml:space="preserve">
+    <value>Geescaleerd</value>
+  </data>
+  <data name="Status_Resolved" xml:space="preserve">
+    <value>Opgelost</value>
+  </data>
+  <data name="Status_Closed" xml:space="preserve">
+    <value>Gesloten</value>
+  </data>
+  <data name="Status_Reopened" xml:space="preserve">
+    <value>Heropend</value>
+  </data>
+  <data name="Status_Snoozed" xml:space="preserve">
+    <value>Uitgesteld</value>
+  </data>
+  <data name="Status_Unsnoozed" xml:space="preserve">
+    <value>Heractiveerd</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>Laag</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>Gemiddeld</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>Hoog</value>
+  </data>
+  <data name="Priority_Urgent" xml:space="preserve">
+    <value>Urgent</value>
+  </data>
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>Kritiek</value>
+  </data>
+  <data name="Activity_StatusChanged" xml:space="preserve">
+    <value>Status gewijzigd</value>
+  </data>
+  <data name="Activity_Assigned" xml:space="preserve">
+    <value>Toegewezen</value>
+  </data>
+  <data name="Activity_Unassigned" xml:space="preserve">
+    <value>Niet toegewezen</value>
+  </data>
+  <data name="Activity_PriorityChanged" xml:space="preserve">
+    <value>Prioriteit gewijzigd</value>
+  </data>
+  <data name="Activity_TagAdded" xml:space="preserve">
+    <value>Tag toegevoegd</value>
+  </data>
+  <data name="Activity_TagRemoved" xml:space="preserve">
+    <value>Tag verwijderd</value>
+  </data>
+  <data name="Activity_SlaBreached" xml:space="preserve">
+    <value>SLA geschonden</value>
+  </data>
+  <data name="Activity_Replied" xml:space="preserve">
+    <value>Beantwoord</value>
+  </data>
+  <data name="Activity_NoteAdded" xml:space="preserve">
+    <value>Notitie toegevoegd</value>
+  </data>
+  <data name="Activity_DepartmentChanged" xml:space="preserve">
+    <value>Afdeling gewijzigd</value>
+  </data>
+  <data name="Activity_TicketSplit" xml:space="preserve">
+    <value>Ticket gesplitst</value>
+  </data>
+  <data name="Message_ReplySent" xml:space="preserve">
+    <value>Antwoord verzonden.</value>
+  </data>
+  <data name="Message_TicketAssigned" xml:space="preserve">
+    <value>Ticket toegewezen.</value>
+  </data>
+  <data name="Message_StatusUpdated" xml:space="preserve">
+    <value>Status bijgewerkt.</value>
+  </data>
+  <data name="Message_PriorityUpdated" xml:space="preserve">
+    <value>Prioriteit bijgewerkt.</value>
+  </data>
+  <data name="Message_TagsUpdated" xml:space="preserve">
+    <value>Tags bijgewerkt.</value>
+  </data>
+  <data name="Message_DepartmentUpdated" xml:space="preserve">
+    <value>Afdeling bijgewerkt.</value>
+  </data>
+  <data name="Message_TicketCreated" xml:space="preserve">
+    <value>Ticket succesvol aangemaakt.</value>
+  </data>
+  <data name="Message_TicketClosed" xml:space="preserve">
+    <value>Ticket gesloten.</value>
+  </data>
+  <data name="Message_TicketReopened" xml:space="preserve">
+    <value>Ticket heropend.</value>
+  </data>
+  <data name="Message_SettingsUpdated" xml:space="preserve">
+    <value>Instellingen bijgewerkt.</value>
+  </data>
+  <data name="Message_AccessDenied" xml:space="preserve">
+    <value>Toegang geweigerd.</value>
+  </data>
+  <data name="Message_NotFound" xml:space="preserve">
+    <value>Gevraagde bron niet gevonden.</value>
+  </data>
+</root>
