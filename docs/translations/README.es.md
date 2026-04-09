@@ -15,66 +15,66 @@
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-# Escalated for ASP.NET Core
+# Escalated para ASP.NET Core
 
 [![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
 [![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app -- get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+Un sistema completo de tickets de soporte integrable para ASP.NET Core. Agrégalo a cualquier aplicación y obtén un helpdesk completo con seguimiento de SLA, reglas de escalamiento, flujos de trabajo para agentes y un portal de clientes. No se requieren servicios externos.
 
-> **[escalated.dev](https://escalated.dev)** -- Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** -- Más información, demos y comparación entre opciones Cloud y Self-Hosted.
 
 ## Características
 
-- **Ticket lifecycle** -- Create, assign, reply, resolve, close, reopen with configurable status transitions
-- **SLA engine** -- Per-priority response and resolution targets, business hours calculation, automatic breach detection
-- **Escalation rules** -- Condition-based rules that auto-escalate, reprioritize, reassign, or notify
-- **Automations** -- Time-based rules with conditions and actions
-- **Agent dashboard** -- Ticket queue with filters, bulk actions, internal notes, canned responses
-- **Customer portal** -- Self-service ticket creation, replies, and status tracking
-- **Admin panel** -- Manage departments, SLA policies, escalation rules, tags, and more
-- **Macros and canned responses** -- Batch actions and reusable reply templates
-- **Custom fields** -- Dynamic metadata with conditional display logic
-- **Knowledge base** -- Articles, categories, search, and feedback
-- **File attachments** -- Upload support with configurable storage and size limits
-- **Activity timeline** -- Full audit log of every action on every ticket
-- **Webhooks** -- HMAC-SHA256 signed with retry logic
-- **API tokens** -- Bearer auth with ability-based scoping
-- **Roles and permissions** -- Fine-grained access control
-- **Audit logging** -- All mutations tracked with old/new values
-- **Import system** -- Multi-step wizard with pluggable adapters
-- **Side conversations** -- Internal team threads on tickets
-- **Ticket merging and linking** -- Merge duplicate tickets and relate issues
-- **Ticket splitting** -- Split a reply into a new ticket
-- **Ticket snooze** -- Snooze until a future date with auto-wake background service
-- **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Saved views** -- Personal and shared filter presets
-- **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
-- **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
-- **Capacity management** -- Per-agent workload limits by channel
-- **Skill-based routing** -- Match agents to tickets by skill tags
-- **CSAT ratings** -- Satisfaction surveys on resolved tickets
-- **2FA** -- TOTP setup and verification with recovery codes
-- **Guest access** -- Anonymous ticket creation with magic token lookup
-- **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+- **Ciclo de vida del ticket** -- Crear, asignar, responder, resolver, cerrar, reabrir con transiciones de estado configurables
+- **Motor de SLA** -- Objetivos de respuesta y resolución por prioridad, cálculo de horas laborales, detección automática de incumplimientos
+- **Reglas de escalamiento** -- Reglas basadas en condiciones que escalan, repriorizan, reasignan o notifican automáticamente
+- **Automatizaciones** -- Reglas basadas en tiempo con condiciones y acciones
+- **Panel del agente** -- Cola de tickets con filtros, acciones masivas, notas internas, respuestas predefinidas
+- **Portal del cliente** -- Creación de tickets en autoservicio, respuestas y seguimiento de estado
+- **Panel de administración** -- Gestionar departamentos, políticas de SLA, reglas de escalamiento, etiquetas y más
+- **Macros y respuestas predefinidas** -- Acciones en lote y plantillas de respuesta reutilizables
+- **Campos personalizados** -- Metadatos dinámicos con lógica de visualización condicional
+- **Base de conocimientos** -- Artículos, categorías, búsqueda y retroalimentación
+- **Archivos adjuntos** -- Soporte de carga con almacenamiento y límites de tamaño configurables
+- **Línea de actividad** -- Registro completo de auditoría de cada acción en cada ticket
+- **Webhooks** -- Firmados con HMAC-SHA256 con lógica de reintentos
+- **Tokens de API** -- Autenticación Bearer con alcance basado en capacidades
+- **Roles y permisos** -- Control de acceso detallado
+- **Registro de auditoría** -- Todas las mutaciones registradas con valores anteriores/nuevos
+- **Sistema de importación** -- Asistente de múltiples pasos con adaptadores conectables
+- **Conversaciones laterales** -- Hilos internos del equipo en tickets
+- **Fusión y vinculación de tickets** -- Fusionar tickets duplicados y relacionar incidencias
+- **División de tickets** -- Dividir una respuesta en un nuevo ticket
+- **Posponer tickets** -- Posponer hasta una fecha futura con servicio de activación en segundo plano
+- **Hilos de correo electrónico** -- Encabezados In-Reply-To/References/Message-ID para hilos correctos
+- **Vistas guardadas** -- Filtros preestablecidos personales y compartidos
+- **API de widget integrable** -- Endpoints públicos para búsqueda en KB, tickets de invitados, consulta de estado
+- **Actualizaciones en tiempo real** -- Hubs SignalR para actualizaciones de tickets en vivo (opcional)
+- **Gestión de capacidad** -- Límites de carga de trabajo por agente y por canal
+- **Enrutamiento basado en habilidades** -- Asignar agentes a tickets por etiquetas de habilidades
+- **Calificaciones CSAT** -- Encuestas de satisfacción en tickets resueltos
+- **2FA** -- Configuración y verificación TOTP con códigos de recuperación
+- **Acceso de invitados** -- Creación anónima de tickets con búsqueda por token mágico
+- **Inertia.js + Vue 3 UI** -- Frontend compartido vía [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 
 ## Requisitos
 
 - .NET 8.0+
 - Entity Framework Core 8.0+
-- SQL Server, SQLite, or PostgreSQL
-- Node.js 18+ (for frontend assets)
+- SQL Server, SQLite o PostgreSQL
+- Node.js 18+ (para recursos del frontend)
 
 ## Inicio Rápido
 
-### 1. Install the Package
+### 1. Instalar el Paquete
 
 ```bash
 dotnet add package Escalated
 ```
 
-### 2. Register Services
+### 2. Registrar Servicios
 
 ```csharp
 // Program.cs
@@ -95,7 +95,7 @@ app.MapEscalated();
 app.Run();
 ```
 
-### 3. Configure
+### 3. Configurar
 
 ```json
 // appsettings.json
@@ -124,110 +124,110 @@ app.Run();
 }
 ```
 
-### 4. Run Migrations
+### 4. Ejecutar Migraciones
 
 ```bash
 dotnet ef migrations add InitialEscalated --context EscalatedDbContext
 dotnet ef database update --context EscalatedDbContext
 ```
 
-Visit `/support` -- you're live.
+Visita `/support` -- ya está en funcionamiento.
 
 ## Integración Frontend
 
-Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package. Integrate with Inertia.js for seamless SPA rendering inside your existing layout.
+Escalated proporciona una biblioteca de componentes Vue y páginas predeterminadas a través del paquete npm [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated). Integra con Inertia.js para renderizado SPA sin interrupciones dentro de tu diseño existente.
 
 ```bash
 npm install @escalated-dev/escalated
 ```
 
-## Architecture
+## Arquitectura
 
 ```
 src/Escalated/
-  Models/           # 40+ EF Core entity models
-  Data/             # EscalatedDbContext with full relationship mapping
-  Services/         # Business logic (ticket, SLA, merge, split, snooze, etc.)
+  Models/           # Más de 40 modelos de entidades EF Core
+  Data/             # EscalatedDbContext con mapeo completo de relaciones
+  Services/         # Lógica de negocio (ticket, SLA, fusión, división, posponer, etc.)
   Controllers/
-    Admin/          # Admin panel API (CRUD for all settings)
-    Agent/          # Agent ticket queue and actions
-    Customer/       # Customer self-service portal
-    Widget/         # Public widget API (KB search, guest tickets)
-  Middleware/       # API token auth, permissions, rate limiting
-  Events/           # Domain events (TicketCreated, SlaBreached, etc.)
-  Notifications/    # Email notification interfaces and templates
-  Configuration/    # DI registration, options, endpoint mapping
-  Hubs/             # SignalR hub for real-time updates
+    Admin/          # API del panel de administración (CRUD para toda la configuración)
+    Agent/          # Cola de tickets y acciones del agente
+    Customer/       # Portal de autoservicio del cliente
+    Widget/         # API pública del widget (búsqueda KB, tickets de invitados)
+  Middleware/       # Autenticación por token API, permisos, limitación de tasa
+  Events/           # Eventos de dominio (TicketCreated, SlaBreached, etc.)
+  Notifications/    # Interfaces y plantillas de notificaciones por correo
+  Configuration/    # Registro DI, opciones, mapeo de endpoints
+  Hubs/             # Hub SignalR para actualizaciones en tiempo real
   Enums/            # TicketStatus, TicketPriority, ActivityType
 ```
 
-## Models
+## Modelos
 
-Escalated includes 40+ EF Core entities covering the full helpdesk domain:
+Escalated incluye más de 40 entidades EF Core que cubren todo el dominio de helpdesk:
 
-| Category | Models |
+| Categoría | Modelos |
 |----------|--------|
-| Core | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
+| Principal | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
 | SLA | SlaPolicy, EscalationRule, BusinessSchedule, Holiday, Automation |
-| Agents | AgentProfile, AgentCapacity, Skill, AgentSkill |
-| Messaging | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
-| Admin | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
-| Custom | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
-| Import | ImportJob, ImportSourceMap |
-| Config | EscalatedSettings, SavedView |
-| Knowledge Base | Article, ArticleCategory |
+| Agentes | AgentProfile, AgentCapacity, Skill, AgentSkill |
+| Mensajería | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
+| Administración | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
+| Personalizado | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
+| Importación | ImportJob, ImportSourceMap |
+| Configuración | EscalatedSettings, SavedView |
+| Base de Conocimientos | Article, ArticleCategory |
 
-All models have proper relationships, indexes, and query filters configured in `EscalatedDbContext`.
+Todos los modelos tienen relaciones, índices y filtros de consulta configurados correctamente en `EscalatedDbContext`.
 
-## Services
+## Servicios
 
-| Service | Responsibility |
+| Servicio | Responsabilidad |
 |---------|---------------|
-| `TicketService` | Full ticket CRUD, status transitions, replies, tags, departments |
-| `SlaService` | Policy attachment, breach detection, warning checks, first response recording |
-| `AssignmentService` | Agent assignment, unassignment, auto-assign by workload |
-| `EscalationService` | Evaluate condition-based rules, execute escalation actions |
-| `AutomationRunner` | Time-based automation evaluation and action execution |
-| `MacroService` | Apply macro action sequences to tickets |
-| `TicketMergeService` | Merge source into target with reply transfer |
-| `TicketSplitService` | Split a reply into a new linked ticket |
-| `TicketSnoozeService` | Snooze/unsnooze with background wake service |
-| `WebhookDispatcher` | HMAC-signed webhook delivery with retry logic |
-| `CapacityService` | Per-agent concurrent ticket limits |
-| `SkillRoutingService` | Match agents by skills to ticket tags |
-| `BusinessHoursCalculator` | Business hours date math with holiday support |
-| `TwoFactorService` | TOTP secret generation, verification, recovery codes |
-| `AuditLogService` | Log and query entity mutations |
-| `KnowledgeBaseService` | Article/category CRUD, search, feedback |
-| `SavedViewService` | Personal and shared filter presets |
-| `SideConversationService` | Internal threaded conversations on tickets |
-| `ImportService` | Multi-step import with pluggable adapters |
-| `SettingsService` | Key-value settings store |
+| `TicketService` | CRUD completo de tickets, transiciones de estado, respuestas, etiquetas, departamentos |
+| `SlaService` | Asignación de políticas, detección de incumplimientos, verificación de advertencias, registro de primera respuesta |
+| `AssignmentService` | Asignación de agentes, desasignación, auto-asignación por carga de trabajo |
+| `EscalationService` | Evaluación de reglas basadas en condiciones, ejecución de acciones de escalamiento |
+| `AutomationRunner` | Evaluación de automatizaciones basadas en tiempo y ejecución de acciones |
+| `MacroService` | Aplicar secuencias de acciones de macro a tickets |
+| `TicketMergeService` | Fusionar origen en destino con transferencia de respuestas |
+| `TicketSplitService` | Dividir una respuesta en un nuevo ticket vinculado |
+| `TicketSnoozeService` | Posponer/activar con servicio de activación en segundo plano |
+| `WebhookDispatcher` | Entrega de webhooks firmados con HMAC con lógica de reintentos |
+| `CapacityService` | Límites de tickets concurrentes por agente |
+| `SkillRoutingService` | Asignar agentes por habilidades a etiquetas de tickets |
+| `BusinessHoursCalculator` | Cálculos de fechas en horas laborales con soporte de feriados |
+| `TwoFactorService` | Generación de secretos TOTP, verificación, códigos de recuperación |
+| `AuditLogService` | Registrar y consultar mutaciones de entidades |
+| `KnowledgeBaseService` | CRUD de artículos/categorías, búsqueda, retroalimentación |
+| `SavedViewService` | Filtros preestablecidos personales y compartidos |
+| `SideConversationService` | Conversaciones internas con hilos en tickets |
+| `ImportService` | Importación de múltiples pasos con adaptadores conectables |
+| `SettingsService` | Almacén de configuración clave-valor |
 
 ## Eventos
 
-Every ticket action dispatches a domain event:
+Cada acción de ticket emite un evento de dominio:
 
-| Event | When |
+| Evento | Cuándo |
 |-------|------|
-| `TicketCreatedEvent` | New ticket created |
-| `TicketStatusChangedEvent` | Status transition |
-| `TicketAssignedEvent` | Agent assigned |
-| `TicketUnassignedEvent` | Agent removed |
-| `ReplyCreatedEvent` | Public reply added |
-| `InternalNoteAddedEvent` | Agent note added |
-| `SlaBreachedEvent` | SLA deadline missed |
-| `SlaWarningEvent` | SLA deadline approaching |
-| `TicketEscalatedEvent` | Ticket escalated |
-| `TicketResolvedEvent` | Ticket resolved |
-| `TicketClosedEvent` | Ticket closed |
-| `TicketReopenedEvent` | Ticket reopened |
-| `TicketPriorityChangedEvent` | Priority changed |
-| `DepartmentChangedEvent` | Department changed |
-| `TagAddedEvent` | Tag added |
-| `TagRemovedEvent` | Tag removed |
+| `TicketCreatedEvent` | Nuevo ticket creado |
+| `TicketStatusChangedEvent` | Transición de estado |
+| `TicketAssignedEvent` | Agente asignado |
+| `TicketUnassignedEvent` | Agente eliminado |
+| `ReplyCreatedEvent` | Respuesta pública agregada |
+| `InternalNoteAddedEvent` | Nota del agente agregada |
+| `SlaBreachedEvent` | Plazo de SLA incumplido |
+| `SlaWarningEvent` | Plazo de SLA próximo a vencer |
+| `TicketEscalatedEvent` | Ticket escalado |
+| `TicketResolvedEvent` | Ticket resuelto |
+| `TicketClosedEvent` | Ticket cerrado |
+| `TicketReopenedEvent` | Ticket reabierto |
+| `TicketPriorityChangedEvent` | Prioridad cambiada |
+| `DepartmentChangedEvent` | Departamento cambiado |
+| `TagAddedEvent` | Etiqueta agregada |
+| `TagRemovedEvent` | Etiqueta eliminada |
 
-Implement `IEscalatedEventDispatcher` to receive these events in your host application:
+Implementa `IEscalatedEventDispatcher` para recibir estos eventos en tu aplicación anfitriona:
 
 ```csharp
 public class MyEventHandler : IEscalatedEventDispatcher
@@ -245,71 +245,71 @@ public class MyEventHandler : IEscalatedEventDispatcher
 services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 ```
 
-## API Endpoints
+## Endpoints de API
 
-### Customer
+### Cliente
 
-| Method | Route | Description |
+| Método | Ruta | Descripción |
 |--------|-------|-------------|
-| GET | `/support/tickets` | List customer tickets |
-| POST | `/support/tickets` | Create ticket |
-| GET | `/support/tickets/{id}` | View ticket |
-| POST | `/support/tickets/{id}/reply` | Reply to ticket |
-| POST | `/support/tickets/{id}/close` | Close ticket |
-| POST | `/support/tickets/{id}/reopen` | Reopen ticket |
+| GET | `/support/tickets` | Listar tickets del cliente |
+| POST | `/support/tickets` | Crear ticket |
+| GET | `/support/tickets/{id}` | Ver ticket |
+| POST | `/support/tickets/{id}/reply` | Responder al ticket |
+| POST | `/support/tickets/{id}/close` | Cerrar ticket |
+| POST | `/support/tickets/{id}/reopen` | Reabrir ticket |
 
-### Agent
+### Agente
 
-| Method | Route | Description |
+| Método | Ruta | Descripción |
 |--------|-------|-------------|
-| GET | `/support/agent/tickets` | Ticket queue with filters |
-| GET | `/support/agent/tickets/{id}` | Ticket detail |
-| POST | `/support/agent/tickets/{id}/reply` | Reply |
-| POST | `/support/agent/tickets/{id}/note` | Internal note |
-| POST | `/support/agent/tickets/{id}/assign` | Assign agent |
-| POST | `/support/agent/tickets/{id}/status` | Change status |
-| POST | `/support/agent/tickets/{id}/priority` | Change priority |
-| POST | `/support/agent/tickets/{id}/macro` | Apply macro |
-| POST | `/support/agent/tickets/bulk` | Bulk actions |
-| GET | `/support/agent/tickets/dashboard` | Agent workload |
+| GET | `/support/agent/tickets` | Cola de tickets con filtros |
+| GET | `/support/agent/tickets/{id}` | Detalle del ticket |
+| POST | `/support/agent/tickets/{id}/reply` | Responder |
+| POST | `/support/agent/tickets/{id}/note` | Nota interna |
+| POST | `/support/agent/tickets/{id}/assign` | Asignar agente |
+| POST | `/support/agent/tickets/{id}/status` | Cambiar estado |
+| POST | `/support/agent/tickets/{id}/priority` | Cambiar prioridad |
+| POST | `/support/agent/tickets/{id}/macro` | Aplicar macro |
+| POST | `/support/agent/tickets/bulk` | Acciones masivas |
+| GET | `/support/agent/tickets/dashboard` | Carga de trabajo del agente |
 
-### Admin
+### Administración
 
-| Method | Route | Description |
+| Método | Ruta | Descripción |
 |--------|-------|-------------|
-| GET/POST | `/support/admin/departments` | Manage departments |
-| GET/POST | `/support/admin/tags` | Manage tags |
-| GET/POST | `/support/admin/sla-policies` | Manage SLA policies |
-| GET/POST | `/support/admin/escalation-rules` | Manage escalation rules |
-| GET/POST | `/support/admin/webhooks` | Manage webhooks |
-| GET/POST | `/support/admin/api-tokens` | Manage API tokens |
-| GET/POST | `/support/admin/macros` | Manage macros |
-| GET/POST | `/support/admin/automations` | Manage automations |
-| GET/POST | `/support/admin/custom-fields` | Manage custom fields |
-| GET/POST | `/support/admin/business-hours` | Business schedules |
-| GET/POST | `/support/admin/skills` | Manage skills |
-| GET/POST | `/support/admin/roles` | Manage roles |
-| GET | `/support/admin/audit-logs` | Query audit logs |
-| GET/POST | `/support/admin/settings` | App settings |
-| POST | `/support/admin/tickets/{id}/merge` | Merge tickets |
-| POST | `/support/admin/tickets/{id}/split` | Split ticket |
-| POST | `/support/admin/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/support/admin/tickets/{id}/link` | Link tickets |
+| GET/POST | `/support/admin/departments` | Gestionar departamentos |
+| GET/POST | `/support/admin/tags` | Gestionar etiquetas |
+| GET/POST | `/support/admin/sla-policies` | Gestionar políticas de SLA |
+| GET/POST | `/support/admin/escalation-rules` | Gestionar reglas de escalamiento |
+| GET/POST | `/support/admin/webhooks` | Gestionar webhooks |
+| GET/POST | `/support/admin/api-tokens` | Gestionar tokens de API |
+| GET/POST | `/support/admin/macros` | Gestionar macros |
+| GET/POST | `/support/admin/automations` | Gestionar automatizaciones |
+| GET/POST | `/support/admin/custom-fields` | Gestionar campos personalizados |
+| GET/POST | `/support/admin/business-hours` | Horarios laborales |
+| GET/POST | `/support/admin/skills` | Gestionar habilidades |
+| GET/POST | `/support/admin/roles` | Gestionar roles |
+| GET | `/support/admin/audit-logs` | Consultar registros de auditoría |
+| GET/POST | `/support/admin/settings` | Configuración de la aplicación |
+| POST | `/support/admin/tickets/{id}/merge` | Fusionar tickets |
+| POST | `/support/admin/tickets/{id}/split` | Dividir ticket |
+| POST | `/support/admin/tickets/{id}/snooze` | Posponer ticket |
+| POST | `/support/admin/tickets/{id}/link` | Vincular tickets |
 
-### Widget (Public)
+### Widget (Público)
 
-| Method | Route | Description |
+| Método | Ruta | Descripción |
 |--------|-------|-------------|
-| GET | `/support/widget/kb/search` | Search knowledge base |
-| POST | `/support/widget/tickets` | Create guest ticket |
-| GET | `/support/widget/tickets/{token}` | Lookup by guest token |
-| POST | `/support/widget/tickets/{token}/reply` | Guest reply |
-| POST | `/support/widget/tickets/{token}/rate` | Submit CSAT rating |
-| POST | `/support/widget/kb/articles/{id}/feedback` | Article feedback |
+| GET | `/support/widget/kb/search` | Buscar en la base de conocimientos |
+| POST | `/support/widget/tickets` | Crear ticket de invitado |
+| GET | `/support/widget/tickets/{token}` | Buscar por token de invitado |
+| POST | `/support/widget/tickets/{token}/reply` | Respuesta de invitado |
+| POST | `/support/widget/tickets/{token}/rate` | Enviar calificación CSAT |
+| POST | `/support/widget/kb/articles/{id}/feedback` | Retroalimentación de artículo |
 
-## Real-time Updates
+## Actualizaciones en Tiempo Real
 
-Enable SignalR for live ticket updates:
+Habilita SignalR para actualizaciones de tickets en vivo:
 
 ```json
 {
@@ -324,7 +324,7 @@ Enable SignalR for live ticket updates:
 app.MapHub<EscalatedHub>("/support/hub");
 ```
 
-Clients join ticket-specific groups to receive updates:
+Los clientes se unen a grupos específicos de tickets para recibir actualizaciones:
 
 ```javascript
 connection.invoke("JoinTicket", ticketId);
@@ -333,17 +333,17 @@ connection.on("TicketUpdated", (data) => { /* handle */ });
 
 ## Middleware
 
-### API Token Authentication
+### Autenticación por Token de API
 
-Protect API endpoints with bearer token authentication:
+Protege los endpoints de API con autenticación de token Bearer:
 
 ```csharp
 app.UseMiddleware<ApiTokenAuthMiddleware>();
 ```
 
-Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
+Los tokens se almacenan como hashes SHA-256. Crea tokens a través del endpoint de administración de API.
 
-### Rate Limiting
+### Limitación de Tasa
 
 ```csharp
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
@@ -355,26 +355,26 @@ app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 s
 dotnet test
 ```
 
-Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
-- Ticket CRUD and status transitions
-- SLA breach detection and warnings
-- Ticket split, merge, and snooze
-- Assignment and workload calculation
-- Webhook subscription matching
-- 2FA secret generation and verification
-- Capacity management
-- Model validation and enum behavior
+Las pruebas usan xUnit con Moq y el proveedor InMemory de EF Core. La cobertura incluye:
+- CRUD de tickets y transiciones de estado
+- Detección de incumplimientos y advertencias de SLA
+- División, fusión y posposición de tickets
+- Asignación y cálculo de carga de trabajo
+- Coincidencia de suscripciones de webhooks
+- Generación y verificación de secretos 2FA
+- Gestión de capacidad
+- Validación de modelos y comportamiento de enums
 
 ## También Disponible Para
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 package
-- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core package (you are here)
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Paquete Composer para Laravel
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Motor de Ruby on Rails
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Aplicación reutilizable de Django
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Paquete AdonisJS v6
+- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- Paquete ASP.NET Core (estás aquí)
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Componentes UI Vue 3 + Inertia.js
 
-Same architecture, same Vue UI -- for every major backend framework.
+La misma arquitectura, la misma UI Vue -- para todos los principales frameworks backend.
 
 ## Licencia
 
