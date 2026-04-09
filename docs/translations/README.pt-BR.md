@@ -1,18 +1,18 @@
 <p align="center">
-  <a href="docs/translations/README.ar.md">العربية</a> •
-  <a href="docs/translations/README.de.md">Deutsch</a> •
-  <b>English</b> •
-  <a href="docs/translations/README.es.md">Español</a> •
-  <a href="docs/translations/README.fr.md">Français</a> •
-  <a href="docs/translations/README.it.md">Italiano</a> •
-  <a href="docs/translations/README.ja.md">日本語</a> •
-  <a href="docs/translations/README.ko.md">한국어</a> •
-  <a href="docs/translations/README.nl.md">Nederlands</a> •
-  <a href="docs/translations/README.pl.md">Polski</a> •
-  <a href="docs/translations/README.pt-BR.md">Português (BR)</a> •
-  <a href="docs/translations/README.ru.md">Русский</a> •
-  <a href="docs/translations/README.tr.md">Türkçe</a> •
-  <a href="docs/translations/README.zh-CN.md">简体中文</a>
+  <a href="README.ar.md">العربية</a> •
+  <a href="README.de.md">Deutsch</a> •
+  <a href="../../README.md">English</a> •
+  <a href="README.es.md">Español</a> •
+  <a href="README.fr.md">Français</a> •
+  <a href="README.it.md">Italiano</a> •
+  <a href="README.ja.md">日本語</a> •
+  <a href="README.ko.md">한국어</a> •
+  <a href="README.nl.md">Nederlands</a> •
+  <a href="README.pl.md">Polski</a> •
+  <b>Português (BR)</b> •
+  <a href="README.ru.md">Русский</a> •
+  <a href="README.tr.md">Türkçe</a> •
+  <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 # Escalated for ASP.NET Core
@@ -25,7 +25,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 
 > **[escalated.dev](https://escalated.dev)** -- Learn more, view demos, and compare Cloud vs Self-Hosted options.
 
-## Features
+## Recursos
 
 - **Ticket lifecycle** -- Create, assign, reply, resolve, close, reopen with configurable status transitions
 - **SLA engine** -- Per-priority response and resolution targets, business hours calculation, automatic breach detection
@@ -59,14 +59,14 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Guest access** -- Anonymous ticket creation with magic token lookup
 - **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 
-## Requirements
+## Requisitos
 
 - .NET 8.0+
 - Entity Framework Core 8.0+
 - SQL Server, SQLite, or PostgreSQL
 - Node.js 18+ (for frontend assets)
 
-## Quick Start
+## Início Rápido
 
 ### 1. Install the Package
 
@@ -133,7 +133,7 @@ dotnet ef database update --context EscalatedDbContext
 
 Visit `/support` -- you're live.
 
-## Frontend Integration
+## Integração Frontend
 
 Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package. Integrate with Inertia.js for seamless SPA rendering inside your existing layout.
 
@@ -204,7 +204,7 @@ All models have proper relationships, indexes, and query filters configured in `
 | `ImportService` | Multi-step import with pluggable adapters |
 | `SettingsService` | Key-value settings store |
 
-## Events
+## Eventos
 
 Every ticket action dispatches a domain event:
 
@@ -349,7 +349,7 @@ Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
 ```
 
-## Testing
+## Testes
 
 ```bash
 dotnet test
@@ -365,7 +365,7 @@ Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
 - Capacity management
 - Model validation and enum behavior
 
-## Also Available For
+## Também Disponível Para
 
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
@@ -376,6 +376,6 @@ Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
 
 Same architecture, same Vue UI -- for every major backend framework.
 
-## License
+## Licença
 
 MIT
