@@ -122,6 +122,42 @@ public class Ticket
     [JsonPropertyName("is_snoozed")]
     public bool IsSnoozed => SnoozedUntil.HasValue && SnoozedUntil.Value > DateTime.UtcNow;
 
+    // ── Chat context fields ──────────────────────────────────────────
+
+    /// <summary>ID of the most recent (or active) chat session.</summary>
+    [NotMapped]
+    [JsonPropertyName("chat_session_id")]
+    public int? ChatSessionId { get; set; }
+
+    /// <summary>When the chat session started.</summary>
+    [NotMapped]
+    [JsonPropertyName("chat_started_at")]
+    public DateTime? ChatStartedAt { get; set; }
+
+    /// <summary>Chat messages (replies belonging to the chat session).</summary>
+    [NotMapped]
+    [JsonPropertyName("chat_messages")]
+    public IEnumerable<object>? ChatMessages { get; set; }
+
+    /// <summary>Metadata from the chat session (browser info, page URL, etc.).</summary>
+    [NotMapped]
+    [JsonPropertyName("chat_metadata")]
+    public string? ChatMetadata { get; set; }
+
+    // ── Requester context fields ─────────────────────────────────────
+
+    /// <summary>Total number of tickets opened by this requester.</summary>
+    [NotMapped]
+    [JsonPropertyName("requester_ticket_count")]
+    public int? RequesterTicketCount { get; set; }
+
+    // ── Related tickets ──────────────────────────────────────────────
+
+    /// <summary>Linked tickets with reference, subject, and status.</summary>
+    [NotMapped]
+    [JsonPropertyName("related_tickets")]
+    public IEnumerable<object>? RelatedTickets { get; set; }
+
     public bool IsOpen() => Status.IsOpen();
 
     public string GenerateReference(string prefix = "ESC")
@@ -148,6 +184,41 @@ public class Ticket
                 // AuthorType may indicate the source; fall back to a generic label.
                 LastReplyAuthor = latest.AuthorType ?? "Agent";
             }
+        }
+
+        // Chat context: pick the most recent (or active) chat session.
+        if (ChatSessions?.Count > 0)
+        {
+            var session = ChatSessions
+                .OrderByDescending(cs => cs.Status == "active" ? 1 : 0)
+                .ThenByDescending(cs => cs.CreatedAt)
+                .First();
+
+            ChatSessionId = session.Id;
+            ChatStartedAt = session.CreatedAt;
+            ChatMetadata = session.Metadata;
+        }
+
+        // Related tickets from loaded links.
+        var allLinks = (LinksAsParent?.Count > 0 || LinksAsChild?.Count > 0)
+            ? (LinksAsParent ?? Enumerable.Empty<TicketLink>())
+              .Concat(LinksAsChild ?? Enumerable.Empty<TicketLink>())
+            : null;
+
+        if (allLinks != null)
+        {
+            RelatedTickets = allLinks.Select(link =>
+            {
+                var other = link.ParentTicketId == Id ? link.ChildTicket : link.ParentTicket;
+                return new
+                {
+                    id = other?.Id,
+                    reference = other?.Reference,
+                    subject = other?.Subject,
+                    status = other?.Status.ToString().ToLowerInvariant(),
+                    link_type = link.LinkType
+                };
+            }).Where(rt => rt.id != null).ToList();
         }
     }
 }

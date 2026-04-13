@@ -50,6 +50,11 @@ public class ChatSession
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Arbitrary JSON metadata from the chat widget (e.g. page URL, browser info).
+    /// </summary>
+    public string? Metadata { get; set; }
+
     // Navigation
     [ForeignKey(nameof(TicketId))]
     public Ticket? Ticket { get; set; }
