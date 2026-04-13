@@ -1,7 +1,10 @@
 using Escalated.Configuration;
+using Escalated.Data;
 using Escalated.Enums;
+using Escalated.Extensions;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Escalated.Controllers.Customer;
@@ -12,11 +15,14 @@ public class CustomerTicketController : ControllerBase
 {
     private readonly TicketService _ticketService;
     private readonly EscalatedOptions _options;
+    private readonly EscalatedDbContext _db;
 
-    public CustomerTicketController(TicketService ticketService, IOptions<EscalatedOptions> options)
+    public CustomerTicketController(TicketService ticketService, IOptions<EscalatedOptions> options,
+        EscalatedDbContext db)
     {
         _ticketService = ticketService;
         _options = options.Value;
+        _db = db;
     }
 
     [HttpGet]
@@ -47,13 +53,19 @@ public class CustomerTicketController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Show(int id, [FromQuery] int requesterId)
     {
-        var ticket = await _ticketService.FindByIdAsync(id);
+        var ticket = await _db.Tickets
+            .Include(t => t.Replies.OrderByDescending(r => r.CreatedAt))
+                .ThenInclude(r => r.Attachments)
+            .Include(t => t.Attachments)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         if (ticket == null) return NotFound();
 
         // Verify ownership
         if (ticket.RequesterId != requesterId)
             return Forbid();
 
+        ticket.PopulateAttachmentUrls(Request);
         return Ok(ticket);
     }
 
