@@ -52,6 +52,8 @@ public class EscalatedDbContext : DbContext
     public DbSet<ArticleCategory> ArticleCategories => Set<ArticleCategory>();
     public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
     public DbSet<ChatRoutingRule> ChatRoutingRules => Set<ChatRoutingRule>();
+    public DbSet<Workflow> Workflows => Set<Workflow>();
+    public DbSet<WorkflowLog> WorkflowLogs => Set<WorkflowLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -361,6 +363,26 @@ public class EscalatedDbContext : DbContext
             e.ToTable($"{prefix}chat_routing_rules");
             e.HasIndex(r => r.Priority);
             e.HasOne(r => r.Department).WithMany().HasForeignKey(r => r.DepartmentId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Workflow>(e =>
+        {
+            e.ToTable($"{prefix}workflows");
+            e.HasMany(w => w.WorkflowLogs).WithOne(l => l.Workflow).HasForeignKey(l => l.WorkflowId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkflowLog>(e =>
+        {
+            e.ToTable($"{prefix}workflow_logs");
+            e.HasOne(l => l.Ticket).WithMany().HasForeignKey(l => l.TicketId).OnDelete(DeleteBehavior.Cascade);
+            e.Ignore(l => l.Event);
+            e.Ignore(l => l.WorkflowName);
+            e.Ignore(l => l.TicketReference);
+            e.Ignore(l => l.Matched);
+            e.Ignore(l => l.ActionsExecutedCount);
+            e.Ignore(l => l.ActionDetails);
+            e.Ignore(l => l.DurationMs);
+            e.Ignore(l => l.Status);
         });
     }
 }
