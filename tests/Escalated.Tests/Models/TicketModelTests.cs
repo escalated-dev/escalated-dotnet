@@ -60,4 +60,94 @@ public class TicketModelTests
         Assert.False(new Ticket { Status = TicketStatus.Resolved }.IsOpen());
         Assert.False(new Ticket { Status = TicketStatus.Closed }.IsOpen());
     }
+
+    [Fact]
+    public void IsSnoozed_TrueWhenSnoozedUntilInFuture()
+    {
+        var ticket = new Ticket { SnoozedUntil = DateTime.UtcNow.AddHours(1) };
+        Assert.True(ticket.IsSnoozed);
+    }
+
+    [Fact]
+    public void IsSnoozed_FalseWhenSnoozedUntilInPast()
+    {
+        var ticket = new Ticket { SnoozedUntil = DateTime.UtcNow.AddHours(-1) };
+        Assert.False(ticket.IsSnoozed);
+    }
+
+    [Fact]
+    public void IsSnoozed_FalseWhenNull()
+    {
+        var ticket = new Ticket { SnoozedUntil = null };
+        Assert.False(ticket.IsSnoozed);
+    }
+
+    [Fact]
+    public void IsLiveChat_TrueWhenActiveChatSessionExists()
+    {
+        var ticket = new Ticket();
+        ticket.ChatSessions.Add(new ChatSession { Status = "active" });
+        Assert.True(ticket.IsLiveChat);
+    }
+
+    [Fact]
+    public void IsLiveChat_FalseWhenAllChatSessionsEnded()
+    {
+        var ticket = new Ticket();
+        ticket.ChatSessions.Add(new ChatSession { Status = "ended" });
+        Assert.False(ticket.IsLiveChat);
+    }
+
+    [Fact]
+    public void IsLiveChat_FalseWhenNoChatSessions()
+    {
+        var ticket = new Ticket();
+        Assert.False(ticket.IsLiveChat);
+    }
+
+    [Fact]
+    public void LastReplyAt_ReturnsLatestReplyTimestamp()
+    {
+        var ticket = new Ticket();
+        var older = new Reply { Body = "old", CreatedAt = DateTime.UtcNow.AddHours(-2) };
+        var newer = new Reply { Body = "new", CreatedAt = DateTime.UtcNow.AddHours(-1) };
+        ticket.Replies.Add(older);
+        ticket.Replies.Add(newer);
+        Assert.Equal(newer.CreatedAt, ticket.LastReplyAt);
+    }
+
+    [Fact]
+    public void LastReplyAt_NullWhenNoReplies()
+    {
+        var ticket = new Ticket();
+        Assert.Null(ticket.LastReplyAt);
+    }
+
+    [Fact]
+    public void PopulateComputedFields_SetsRequesterFromGuestFields()
+    {
+        var ticket = new Ticket
+        {
+            GuestName = "Alice",
+            GuestEmail = "alice@example.com"
+        };
+        ticket.PopulateComputedFields();
+        Assert.Equal("Alice", ticket.RequesterName);
+        Assert.Equal("alice@example.com", ticket.RequesterEmail);
+    }
+
+    [Fact]
+    public void PopulateComputedFields_DoesNotOverrideExistingValues()
+    {
+        var ticket = new Ticket
+        {
+            GuestName = "Alice",
+            GuestEmail = "alice@example.com",
+            RequesterName = "Bob",
+            RequesterEmail = "bob@example.com"
+        };
+        ticket.PopulateComputedFields();
+        Assert.Equal("Bob", ticket.RequesterName);
+        Assert.Equal("bob@example.com", ticket.RequesterEmail);
+    }
 }

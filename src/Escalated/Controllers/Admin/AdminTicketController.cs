@@ -38,6 +38,8 @@ public class AdminTicketController : ControllerBase
         [FromQuery] int page = 1, [FromQuery] int perPage = 25)
     {
         var (items, totalCount) = await _ticketService.ListAsync(filters, page, perPage);
+        foreach (var ticket in items)
+            ticket.PopulateComputedFields();
         return Ok(new { data = items, total = totalCount, page, perPage });
     }
 
@@ -54,10 +56,12 @@ public class AdminTicketController : ControllerBase
             .Include(t => t.Activities.OrderByDescending(a => a.CreatedAt).Take(20))
             .Include(t => t.SatisfactionRating)
             .Include(t => t.SideConversations)
+            .Include(t => t.ChatSessions)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null) return NotFound();
         ticket.PopulateAttachmentUrls(Request);
+        ticket.PopulateComputedFields();
         return Ok(ticket);
     }
 

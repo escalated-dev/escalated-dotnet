@@ -32,6 +32,8 @@ public class CustomerTicketController : ControllerBase
         filters ??= new TicketListFilters();
         filters.RequesterId = requesterId;
         var (items, totalCount) = await _ticketService.ListAsync(filters, page, perPage);
+        foreach (var ticket in items)
+            ticket.PopulateComputedFields();
         return Ok(new { data = items, total = totalCount, page, perPage });
     }
 
@@ -66,6 +68,7 @@ public class CustomerTicketController : ControllerBase
             return Forbid();
 
         ticket.PopulateAttachmentUrls(Request);
+        ticket.PopulateComputedFields();
         return Ok(ticket);
     }
 

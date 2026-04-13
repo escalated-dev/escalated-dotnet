@@ -30,6 +30,8 @@ public class AgentTicketController : ControllerBase
         [FromQuery] int page = 1, [FromQuery] int perPage = 25)
     {
         var (items, totalCount) = await _ticketService.ListAsync(filters, page, perPage);
+        foreach (var ticket in items)
+            ticket.PopulateComputedFields();
         return Ok(new { data = items, total = totalCount, page, perPage });
     }
 
@@ -45,10 +47,12 @@ public class AgentTicketController : ControllerBase
             .Include(t => t.SlaPolicy)
             .Include(t => t.Activities.OrderByDescending(a => a.CreatedAt).Take(20))
             .Include(t => t.SatisfactionRating)
+            .Include(t => t.ChatSessions)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null) return NotFound();
         ticket.PopulateAttachmentUrls(Request);
+        ticket.PopulateComputedFields();
         return Ok(ticket);
     }
 

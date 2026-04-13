@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Escalated.Enums;
 
 namespace Escalated.Models;
@@ -83,15 +84,70 @@ public class Ticket
     public ICollection<TicketLink> LinksAsChild { get; set; } = new List<TicketLink>();
     public SatisfactionRating? SatisfactionRating { get; set; }
     public ICollection<CustomFieldValue> CustomFieldValues { get; set; } = new List<CustomFieldValue>();
+    public ICollection<ChatSession> ChatSessions { get; set; } = new List<ChatSession>();
 
     public static readonly string[] ValidTypes = { "question", "problem", "incident", "task" };
 
     public bool IsGuest => RequesterType == null && GuestToken != null;
+
+    // Computed properties expected by the frontend.
+
+    /// <summary>Guest name, or a name set by the controller when the requester is resolved.</summary>
+    [NotMapped]
+    [JsonPropertyName("requester_name")]
+    public string? RequesterName { get; set; }
+
+    /// <summary>Guest email, or an email set by the controller when the requester is resolved.</summary>
+    [NotMapped]
+    [JsonPropertyName("requester_email")]
+    public string? RequesterEmail { get; set; }
+
+    /// <summary>Timestamp of the most recent reply (computed from the Replies collection).</summary>
+    [NotMapped]
+    [JsonPropertyName("last_reply_at")]
+    public DateTime? LastReplyAt => Replies?.MaxBy(r => r.CreatedAt)?.CreatedAt;
+
+    /// <summary>Display name of the most recent reply's author. Set by controller or populated manually.</summary>
+    [NotMapped]
+    [JsonPropertyName("last_reply_author")]
+    public string? LastReplyAuthor { get; set; }
+
+    /// <summary>True when an active (non-ended) chat session is associated with this ticket.</summary>
+    [NotMapped]
+    [JsonPropertyName("is_live_chat")]
+    public bool IsLiveChat => ChatSessions?.Any(cs => cs.Status != "ended") == true;
+
+    /// <summary>True when the ticket is snoozed until a future time.</summary>
+    [NotMapped]
+    [JsonPropertyName("is_snoozed")]
+    public bool IsSnoozed => SnoozedUntil.HasValue && SnoozedUntil.Value > DateTime.UtcNow;
 
     public bool IsOpen() => Status.IsOpen();
 
     public string GenerateReference(string prefix = "ESC")
     {
         return $"{prefix}-{Id:D5}";
+    }
+
+    /// <summary>
+    /// Populates the settable computed fields from the ticket's own data.
+    /// Call after loading navigation properties.
+    /// </summary>
+    public void PopulateComputedFields()
+    {
+        // Requester defaults to guest fields when no external requester is resolved.
+        RequesterName ??= GuestName;
+        RequesterEmail ??= GuestEmail;
+
+        // Last reply author from the latest reply (if loaded).
+        if (LastReplyAuthor == null && Replies?.Count > 0)
+        {
+            var latest = Replies.MaxBy(r => r.CreatedAt);
+            if (latest != null)
+            {
+                // AuthorType may indicate the source; fall back to a generic label.
+                LastReplyAuthor = latest.AuthorType ?? "Agent";
+            }
+        }
     }
 }
