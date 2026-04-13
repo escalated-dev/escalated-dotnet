@@ -1,6 +1,7 @@
 using Escalated.Data;
 using Escalated.Enums;
 using Escalated.Extensions;
+using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -48,11 +49,42 @@ public class AgentTicketController : ControllerBase
             .Include(t => t.Activities.OrderByDescending(a => a.CreatedAt).Take(20))
             .Include(t => t.SatisfactionRating)
             .Include(t => t.ChatSessions)
+            .Include(t => t.LinksAsParent).ThenInclude(l => l.ChildTicket)
+            .Include(t => t.LinksAsChild).ThenInclude(l => l.ParentTicket)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null) return NotFound();
         ticket.PopulateAttachmentUrls(Request);
         ticket.PopulateComputedFields();
+
+        // Chat messages: replies that belong to the active chat session's ticket
+        if (ticket.ChatSessionId != null)
+        {
+            ticket.ChatMessages = ticket.Replies
+                .OrderBy(r => r.CreatedAt)
+                .Select(r => new
+                {
+                    id = r.Id,
+                    body = r.Body,
+                    author_type = r.AuthorType,
+                    author_id = r.AuthorId,
+                    created_at = r.CreatedAt
+                });
+        }
+
+        // Requester ticket count
+        if (ticket.RequesterId != null)
+        {
+            ticket.RequesterTicketCount = await _db.Tickets
+                .CountAsync(t => t.RequesterType == ticket.RequesterType
+                              && t.RequesterId == ticket.RequesterId);
+        }
+        else if (ticket.GuestEmail != null)
+        {
+            ticket.RequesterTicketCount = await _db.Tickets
+                .CountAsync(t => t.GuestEmail == ticket.GuestEmail);
+        }
+
         return Ok(ticket);
     }
 
