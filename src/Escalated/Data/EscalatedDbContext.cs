@@ -352,7 +352,7 @@ public class EscalatedDbContext : DbContext
             e.HasIndex(s => s.TicketId);
             e.HasIndex(s => s.Status);
             e.HasIndex(s => s.AgentId);
-            e.HasOne(s => s.Ticket).WithMany().HasForeignKey(s => s.TicketId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.Ticket).WithMany(t => t.ChatSessions).HasForeignKey(s => s.TicketId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(s => s.Department).WithMany().HasForeignKey(s => s.DepartmentId).OnDelete(DeleteBehavior.SetNull);
         });
 
