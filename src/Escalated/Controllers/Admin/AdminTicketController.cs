@@ -1,4 +1,5 @@
 using Escalated.Enums;
+using Escalated.Extensions;
 using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +46,8 @@ public class AdminTicketController : ControllerBase
     {
         var ticket = await _db.Tickets
             .Include(t => t.Replies.OrderByDescending(r => r.CreatedAt))
+                .ThenInclude(r => r.Attachments)
+            .Include(t => t.Attachments)
             .Include(t => t.Tags)
             .Include(t => t.Department)
             .Include(t => t.SlaPolicy)
@@ -54,6 +57,7 @@ public class AdminTicketController : ControllerBase
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null) return NotFound();
+        ticket.PopulateAttachmentUrls(Request);
         return Ok(ticket);
     }
 

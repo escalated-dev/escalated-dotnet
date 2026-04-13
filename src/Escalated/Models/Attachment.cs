@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Escalated.Models;
 
@@ -26,6 +27,12 @@ public class Attachment
 
     [MaxLength(50)]
     public string Disk { get; set; } = "local";
+
+    /// <summary>
+    /// Download URL for this attachment. Populated at serialization time, not persisted.
+    /// </summary>
+    [NotMapped]
+    public string? Url { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
