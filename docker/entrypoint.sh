@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
-echo "[demo] ready (placeholder)"
+echo "[demo] starting"
 exec "$@"
