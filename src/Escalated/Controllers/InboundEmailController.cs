@@ -5,7 +5,6 @@ using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Models;
 using Escalated.Services.Email.Inbound;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
