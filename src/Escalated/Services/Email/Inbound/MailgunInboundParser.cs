@@ -48,32 +48,29 @@ public class MailgunInboundParser : IInboundEmailParser
         });
     }
 
-    private static string? NullLookup(string _) => null;
-
-    private static Func<string, string?> BuildJsonElementLookup(JsonElement el) =>
-        key =>
-        {
-            foreach (var prop in el.EnumerateObject())
-            {
-                if (string.Equals(prop.Name, key, StringComparison.Ordinal))
-                {
-                    return prop.Value.ValueKind == JsonValueKind.String
-                        ? prop.Value.GetString()
-                        : prop.Value.ToString();
-                }
-            }
-            return null;
-        };
-
-    private static Func<string, string?> BuildLookup(object payload) =>
-        payload switch
+    private static Func<string, string?> BuildLookup(object payload)
+    {
+        return payload switch
         {
             IDictionary<string, string> map => key => map.TryGetValue(key, out var v) ? v : null,
             IDictionary<string, object> objMap => key =>
                 objMap.TryGetValue(key, out var v) ? v?.ToString() : null,
-            JsonElement el => BuildJsonElementLookup(el),
-            _ => NullLookup,
+            JsonElement el => key =>
+            {
+                foreach (var prop in el.EnumerateObject())
+                {
+                    if (string.Equals(prop.Name, key, StringComparison.Ordinal))
+                    {
+                        return prop.Value.ValueKind == JsonValueKind.String
+                            ? prop.Value.GetString()
+                            : prop.Value.ToString();
+                    }
+                }
+                return null;
+            },
+            _ => _ => null,
         };
+    }
 
     /// <summary>
     /// Mailgun's <c>from</c> field is typically
