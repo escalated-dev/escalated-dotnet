@@ -291,6 +291,7 @@ services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 | GET/POST | `/support/admin/roles` | Manage roles |
 | GET | `/support/admin/audit-logs` | Query audit logs |
 | GET/POST | `/support/admin/settings` | App settings |
+| GET/PUT | `/support/admin/settings/public-tickets` | Runtime guest-policy mode (unassigned / guest_user / prompt_signup). See [docs.escalated.dev/public-tickets](https://docs.escalated.dev/public-tickets). |
 | POST | `/support/admin/tickets/{id}/merge` | Merge tickets |
 | POST | `/support/admin/tickets/{id}/split` | Split ticket |
 | POST | `/support/admin/tickets/{id}/snooze` | Snooze ticket |
