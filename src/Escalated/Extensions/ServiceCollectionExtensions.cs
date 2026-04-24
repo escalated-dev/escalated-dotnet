@@ -41,6 +41,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<TwoFactorService>();
         services.AddScoped<WebhookDispatcher>();
         services.AddScoped<WorkflowEngine>();
+
+        // Inbound email: router + default Postmark parser.
+        // Host apps can add more parsers by registering them as
+        // IInboundEmailParser; the controller dispatches by Name.
+        services.AddScoped<Services.Email.Inbound.InboundEmailRouter>(sp =>
+            new Services.Email.Inbound.InboundEmailRouter(
+                sp.GetRequiredService<Data.EscalatedDbContext>(),
+                sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Configuration.EscalatedOptions>>().Value));
+        services.AddScoped<Services.Email.Inbound.IInboundEmailParser,
+            Services.Email.Inbound.PostmarkInboundParser>();
         return services;
     }
 
