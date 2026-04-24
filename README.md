@@ -49,7 +49,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Ticket splitting** -- Split a reply into a new ticket
 - **Ticket snooze** -- Snooze until a future date with auto-wake background service
 - **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Inbound email** -- Single webhook endpoint with Postmark + Mailgun parsers, signed Reply-To verification, and Message-ID-based ticket resolution
+- **Inbound email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To verification, and Message-ID-based ticket resolution
 - **Saved views** -- Personal and shared filter presets
 - **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
 - **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
@@ -142,11 +142,12 @@ Visit `/support` -- you're live.
 
 ## Inbound email
 
-Point your Postmark or Mailgun inbound webhook at:
+Point your Postmark, Mailgun, or AWS SES (via SNS HTTP subscription) inbound webhook at:
 
 ```
 POST /support/webhook/email/inbound?adapter=postmark
 POST /support/webhook/email/inbound?adapter=mailgun
+POST /support/webhook/email/inbound?adapter=ses
 ```
 
 The adapter can be selected via the query parameter or the `X-Escalated-Adapter` header. Your provider must attach the shared secret as an `X-Escalated-Inbound-Secret` header.
