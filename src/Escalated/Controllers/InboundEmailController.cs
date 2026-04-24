@@ -5,7 +5,6 @@ using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Models;
 using Escalated.Services.Email.Inbound;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -34,18 +33,18 @@ public class InboundEmailController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
     private readonly EscalatedOptions _options;
-    private readonly InboundEmailService _inboundService;
+    private readonly InboundEmailRouter _router;
     private readonly IReadOnlyDictionary<string, IInboundEmailParser> _parsers;
 
     public InboundEmailController(
         EscalatedDbContext db,
         IOptions<EscalatedOptions> options,
-        InboundEmailService inboundService,
+        InboundEmailRouter router,
         IEnumerable<IInboundEmailParser> parsers)
     {
         _db = db;
         _options = options.Value;
-        _inboundService = inboundService;
+        _router = router;
         _parsers = parsers.ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
     }
 
@@ -106,16 +105,17 @@ public class InboundEmailController : ControllerBase
 
         try
         {
-            var result = await _inboundService.ProcessAsync(message, inboundEmail, ct);
+            var ticket = await _router.ResolveTicketAsync(message, ct);
+            inboundEmail.TicketId = ticket?.Id;
+            inboundEmail.Status = ticket is null ? "unmatched" : "matched";
+            inboundEmail.ProcessedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
 
             return Accepted(new
             {
                 inboundId = inboundEmail.Id,
                 status = inboundEmail.Status,
-                outcome = result.Outcome.ToString().ToLowerInvariant(),
-                ticketId = result.TicketId,
-                replyId = result.ReplyId,
-                pendingAttachmentDownloads = result.PendingAttachmentDownloads,
+                ticketId = ticket?.Id,
             });
         }
         catch (Exception ex)
