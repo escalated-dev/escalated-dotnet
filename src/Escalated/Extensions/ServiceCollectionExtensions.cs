@@ -51,6 +51,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Configuration.EscalatedOptions>>().Value));
         services.AddScoped<Services.Email.Inbound.IInboundEmailParser,
             Services.Email.Inbound.PostmarkInboundParser>();
+        services.AddScoped<Services.Email.Inbound.IInboundEmailParser,
+            Services.Email.Inbound.MailgunInboundParser>();
         return services;
     }
 
