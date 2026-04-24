@@ -433,16 +433,16 @@ public class TicketService
         var action = Contact.DecideAction(existing, name);
         switch (action)
         {
-            case Contact.Action.RETURN_EXISTING:
+            case "return-existing":
                 return existing;
 
-            case Contact.Action.UPDATE_NAME:
+            case "update-name":
                 existing!.Name = name;
                 existing.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync(ct);
                 return existing;
 
-            case Contact.Action.CREATE:
+            case "create":
             default:
                 var created = new Contact
                 {
