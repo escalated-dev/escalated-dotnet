@@ -25,7 +25,7 @@ public class WorkflowExecutorServiceTests
         var events = TestHelpers.MockEventDispatcher();
         var options = TestHelpers.DefaultOptions();
         var tickets = new TicketService(db, events.Object, options);
-        var assignments = new AssignmentService(db, events.Object);
+        var assignments = new AssignmentService(db, events.Object, tickets);
         var executor = new WorkflowExecutorService(db, tickets, assignments,
             NullLogger<WorkflowExecutorService>.Instance);
         return (executor, db, events);
