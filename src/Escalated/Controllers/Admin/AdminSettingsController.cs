@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Escalated.Data;
 using Escalated.Models;
 using Escalated.Services;
@@ -420,7 +421,87 @@ public class AdminSettingsController : ControllerBase
         await _db.SaveChangesAsync();
         return Ok(obj);
     }
+
+    // --- Public-ticket guest policy ---
+    //
+    // Three keys back the policy that decides which identity a public
+    // (unauthenticated) submission is attributed to:
+    //   - guest_policy_mode              ∈ { unassigned, guest_user, prompt_signup }
+    //   - guest_policy_user_id           int, required when mode = guest_user
+    //   - guest_policy_signup_url_template  string, optional when mode = prompt_signup
+    // Consumers (widget controller, inbound router) read via SettingsService
+    // so admins can switch modes at runtime without a redeploy. Mirrors the
+    // Symfony PublicTicketsSettingsController.
+
+    private static readonly HashSet<string> GuestPolicyModes = new()
+    {
+        "unassigned",
+        "guest_user",
+        "prompt_signup",
+    };
+
+    [HttpGet("settings/public-tickets")]
+    public async Task<IActionResult> GetPublicTicketsSettings(CancellationToken ct = default)
+    {
+        var mode = await _settingsService.GetAsync("guest_policy_mode", "unassigned", ct) ?? "unassigned";
+        var userIdRaw = await _settingsService.GetAsync("guest_policy_user_id", "", ct) ?? "";
+        var template = await _settingsService.GetAsync("guest_policy_signup_url_template", "", ct) ?? "";
+
+        int? userId = int.TryParse(userIdRaw, out var parsed) && parsed > 0 ? parsed : null;
+
+        return Ok(new
+        {
+            guest_policy_mode = mode,
+            guest_policy_user_id = userId,
+            guest_policy_signup_url_template = template,
+        });
+    }
+
+    [HttpPut("settings/public-tickets")]
+    public async Task<IActionResult> UpdatePublicTicketsSettings(
+        [FromBody] PublicTicketsSettingsRequest request,
+        CancellationToken ct = default)
+    {
+        var mode = GuestPolicyModes.Contains(request.GuestPolicyMode ?? "")
+            ? request.GuestPolicyMode!
+            : "unassigned";
+
+        await _settingsService.SetAsync("guest_policy_mode", mode, ct);
+
+        // Clear the mode-specific fields we don't need so stale values
+        // can't leak back into behavior after a mode switch.
+        if (mode == "guest_user")
+        {
+            var userId = request.GuestPolicyUserId.GetValueOrDefault(0);
+            await _settingsService.SetAsync(
+                "guest_policy_user_id",
+                userId > 0 ? userId.ToString() : "",
+                ct);
+        }
+        else
+        {
+            await _settingsService.SetAsync("guest_policy_user_id", "", ct);
+        }
+
+        if (mode == "prompt_signup")
+        {
+            var template = (request.GuestPolicySignupUrlTemplate ?? "").Trim();
+            if (template.Length > 500) template = template.Substring(0, 500);
+            await _settingsService.SetAsync("guest_policy_signup_url_template", template, ct);
+        }
+        else
+        {
+            await _settingsService.SetAsync("guest_policy_signup_url_template", "", ct);
+        }
+
+        return await GetPublicTicketsSettings(ct);
+    }
 }
+
+public record PublicTicketsSettingsRequest(
+    [property: JsonPropertyName("guest_policy_mode")] string? GuestPolicyMode,
+    [property: JsonPropertyName("guest_policy_user_id")] int? GuestPolicyUserId,
+    [property: JsonPropertyName("guest_policy_signup_url_template")] string? GuestPolicySignupUrlTemplate);
 
 public record CreateApiTokenRequest(string Name, string? Abilities = null, string? TokenableType = null,
     int? TokenableId = null, DateTime? ExpiresAt = null);
