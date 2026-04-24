@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
             Services.Email.Inbound.PostmarkInboundParser>();
         services.AddScoped<Services.Email.Inbound.IInboundEmailParser,
             Services.Email.Inbound.MailgunInboundParser>();
+        services.AddScoped<Services.Email.Inbound.InboundEmailService>();
         return services;
     }
 
