@@ -48,6 +48,19 @@ public class TicketService
             ticket.GuestToken = Guid.NewGuid().ToString("N");
         }
 
+        // Dedupe repeat guests by email (Pattern B). Inline Guest* fields
+        // remain populated for the backwards-compat dual-read period. Any
+        // store error here is non-fatal — ticket creation must never
+        // block on the Contact lookup.
+        if (requesterId == null && !string.IsNullOrEmpty(guestEmail))
+        {
+            var contact = await FindOrCreateContactAsync(guestEmail, guestName, ct);
+            if (contact != null)
+            {
+                ticket.ContactId = contact.Id;
+            }
+        }
+
         _db.Tickets.Add(ticket);
         await _db.SaveChangesAsync(ct);
 
@@ -400,6 +413,49 @@ public class TicketService
             CreatedAt = DateTime.UtcNow
         };
         _db.TicketActivities.Add(activity);
+    }
+
+    /// <summary>
+    /// Resolve a Contact by email (normalized trim + lowercase) or
+    /// create one. Mirrors the Pattern B reference impl — uses
+    /// <see cref="Contact.NormalizeEmail"/> + <see cref="Contact.DecideAction"/>
+    /// for branch selection.
+    /// </summary>
+    private async Task<Contact?> FindOrCreateContactAsync(
+        string email, string? name, CancellationToken ct)
+    {
+        var normalized = Contact.NormalizeEmail(email);
+        if (string.IsNullOrEmpty(normalized)) return null;
+
+        var existing = await _db.Contacts
+            .FirstOrDefaultAsync(c => c.Email == normalized, ct);
+
+        var action = Contact.DecideAction(existing, name);
+        switch (action)
+        {
+            case "return-existing":
+                return existing;
+
+            case "update-name":
+                existing!.Name = name;
+                existing.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+                return existing;
+
+            case "create":
+            default:
+                var created = new Contact
+                {
+                    Email = normalized,
+                    Name = name,
+                    Metadata = "{}",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+                _db.Contacts.Add(created);
+                await _db.SaveChangesAsync(ct);
+                return created;
+        }
     }
 }
 

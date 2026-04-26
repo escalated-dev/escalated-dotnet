@@ -47,6 +47,13 @@ public class Ticket
     [MaxLength(255)]
     public string? GuestToken { get; set; }
 
+    // First-class Contact FK (Pattern B convergence). Populated from
+    // the public widget submission path or by backfill from GuestEmail.
+    public int? ContactId { get; set; }
+
+    [ForeignKey(nameof(ContactId))]
+    public Contact? Contact { get; set; }
+
     // SLA fields
     public DateTime? FirstResponseAt { get; set; }
     public DateTime? FirstResponseDueAt { get; set; }

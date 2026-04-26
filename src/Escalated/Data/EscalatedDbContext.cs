@@ -30,6 +30,7 @@ public class EscalatedDbContext : DbContext
     public DbSet<SideConversation> SideConversations => Set<SideConversation>();
     public DbSet<SideConversationReply> SideConversationReplies => Set<SideConversationReply>();
     public DbSet<InboundEmail> InboundEmails => Set<InboundEmail>();
+    public DbSet<Contact> Contacts => Set<Contact>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
@@ -72,6 +73,7 @@ public class EscalatedDbContext : DbContext
             e.HasIndex(t => t.DepartmentId);
             e.HasIndex(t => t.GuestToken);
             e.HasIndex(t => t.GuestEmail);
+            e.HasIndex(t => t.ContactId);
             e.HasIndex(t => new { t.RequesterType, t.RequesterId });
             e.HasIndex(t => t.CreatedAt);
             e.HasQueryFilter(t => t.DeletedAt == null);
@@ -85,6 +87,14 @@ public class EscalatedDbContext : DbContext
             e.HasMany(t => t.LinksAsParent).WithOne(l => l.ParentTicket).HasForeignKey(l => l.ParentTicketId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(t => t.LinksAsChild).WithOne(l => l.ChildTicket).HasForeignKey(l => l.ChildTicketId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(t => t.SatisfactionRating).WithOne(r => r.Ticket).HasForeignKey<SatisfactionRating>(r => r.TicketId);
+            e.HasOne(t => t.Contact).WithMany().HasForeignKey(t => t.ContactId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Contact>(e =>
+        {
+            e.ToTable($"{prefix}contacts");
+            e.HasIndex(c => c.Email).IsUnique();
+            e.HasIndex(c => c.UserId);
         });
 
         modelBuilder.Entity<Reply>(e =>
