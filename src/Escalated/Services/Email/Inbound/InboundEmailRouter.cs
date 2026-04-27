@@ -113,7 +113,7 @@ public class InboundEmailRouter
     /// the order the mail client sent them. Caller iterates the
     /// result and stops at the first resolvable id.
     /// </summary>
-    internal static IEnumerable<string> CandidateHeaderMessageIds(InboundMessage message)
+    public static IEnumerable<string> CandidateHeaderMessageIds(InboundMessage message)
     {
         if (!string.IsNullOrEmpty(message.InReplyTo))
         {
