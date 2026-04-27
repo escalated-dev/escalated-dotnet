@@ -48,6 +48,8 @@ public class MailgunInboundParser : IInboundEmailParser
         });
     }
 
+    private static string? NullLookup(string _) => null;
+
     private static Func<string, string?> BuildLookup(object payload)
     {
         return payload switch
@@ -68,8 +70,7 @@ public class MailgunInboundParser : IInboundEmailParser
                 }
                 return null;
             },
-            _ =>
-                _ => null,
+            _ => NullLookup,
         };
     }
 
