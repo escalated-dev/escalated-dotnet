@@ -68,7 +68,7 @@ public class MailgunInboundParser : IInboundEmailParser
                 }
                 return null;
             },
-            _ => _ => null,
+            _ => (_ => null),
         };
     }
 
