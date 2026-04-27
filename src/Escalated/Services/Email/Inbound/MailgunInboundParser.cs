@@ -70,7 +70,7 @@ public class MailgunInboundParser : IInboundEmailParser
                 }
                 return null;
             },
-            _ => NullLookup,
+            _ => NullLookup
         };
     }
 
