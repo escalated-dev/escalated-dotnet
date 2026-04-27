@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Escalated.Configuration;
 using Escalated.Controllers;
+using Escalated.Models;
 using Escalated.Services;
 using Escalated.Services.Email.Inbound;
 using Microsoft.AspNetCore.Http;
@@ -108,12 +109,12 @@ public class InboundEmailControllerTests
         var (controller, db) = CreateController();
 
         // Seed a ticket with id 55 that the canonical In-Reply-To will hit.
-        var ticket = new Models.Ticket
+        var ticket = new Escalated.Models.Ticket
         {
             Reference = "ESC-00055",
             Subject = "Existing",
-            Status = Enums.TicketStatus.Open,
-            Priority = Enums.TicketPriority.Medium,
+            Status = Escalated.Enums.TicketStatus.Open,
+            Priority = Escalated.Enums.TicketPriority.Medium,
         };
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync();
