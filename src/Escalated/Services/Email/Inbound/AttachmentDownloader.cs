@@ -148,7 +148,7 @@ public class AttachmentDownloader
     /// <c>../../etc/passwd</c> can't escape the storage root. Falls
     /// back to <c>"attachment"</c> when the original name is unusable.
     /// </summary>
-    internal static string SafeFilename(string? name)
+    public static string SafeFilename(string? name)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
