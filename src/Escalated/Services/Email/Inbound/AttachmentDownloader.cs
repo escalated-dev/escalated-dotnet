@@ -155,7 +155,7 @@ public class AttachmentDownloader
             return "attachment";
         }
         var cleaned = Path.GetFileName(name.Replace('\\', '/').Trim());
-        if (string.IsNullOrEmpty(cleaned) || cleaned == ".")
+        if (string.IsNullOrEmpty(cleaned) || cleaned == "." || cleaned == "..")
         {
             return "attachment";
         }
