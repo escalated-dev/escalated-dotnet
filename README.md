@@ -49,6 +49,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Ticket splitting** -- Split a reply into a new ticket
 - **Ticket snooze** -- Snooze until a future date with auto-wake background service
 - **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
+- **Inbound email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To verification, and Message-ID-based ticket resolution
 - **Saved views** -- Personal and shared filter presets
 - **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
 - **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
@@ -119,10 +120,16 @@ app.Run();
         "Days": [1, 2, 3, 4, 5]
       }
     },
-    "EnableRealTime": false
+    "EnableRealTime": false,
+    "Mail": {
+      "Domain": "support.yourapp.com",
+      "InboundSecret": "a-long-random-value"
+    }
   }
 }
 ```
+
+The `Mail.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
 
 ### 4. Run Migrations
 
@@ -132,6 +139,22 @@ dotnet ef database update --context EscalatedDbContext
 ```
 
 Visit `/support` -- you're live.
+
+## Inbound email
+
+Point your Postmark, Mailgun, or AWS SES (via SNS HTTP subscription) inbound webhook at:
+
+```
+POST /support/webhook/email/inbound?adapter=postmark
+POST /support/webhook/email/inbound?adapter=mailgun
+POST /support/webhook/email/inbound?adapter=ses
+```
+
+The adapter can be selected via the query parameter or the `X-Escalated-Adapter` header. Your provider must attach the shared secret as an `X-Escalated-Inbound-Secret` header.
+
+The service resolves inbound messages to existing tickets via, in order: canonical `Message-ID` headers, signed `Reply-To` verification, and subject-reference tags. Unmatched messages with real content create a new ticket; SNS subscription confirmations and empty body+subject messages are skipped.
+
+See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provider setup, the response shape, and a ready-to-paste curl test recipe.
 
 ## Frontend Integration
 
