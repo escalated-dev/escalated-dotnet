@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Escalated.Services;
@@ -13,11 +14,51 @@ public class WorkflowEngine
 
     public bool EvaluateConditions(Dictionary<string, object> conditions, Dictionary<string, string> ticket)
     {
-        if (conditions.TryGetValue("all", out var allObj) && allObj is List<Dictionary<string, string>> allConds)
-            return allConds.All(c => EvaluateSingle(c, ticket));
-        if (conditions.TryGetValue("any", out var anyObj) && anyObj is List<Dictionary<string, string>> anyConds)
-            return anyConds.Any(c => EvaluateSingle(c, ticket));
+        if (conditions.TryGetValue("all", out var allObj))
+        {
+            var allConds = NormalizeConditionList(allObj);
+            if (allConds is not null) return allConds.All(c => EvaluateSingle(c, ticket));
+        }
+        if (conditions.TryGetValue("any", out var anyObj))
+        {
+            var anyConds = NormalizeConditionList(anyObj);
+            if (anyConds is not null) return anyConds.Any(c => EvaluateSingle(c, ticket));
+        }
         return true;
+    }
+
+    /// <summary>
+    /// Conditions arrive as either a `List&lt;Dictionary&lt;string,string&gt;&gt;`
+    /// (constructed in code, e.g. DryRun callers) or a `JsonElement`
+    /// (deserialized from `Workflow.Conditions`). Normalize both shapes
+    /// to a list the rest of the engine can evaluate. Returns null when
+    /// the value isn't a recognizable condition list — caller treats
+    /// that as "no constraint".
+    /// </summary>
+    private static List<Dictionary<string, string>>? NormalizeConditionList(object value)
+    {
+        if (value is List<Dictionary<string, string>> list)
+        {
+            return list;
+        }
+        if (value is JsonElement element && element.ValueKind == JsonValueKind.Array)
+        {
+            var result = new List<Dictionary<string, string>>();
+            foreach (var item in element.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object) continue;
+                var dict = new Dictionary<string, string>();
+                foreach (var prop in item.EnumerateObject())
+                {
+                    dict[prop.Name] = prop.Value.ValueKind == JsonValueKind.String
+                        ? prop.Value.GetString() ?? ""
+                        : prop.Value.ToString();
+                }
+                result.Add(dict);
+            }
+            return result;
+        }
+        return null;
     }
 
     public bool EvaluateSingle(Dictionary<string, string> condition, Dictionary<string, string> ticket)
