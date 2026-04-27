@@ -34,18 +34,18 @@ public class InboundEmailController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
     private readonly EscalatedOptions _options;
-    private readonly InboundEmailRouter _router;
+    private readonly InboundEmailService _inboundService;
     private readonly IReadOnlyDictionary<string, IInboundEmailParser> _parsers;
 
     public InboundEmailController(
         EscalatedDbContext db,
         IOptions<EscalatedOptions> options,
-        InboundEmailRouter router,
+        InboundEmailService inboundService,
         IEnumerable<IInboundEmailParser> parsers)
     {
         _db = db;
         _options = options.Value;
-        _router = router;
+        _inboundService = inboundService;
         _parsers = parsers.ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
     }
 
@@ -106,17 +106,16 @@ public class InboundEmailController : ControllerBase
 
         try
         {
-            var ticket = await _router.ResolveTicketAsync(message, ct);
-            inboundEmail.TicketId = ticket?.Id;
-            inboundEmail.Status = ticket is null ? "unmatched" : "matched";
-            inboundEmail.ProcessedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync(ct);
+            var result = await _inboundService.ProcessAsync(message, inboundEmail, ct);
 
             return Accepted(new
             {
                 inboundId = inboundEmail.Id,
                 status = inboundEmail.Status,
-                ticketId = ticket?.Id,
+                outcome = result.Outcome.ToString().ToLowerInvariant(),
+                ticketId = result.TicketId,
+                replyId = result.ReplyId,
+                pendingAttachmentDownloads = result.PendingAttachmentDownloads,
             });
         }
         catch (Exception ex)
