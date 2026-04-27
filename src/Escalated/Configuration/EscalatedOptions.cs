@@ -53,6 +53,26 @@ public class EscalatedOptions
     /// CSAT configuration.
     /// </summary>
     public CsatOptions Csat { get; set; } = new();
+
+    /// <summary>
+    /// Outbound + inbound email config.
+    /// </summary>
+    public EmailOptions Email { get; set; } = new();
+}
+
+/// <summary>
+/// Email threading config. <see cref="Domain"/> is the right-hand side
+/// of RFC 5322 Message-IDs and signed Reply-To addresses.
+/// <see cref="InboundSecret"/> is the HMAC key used to sign Reply-To
+/// addresses so inbound provider webhooks can verify ticket identity
+/// without trusting the mail client's threading headers. An empty
+/// <see cref="InboundSecret"/> disables Reply-To signing — basic
+/// threading still works via Message-ID + In-Reply-To.
+/// </summary>
+public class EmailOptions
+{
+    public string Domain { get; set; } = "localhost";
+    public string InboundSecret { get; set; } = string.Empty;
 }
 
 public class SlaOptions

@@ -1,4 +1,6 @@
+using Escalated.Configuration;
 using Escalated.Models;
+using Escalated.Services.Email;
 
 namespace Escalated.Notifications;
 
@@ -32,45 +34,62 @@ public class NullNotificationSender : IEscalatedNotificationSender
 }
 
 /// <summary>
-/// Email message builder for Escalated notifications.
-/// Provides branded email templates with In-Reply-To/References/Message-ID headers for threading.
+/// Email message builder for Escalated notifications. Provides branded
+/// email templates with RFC 5322 threading headers (Message-ID /
+/// In-Reply-To / References) plus a signed Reply-To so inbound provider
+/// webhooks can verify ticket identity.
+///
+/// Every method takes <see cref="EmailOptions"/> so the <c>Domain</c>
+/// and <c>InboundSecret</c> don't have to be baked into call sites.
+/// Host apps with the default DI wiring resolve <c>IOptions&lt;EscalatedOptions&gt;</c>
+/// and pass <c>options.Value.Email</c>.
 /// </summary>
 public static class EmailTemplates
 {
-    public static EmailMessage NewTicket(Ticket ticket, string supportEmail)
+    public static EmailMessage NewTicket(Ticket ticket, string supportEmail, EmailOptions email)
     {
         return new EmailMessage
         {
             Subject = $"[{ticket.Reference}] {ticket.Subject}",
             Body = $"<h2>New Ticket: {ticket.Subject}</h2><p>{ticket.Description}</p>",
-            MessageId = $"<{ticket.Reference}@escalated>",
-            ToEmail = supportEmail
+            MessageId = MessageIdUtil.BuildMessageId(ticket.Id, null, email.Domain),
+            ToEmail = supportEmail,
+            ReplyTo = SignedReplyTo(ticket, email),
         };
     }
 
-    public static EmailMessage TicketReply(Ticket ticket, Reply reply, string recipientEmail)
+    public static EmailMessage TicketReply(Ticket ticket, Reply reply, string recipientEmail, EmailOptions email)
     {
         return new EmailMessage
         {
             Subject = $"Re: [{ticket.Reference}] {ticket.Subject}",
             Body = $"<p>{reply.Body}</p>",
-            MessageId = $"<{ticket.Reference}-reply-{reply.Id}@escalated>",
-            InReplyTo = $"<{ticket.Reference}@escalated>",
-            References = $"<{ticket.Reference}@escalated>",
-            ToEmail = recipientEmail
+            MessageId = MessageIdUtil.BuildMessageId(ticket.Id, reply.Id, email.Domain),
+            InReplyTo = MessageIdUtil.BuildMessageId(ticket.Id, null, email.Domain),
+            References = MessageIdUtil.BuildMessageId(ticket.Id, null, email.Domain),
+            ToEmail = recipientEmail,
+            ReplyTo = SignedReplyTo(ticket, email),
         };
     }
 
-    public static EmailMessage SlaBreachAlert(Ticket ticket, string breachType, string recipientEmail)
+    public static EmailMessage SlaBreachAlert(Ticket ticket, string breachType, string recipientEmail, EmailOptions email)
     {
         return new EmailMessage
         {
             Subject = $"SLA Breach: [{ticket.Reference}] {ticket.Subject}",
             Body = $"<h2>SLA {breachType} Breached</h2><p>Ticket {ticket.Reference} has breached its {breachType} SLA target.</p>",
-            MessageId = $"<{ticket.Reference}-sla-{breachType}@escalated>",
-            InReplyTo = $"<{ticket.Reference}@escalated>",
-            ToEmail = recipientEmail
+            InReplyTo = MessageIdUtil.BuildMessageId(ticket.Id, null, email.Domain),
+            References = MessageIdUtil.BuildMessageId(ticket.Id, null, email.Domain),
+            ToEmail = recipientEmail,
+            ReplyTo = SignedReplyTo(ticket, email),
         };
+    }
+
+    private static string? SignedReplyTo(Ticket ticket, EmailOptions email)
+    {
+        return string.IsNullOrEmpty(email.InboundSecret)
+            ? null
+            : MessageIdUtil.BuildReplyTo(ticket.Id, email.InboundSecret, email.Domain);
     }
 }
 
@@ -82,4 +101,12 @@ public class EmailMessage
     public string? MessageId { get; set; }
     public string? InReplyTo { get; set; }
     public string? References { get; set; }
+
+    /// <summary>
+    /// Signed Reply-To (<c>reply+{id}.{hmac8}@{domain}</c>) so inbound
+    /// provider webhooks can verify ticket identity even when the mail
+    /// client strips the Message-ID chain. Null when no inbound secret
+    /// is configured.
+    /// </summary>
+    public string? ReplyTo { get; set; }
 }
