@@ -117,7 +117,7 @@ public class InboundEmailService
     /// bounce/no-reply / SNS confirmation senders. Skip rather than
     /// create a new ticket.
     /// </summary>
-    internal static bool IsNoiseEmail(InboundMessage message)
+    public static bool IsNoiseEmail(InboundMessage message)
     {
         if (string.Equals(
                 message.FromEmail,
