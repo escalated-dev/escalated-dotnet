@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "nuget"
+    directory: "/src/Escalated"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "nuget"
+    directory: "/tests/Escalated.Tests"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "nuget"
+    directory: "/docker/host-app"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
