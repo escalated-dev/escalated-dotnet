@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `AddEscalated()` DI extension method for single-call service registration (#15)
+- Consume central translation catalog from the `Escalated.Locale` NuGet
+  package. `AddEscalated()` now registers a chained `IStringLocalizer`
+  that resolves plugin-local overrides under
+  `Resources/Overrides/` first and falls back to the central catalog.
 
 ### Fixed
 - Include `url` in attachment JSON serialization (#9)

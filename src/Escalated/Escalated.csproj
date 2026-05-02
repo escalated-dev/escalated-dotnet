@@ -23,6 +23,14 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.0" />
+    <!--
+      Central translation catalog. Ships JSON resources as embedded
+      assets and exposes Escalated.Locale.LocaleProvider for
+      IStringLocalizer-compatible lookup. Overrides under
+      Resources/Overrides/ are layered on top.
+    -->
+    <PackageReference Include="Escalated.Locale" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
