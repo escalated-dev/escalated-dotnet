@@ -1,6 +1,9 @@
 using Escalated.Events;
+using Escalated.Localization;
 using Escalated.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Localization;
 
 namespace Escalated.Extensions;
 
@@ -16,6 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient();
         services.TryAddSingletonEvent();
         services.TryAddSingletonUserDirectory();
+        services.AddEscalatedLocalization();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<AssignmentService>();
         services.AddScoped<AuditLogService>();
@@ -72,5 +76,28 @@ public static class ServiceCollectionExtensions
         {
             services.AddSingleton<IUserDirectory, NullUserDirectory>();
         }
+    }
+
+    /// <summary>
+    /// Registers a chained <see cref="IStringLocalizer"/> stack that
+    /// resolves strings from plugin-local overrides under
+    /// <c>Resources/Overrides/</c> first, falling through to the
+    /// vendored central catalog at <c>Resources/locales/*.json</c>
+    /// (sourced from escalated-dev/escalated-locale; will swap back
+    /// to a runtime dep on the <c>Escalated.Locale</c> NuGet package
+    /// once that publish pipeline is online).
+    /// </summary>
+    private static void AddEscalatedLocalization(this IServiceCollection services)
+    {
+        // Standard ASP.NET Core localization (resx + JSON readers).
+        services.AddLocalization(opts => opts.ResourcesPath = "Resources/Overrides");
+
+        // Decorate the default factory: chain plugin-local first,
+        // central (vendored) catalog second.
+        services.Replace(ServiceDescriptor.Singleton<IStringLocalizerFactory>(sp =>
+        {
+            var inner = ActivatorUtilities.CreateInstance<ResourceManagerStringLocalizerFactory>(sp);
+            return new EscalatedLocalizerFactory(inner);
+        }));
     }
 }
