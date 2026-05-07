@@ -325,7 +325,9 @@ public class EscalatedDbContext : DbContext
         modelBuilder.Entity<ImportSourceMap>(e =>
         {
             e.ToTable($"{prefix}import_source_maps");
-            e.HasIndex(m => new { m.ImportJobId, m.EntityType, m.SourceId }).IsUnique();
+            e.HasIndex(m => new { m.ImportJobId, m.EntityType, m.SourceId })
+                .IsUnique()
+                .HasDatabaseName("IX_import_source_maps_unique_source");
         });
 
         modelBuilder.Entity<EscalatedSettings>(e =>
