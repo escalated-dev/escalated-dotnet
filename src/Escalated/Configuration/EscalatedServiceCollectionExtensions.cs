@@ -4,6 +4,7 @@ using Escalated.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Escalated.Configuration;
 
@@ -33,6 +34,10 @@ public static class EscalatedServiceCollectionExtensions
 
         // Register event dispatcher (no-op default; host apps can override)
         services.AddSingleton<IEscalatedEventDispatcher, NullEventDispatcher>();
+
+        // Register user directory (empty default; host apps register their own
+        // implementation to surface their user table in the admin users page).
+        services.TryAddSingleton<IUserDirectory, NullUserDirectory>();
 
         // Register services
         services.AddScoped<TicketService>();
