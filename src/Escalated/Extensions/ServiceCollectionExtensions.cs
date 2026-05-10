@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddHttpClient();
         services.TryAddSingletonEvent();
+        services.TryAddSingletonUserDirectory();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<AssignmentService>();
         services.AddScoped<AuditLogService>();
@@ -62,6 +63,14 @@ public static class ServiceCollectionExtensions
         if (!services.Any(d => d.ServiceType == typeof(IEscalatedEventDispatcher)))
         {
             services.AddSingleton<IEscalatedEventDispatcher, NullEventDispatcher>();
+        }
+    }
+
+    private static void TryAddSingletonUserDirectory(this IServiceCollection services)
+    {
+        if (!services.Any(d => d.ServiceType == typeof(IUserDirectory)))
+        {
+            services.AddSingleton<IUserDirectory, NullUserDirectory>();
         }
     }
 }
