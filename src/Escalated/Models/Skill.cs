@@ -23,6 +23,10 @@ public class Skill
 
     public ICollection<AgentSkill> AgentSkills { get; set; } = new List<AgentSkill>();
 
+    public ICollection<SkillRoutingTag> RoutingTags { get; set; } = new List<SkillRoutingTag>();
+
+    public ICollection<SkillRoutingDepartment> RoutingDepartments { get; set; } = new List<SkillRoutingDepartment>();
+
     public static string GenerateSlug(string name)
     {
         var slug = name.ToLowerInvariant();
@@ -34,11 +38,43 @@ public class Skill
 
 public class AgentSkill
 {
+    [Key]
+    public int Id { get; set; }
+
     public int UserId { get; set; }
     public int SkillId { get; set; }
 
-    [MaxLength(50)]
-    public string? Proficiency { get; set; } // beginner, intermediate, expert
+    /// <summary>1 (beginner) .. 5 (expert).</summary>
+    [Range(1, 5)]
+    public int Proficiency { get; set; } = 3;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public Skill? Skill { get; set; }
+}
+
+public class SkillRoutingTag
+{
+    [Key]
+    public int Id { get; set; }
+
+    public int SkillId { get; set; }
+    public Skill? Skill { get; set; }
+
+    public int TagId { get; set; }
+    public Tag? Tag { get; set; }
+}
+
+public class SkillRoutingDepartment
+{
+    [Key]
+    public int Id { get; set; }
+
+    public int SkillId { get; set; }
+    public Skill? Skill { get; set; }
+
+    public int DepartmentId { get; set; }
+    public Department? Department { get; set; }
 }

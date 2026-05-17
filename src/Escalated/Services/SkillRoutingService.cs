@@ -15,58 +15,85 @@ public class SkillRoutingService
     }
 
     /// <summary>
-    /// Find agents with skills matching ticket tags, sorted by current workload (ascending).
+    /// Rank agents eligible under explicit routing (tags / departments): they must hold
+    /// <i>every</i> matching skill row. Ranking is proficiency sum (required skills only)
+    /// descending, then current open workload ascending.
     /// </summary>
     public async Task<List<int>> FindMatchingAgentIdsAsync(Ticket ticket, CancellationToken ct = default)
     {
-        // Get the ticket's tag names
-        var tagNames = await _db.TicketTags
+        var tagIds = await _db.TicketTags
             .Where(tt => tt.TicketId == ticket.Id)
-            .Join(_db.Tags, tt => tt.TagId, t => t.Id, (tt, t) => t.Name)
-            .ToListAsync(ct);
-
-        if (!tagNames.Any()) return new List<int>();
-
-        // Find skills matching tag names
-        var skillIds = await _db.Skills
-            .Where(s => tagNames.Contains(s.Name))
-            .Select(s => s.Id)
-            .ToListAsync(ct);
-
-        if (!skillIds.Any()) return new List<int>();
-
-        // Find agents with these skills
-        var agentIds = await _db.AgentSkills
-            .Where(a => skillIds.Contains(a.SkillId))
-            .Select(a => a.UserId)
+            .Select(tt => tt.TagId)
             .Distinct()
             .ToListAsync(ct);
 
-        if (!agentIds.Any()) return new List<int>();
+        var skillFromTags = tagIds.Count == 0
+            ? new List<int>()
+            : await _db.SkillRoutingTags
+                .Where(rt => tagIds.Contains(rt.TagId))
+                .Select(rt => rt.SkillId)
+                .Distinct()
+                .ToListAsync(ct);
 
-        // Sort by open ticket count (ascending)
-        var agentLoads = new List<(int UserId, int OpenCount)>();
-        foreach (var agentId in agentIds)
+        var skillFromDept = new List<int>();
+        if (ticket.DepartmentId is { } deptId)
         {
-            var openCount = await _db.Tickets
-                .Where(t => t.AssignedTo == agentId)
-                .Where(t => t.Status != TicketStatus.Resolved && t.Status != TicketStatus.Closed)
-                .CountAsync(ct);
-            agentLoads.Add((agentId, openCount));
+            skillFromDept = await _db.SkillRoutingDepartments
+                .Where(rd => rd.DepartmentId == deptId)
+                .Select(rd => rd.SkillId)
+                .Distinct()
+                .ToListAsync(ct);
         }
 
-        return agentLoads
-            .OrderBy(a => a.OpenCount)
-            .Select(a => a.UserId)
+        var requiredSkillIds = skillFromTags.Union(skillFromDept).Distinct().ToList();
+        var requiredCount = requiredSkillIds.Count;
+        if (requiredCount == 0)
+        {
+            return new List<int>();
+        }
+
+        var candidateRows = await _db.AgentSkills
+            .AsNoTracking()
+            .Where(a => requiredSkillIds.Contains(a.SkillId))
+            .GroupBy(a => a.UserId)
+            .Where(g => g.Select(a => a.SkillId).Distinct().Count() == requiredCount)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                ProficiencySum = g.Sum(a => a.Proficiency),
+            })
+            .ToListAsync(ct);
+
+        if (candidateRows.Count == 0)
+        {
+            return new List<int>();
+        }
+
+        var userIds = candidateRows.Select(r => r.UserId).ToList();
+
+        var openCounts = await _db.Tickets
+            .Where(t =>
+                t.AssignedTo.HasValue && userIds.Contains(t.AssignedTo.Value)
+                                         && t.Status != TicketStatus.Resolved
+                                         && t.Status != TicketStatus.Closed)
+            .GroupBy(t => t.AssignedTo!.Value)
+            .Select(g => new { UserId = g.Key, Open = g.Count() })
+            .ToListAsync(ct);
+
+        var loads = openCounts.ToDictionary(x => x.UserId, x => x.Open);
+
+        return candidateRows
+            .OrderByDescending(r => r.ProficiencySum)
+            .ThenBy(r => loads.GetValueOrDefault(r.UserId, 0))
+            .ThenBy(r => r.UserId)
+            .Select(r => r.UserId)
             .ToList();
     }
 
-    /// <summary>
-    /// Auto-assign ticket to the best matching agent by skills.
-    /// </summary>
+    /// <summary>Best match (same ordering as list), or <c>null</c> when no eligible router.</summary>
     public async Task<int?> FindBestAgentAsync(Ticket ticket, CancellationToken ct = default)
     {
         var agents = await FindMatchingAgentIdsAsync(ticket, ct);
-        return agents.FirstOrDefault();
+        return agents.Count == 0 ? null : agents[0];
     }
 }
