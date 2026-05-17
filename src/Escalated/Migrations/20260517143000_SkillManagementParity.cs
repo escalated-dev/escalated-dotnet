@@ -231,3 +231,4 @@ public partial class SkillManagementParity : Migration
         migrationBuilder.DropTable(name: "escalated_skill_routing_tags");
         // AgentSkill reshape is not reversible from code — rollback requires a bespoke SQL restore (#58).
     }
+}
