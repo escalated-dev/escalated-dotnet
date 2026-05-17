@@ -14,7 +14,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.15" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.27" />
   </ItemGroup>
 
   <ItemGroup>
