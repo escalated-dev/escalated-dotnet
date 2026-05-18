@@ -373,6 +373,25 @@ Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
 ```
 
+## Localization
+
+Escalated for ASP.NET Core consumes its translation catalog from the
+central [`Escalated.Locale`](https://www.nuget.org/packages/Escalated.Locale)
+NuGet package. `AddEscalated()` registers a chained
+`IStringLocalizer` stack that resolves keys in this order:
+
+1. **Plugin-local overrides** -- `.resx` files under
+   `src/Escalated/Resources/Overrides/`. Empty by default.
+2. **Central catalog** -- embedded JSON resources from
+   `Escalated.Locale`, accessed through
+   `Escalated.Locale.LocaleProvider`.
+
+Adding a locale upstream lights it up across every host plugin without
+a code change here. Drop a resx into `Resources/Overrides/` only when
+you need a .NET-specific string that should not be back-ported to the
+shared catalog. See `src/Escalated/Resources/Overrides/README.md` for
+naming conventions.
+
 ## Testing
 
 ```bash
