@@ -2,7 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using Escalated.Models;
-using Escalated.Models.Newsletter;
+using NewsletterEntity = Escalated.Models.Newsletter.Newsletter;
+using NewsletterTemplate = Escalated.Models.Newsletter.NewsletterTemplate;
+using NewsletterDelivery = Escalated.Models.Newsletter.NewsletterDelivery;
 
 namespace Escalated.Services.Newsletter;
 
@@ -28,7 +30,7 @@ public class NewsletterRenderer
         _options = options;
     }
 
-    public string Render(NewsletterDelivery delivery, Newsletter newsletter, Contact contact, NewsletterTemplate? template = null)
+    public string Render(NewsletterDelivery delivery, NewsletterEntity newsletter, Contact contact, NewsletterTemplate? template = null)
     {
         var bodyMd = newsletter.BodyMarkdown ?? template?.BodyMarkdown ?? string.Empty;
         var themeSlug = newsletter.Theme ?? template?.Theme ?? _options.DefaultTheme;
