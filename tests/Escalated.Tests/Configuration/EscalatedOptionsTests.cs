@@ -1,4 +1,5 @@
 using Escalated.Configuration;
+using Xunit;
 
 namespace Escalated.Tests.Configuration;
 
