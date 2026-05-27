@@ -3,6 +3,7 @@ namespace Escalated.Configuration;
 public class EscalatedOptions
 {
     public const string SectionName = "Escalated";
+    private string _ticketReferencePrefix = "ESC";
 
     /// <summary>
     /// Route prefix for all Escalated endpoints (default: "support").
@@ -12,7 +13,21 @@ public class EscalatedOptions
     /// <summary>
     /// Ticket reference prefix (default: "ESC").
     /// </summary>
-    public string TicketReferencePrefix { get; set; } = "ESC";
+    public string TicketReferencePrefix
+    {
+        get => _ticketReferencePrefix;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (value.Contains('-'))
+            {
+                throw new ArgumentException("Ticket reference prefix cannot contain hyphens.", nameof(value));
+            }
+
+            _ticketReferencePrefix = value;
+        }
+    }
 
     /// <summary>
     /// Default ticket priority for new tickets.
