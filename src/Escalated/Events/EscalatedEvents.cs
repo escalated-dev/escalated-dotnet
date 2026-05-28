@@ -20,6 +20,7 @@ public record SlaBreachedEvent(Ticket Ticket, string BreachType);
 public record SlaWarningEvent(Ticket Ticket, string WarningType, int MinutesRemaining);
 public record TagAddedEvent(Ticket Ticket, int TagId, int? CauserId);
 public record TagRemovedEvent(Ticket Ticket, int TagId, int? CauserId);
+public record TicketCustomActionTriggeredEvent(Ticket Ticket, string Action, int? UserId, Dictionary<string, object>? Payload, Dictionary<string, object>? Metadata);
 
 /// <summary>
 /// Central event dispatcher interface for the Escalated system.

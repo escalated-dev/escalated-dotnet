@@ -73,6 +73,36 @@ public class EscalatedOptions
     /// Outbound + inbound email config.
     /// </summary>
     public EmailOptions Email { get; set; } = new();
+
+    /// <summary>
+    /// Host-defined custom ticket action buttons for the agent ticket screen.
+    /// </summary>
+    public List<TicketActionConfig> TicketActions { get; set; } = new();
+}
+
+/// <summary>
+/// A host-defined custom ticket action. Bound from the
+/// <c>Escalated:TicketActions</c> configuration section.
+/// </summary>
+public class TicketActionConfig
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>Button style: "primary" | "secondary" | "danger".</summary>
+    public string Variant { get; set; } = "secondary";
+
+    /// <summary>Whether the action appears for the ticket at all.</summary>
+    public bool Visible { get; set; } = true;
+
+    /// <summary>Whether the button is clickable (vs. shown but disabled).</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>Optional confirmation prompt shown before the action fires.</summary>
+    public string? Confirmation { get; set; }
+
+    /// <summary>Arbitrary metadata passed through to the UI and the event.</summary>
+    public Dictionary<string, object>? Metadata { get; set; }
 }
 
 /// <summary>

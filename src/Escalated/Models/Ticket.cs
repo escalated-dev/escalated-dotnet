@@ -158,6 +158,11 @@ public class Ticket
     [JsonPropertyName("requester_ticket_count")]
     public int? RequesterTicketCount { get; set; }
 
+    /// <summary>Host-defined custom actions visible for this ticket (with url + method).</summary>
+    [NotMapped]
+    [JsonPropertyName("custom_actions")]
+    public IEnumerable<object>? CustomActions { get; set; }
+
     // ── Related tickets ──────────────────────────────────────────────
 
     /// <summary>Linked tickets with reference, subject, and status.</summary>

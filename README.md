@@ -249,6 +249,7 @@ Every ticket action dispatches a domain event:
 | `DepartmentChangedEvent` | Department changed |
 | `TagAddedEvent` | Tag added |
 | `TagRemovedEvent` | Tag removed |
+| `TicketCustomActionTriggeredEvent` | Agent triggered a custom ticket action |
 
 Implement `IEscalatedEventDispatcher` to receive these events in your host application:
 
@@ -267,6 +268,42 @@ public class MyEventHandler : IEscalatedEventDispatcher
 // Register in DI
 services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 ```
+
+## Custom Ticket Actions
+
+Host applications can add custom buttons to the agent ticket screen and handle
+clicks via the event dispatcher. Register actions in configuration:
+
+```json
+{
+  "Escalated": {
+    "TicketActions": [
+      {
+        "Key": "sync-crm",
+        "Label": "Sync CRM",
+        "Variant": "primary",
+        "Confirmation": "Sync this ticket to the CRM?",
+        "Metadata": { "icon": "refresh-cw" }
+      }
+    ]
+  }
+}
+```
+
+Visible actions are exposed on the agent ticket response as `custom_actions`
+(each with a `url` and `method`). Triggering one
+(`POST /support/agent/tickets/{id}/actions/{action}`) validates the action is
+visible (404) and enabled (403), records an internal note for auditability, and
+dispatches `TicketCustomActionTriggeredEvent` to your `IEscalatedEventDispatcher`:
+
+```csharp
+if (@event is TicketCustomActionTriggeredEvent triggered && triggered.Action == "sync-crm")
+{
+    // triggered.Ticket, triggered.UserId, triggered.Payload, triggered.Metadata
+}
+```
+
+For dynamic per-ticket visibility, register your own `ITicketActionRegistry`.
 
 ## API Endpoints
 
