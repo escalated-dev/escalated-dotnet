@@ -1,5 +1,7 @@
+using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
+using Escalated.Events;
 using Escalated.Extensions;
 using Escalated.Models;
 using Escalated.Services;
@@ -16,14 +18,31 @@ public class AgentTicketController : ControllerBase
     private readonly AssignmentService _assignmentService;
     private readonly MacroService _macroService;
     private readonly EscalatedDbContext _db;
+    private readonly ITicketActionRegistry _actions;
+    private readonly IEscalatedEventDispatcher _events;
 
     public AgentTicketController(TicketService ticketService, AssignmentService assignmentService,
-        MacroService macroService, EscalatedDbContext db)
+        MacroService macroService, EscalatedDbContext db, ITicketActionRegistry actions,
+        IEscalatedEventDispatcher events)
     {
         _ticketService = ticketService;
         _assignmentService = assignmentService;
         _macroService = macroService;
         _db = db;
+        _actions = actions;
+        _events = events;
+    }
+
+    /// <summary>Serializes the visible custom actions for a ticket, adding url + method.</summary>
+    private List<Dictionary<string, object?>> CustomActionsForTicket(Ticket ticket, int? userId)
+    {
+        var actions = _actions.ForTicket(ticket, userId).Select(a => new Dictionary<string, object?>(a)).ToList();
+        foreach (var a in actions)
+        {
+            a["url"] = $"/support/agent/tickets/{ticket.Id}/actions/{a["key"]}";
+            a["method"] = "post";
+        }
+        return actions;
     }
 
     [HttpGet]
@@ -85,7 +104,34 @@ public class AgentTicketController : ControllerBase
                 .CountAsync(t => t.GuestEmail == ticket.GuestEmail);
         }
 
+        ticket.CustomActions = CustomActionsForTicket(ticket, null);
+
         return Ok(ticket);
+    }
+
+    [HttpPost("{id:int}/actions/{action}")]
+    public async Task<IActionResult> CustomAction(int id, string action,
+        [FromBody] CustomActionRequest? request, CancellationToken ct)
+    {
+        var ticket = await _ticketService.FindByIdAsync(id);
+        if (ticket == null) return NotFound();
+
+        var config = _actions.Find(action);
+        if (config == null || !config.Visible)
+            return NotFound(new { error = "Custom action not found." });
+        if (!config.Enabled)
+            return StatusCode(403, new { error = "Custom action is not enabled." });
+
+        var userId = request?.UserId;
+
+        // Record an internal note for auditability.
+        await _ticketService.AddReplyAsync(ticket, $"Custom action \"{action}\" was triggered.",
+            userId, "system", isNote: true, ct);
+
+        await _events.DispatchAsync(
+            new TicketCustomActionTriggeredEvent(ticket, action, userId, request?.Payload, config.Metadata), ct);
+
+        return Ok(new { message = "Custom action dispatched.", action });
     }
 
     [HttpPost("{id:int}/reply")]
@@ -198,3 +244,5 @@ public class AgentTicketController : ControllerBase
 }
 
 public record BulkActionRequest(int[] TicketIds, string Action, int? CauserId = null, string? Value = null);
+
+public record CustomActionRequest(int? UserId = null, Dictionary<string, object>? Payload = null);

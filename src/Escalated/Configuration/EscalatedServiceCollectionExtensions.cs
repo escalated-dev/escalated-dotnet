@@ -35,6 +35,10 @@ public static class EscalatedServiceCollectionExtensions
         // Register event dispatcher (no-op default; host apps can override)
         services.AddSingleton<IEscalatedEventDispatcher, NullEventDispatcher>();
 
+        // Custom ticket action registry (host apps can override for dynamic
+        // per-ticket/user visibility).
+        services.TryAddSingleton<ITicketActionRegistry, TicketActionRegistry>();
+
         // Register user directory (empty default; host apps register their own
         // implementation to surface their user table in the admin users page).
         services.TryAddSingleton<IUserDirectory, NullUserDirectory>();
