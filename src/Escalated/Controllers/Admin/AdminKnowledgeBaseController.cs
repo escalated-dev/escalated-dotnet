@@ -85,6 +85,6 @@ public class AdminKnowledgeBaseController : ControllerBase
     }
 }
 
-public record CreateArticleRequest(string Title, string Body, int? CategoryId = null, int? AuthorId = null);
+public record CreateArticleRequest(string Title, string Body, int? CategoryId = null, string? AuthorId = null);
 public record UpdateArticleRequest(string? Title = null, string? Body = null, int? CategoryId = null);
 public record CreateCategoryRequest(string Name, int? ParentId = null);

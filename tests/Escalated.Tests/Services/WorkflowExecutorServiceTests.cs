@@ -83,19 +83,32 @@ public class WorkflowExecutorServiceTests
         await executor.ExecuteAsync(ticket,
             "[{\"type\":\"assign_agent\",\"value\":\"42\"}]");
 
-        Assert.Equal(42, ticket.AssignedTo);
+        Assert.Equal("42", ticket.AssignedTo);
     }
 
     [Fact]
-    public async Task Execute_AssignAgent_NonNumericValueIsNoop()
+    public async Task Execute_AssignAgent_EmptyValueIsNoop()
     {
         var (executor, db, _) = CreateExecutor();
         var ticket = await SeedTicketAsync(db);
 
         await executor.ExecuteAsync(ticket,
-            "[{\"type\":\"assign_agent\",\"value\":\"not-a-number\"}]");
+            "[{\"type\":\"assign_agent\",\"value\":\"\"}]");
 
         Assert.Null(ticket.AssignedTo);
+    }
+
+    [Fact]
+    public async Task Execute_AssignAgent_AcceptsUuidStyleHostUserId()
+    {
+        var (executor, db, _) = CreateExecutor();
+        var ticket = await SeedTicketAsync(db);
+        const string agentId = "550e8400-e29b-41d4-a716-446655440000";
+
+        await executor.ExecuteAsync(ticket,
+            $"[{{\"type\":\"assign_agent\",\"value\":\"{agentId}\"}}]");
+
+        Assert.Equal(agentId, ticket.AssignedTo);
     }
 
     [Fact]

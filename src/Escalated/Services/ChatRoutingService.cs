@@ -52,7 +52,7 @@ public class ChatRoutingService
     public async Task<ChatRoutingRule> CreateRuleAsync(
         string name,
         int? departmentId = null,
-        int? agentId = null,
+        string? agentId = null,
         string? conditions = null,
         int priority = 0,
         CancellationToken ct = default)
@@ -78,7 +78,7 @@ public class ChatRoutingService
         int ruleId,
         string? name = null,
         int? departmentId = null,
-        int? agentId = null,
+        string? agentId = null,
         string? conditions = null,
         int? priority = null,
         bool? isActive = null,
@@ -89,7 +89,7 @@ public class ChatRoutingService
 
         if (name != null) rule.Name = name;
         if (departmentId.HasValue) rule.DepartmentId = departmentId;
-        if (agentId.HasValue) rule.AgentId = agentId;
+        if (!string.IsNullOrEmpty(agentId)) rule.AgentId = agentId;
         if (conditions != null) rule.Conditions = conditions;
         if (priority.HasValue) rule.Priority = priority.Value;
         if (isActive.HasValue) rule.IsActive = isActive.Value;
@@ -118,4 +118,4 @@ public class ChatRoutingService
     }
 }
 
-public record ChatRouteResult(int? DepartmentId, int? AgentId);
+public record ChatRouteResult(int? DepartmentId, string? AgentId);

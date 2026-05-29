@@ -34,7 +34,8 @@ public class ChatSession
     /// <summary>
     /// Agent user ID currently handling the chat, if any.
     /// </summary>
-    public int? AgentId { get; set; }
+    [MaxLength(255)]
+    public string? AgentId { get; set; }
 
     /// <summary>
     /// Department the chat is routed to.

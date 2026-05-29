@@ -80,7 +80,7 @@ public class ChatSessionService
             ticket.DepartmentId = route.DepartmentId;
             _db.Tickets.Update(ticket);
         }
-        if (route.AgentId.HasValue)
+        if (!string.IsNullOrEmpty(route.AgentId))
         {
             session.AgentId = route.AgentId;
             session.Status = "active";
@@ -106,7 +106,7 @@ public class ChatSessionService
     /// <summary>
     /// Agent accepts a waiting chat session.
     /// </summary>
-    public async Task<ChatSession> AcceptAsync(int sessionId, int agentId, CancellationToken ct = default)
+    public async Task<ChatSession> AcceptAsync(int sessionId, string agentId, CancellationToken ct = default)
     {
         var session = await FindByIdAsync(sessionId, ct)
             ?? throw new InvalidOperationException("Chat session not found.");
@@ -143,7 +143,7 @@ public class ChatSessionService
     public async Task<Reply> SendMessageAsync(
         int sessionId,
         string body,
-        int? authorId = null,
+        string? authorId = null,
         string authorType = "visitor",
         CancellationToken ct = default)
     {
@@ -169,7 +169,7 @@ public class ChatSessionService
     /// <summary>
     /// End a chat session. The underlying ticket is transitioned to Resolved.
     /// </summary>
-    public async Task<ChatSession> EndAsync(int sessionId, int? causerId = null, CancellationToken ct = default)
+    public async Task<ChatSession> EndAsync(int sessionId, string? causerId = null, CancellationToken ct = default)
     {
         var session = await FindByIdAsync(sessionId, ct)
             ?? throw new InvalidOperationException("Chat session not found.");
@@ -214,7 +214,7 @@ public class ChatSessionService
             .ToListAsync(ct);
     }
 
-    public async Task<List<ChatSession>> GetActiveSessionsForAgentAsync(int agentId, CancellationToken ct = default)
+    public async Task<List<ChatSession>> GetActiveSessionsForAgentAsync(string agentId, CancellationToken ct = default)
     {
         return await _db.ChatSessions
             .Where(s => s.AgentId == agentId && s.Status == "active")
@@ -225,5 +225,5 @@ public class ChatSessionService
 
 // Chat events
 public record ChatSessionStartedEvent(ChatSession Session);
-public record ChatSessionAcceptedEvent(ChatSession Session, int AgentId);
-public record ChatSessionEndedEvent(ChatSession Session, int? CauserId);
+public record ChatSessionAcceptedEvent(ChatSession Session, string AgentId);
+public record ChatSessionEndedEvent(ChatSession Session, string? CauserId);

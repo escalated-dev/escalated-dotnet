@@ -37,10 +37,10 @@ public class ChatSessionServiceTests
         var service = CreateService(out _);
         var session = await service.StartAsync("Visitor", initialMessage: "Hi");
 
-        var accepted = await service.AcceptAsync(session.Id, agentId: 42);
+        var accepted = await service.AcceptAsync(session.Id, agentId: "42");
 
         Assert.Equal("active", accepted.Status);
-        Assert.Equal(42, accepted.AgentId);
+        Assert.Equal("42", accepted.AgentId);
         Assert.NotNull(accepted.AcceptedAt);
     }
 
@@ -49,10 +49,10 @@ public class ChatSessionServiceTests
     {
         var service = CreateService(out _);
         var session = await service.StartAsync("Visitor");
-        await service.AcceptAsync(session.Id, agentId: 1);
+        await service.AcceptAsync(session.Id, agentId: "1");
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.AcceptAsync(session.Id, agentId: 2));
+            () => service.AcceptAsync(session.Id, agentId: "2"));
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class ChatSessionServiceTests
         var service = CreateService(out _);
         await service.StartAsync("Visitor1");
         var s2 = await service.StartAsync("Visitor2");
-        await service.AcceptAsync(s2.Id, agentId: 1);
+        await service.AcceptAsync(s2.Id, agentId: "1");
 
         var waiting = await service.GetWaitingSessionsAsync();
 
@@ -121,10 +121,10 @@ public class ChatSessionServiceTests
         var service = CreateService(out _);
         var s1 = await service.StartAsync("Visitor1");
         var s2 = await service.StartAsync("Visitor2");
-        await service.AcceptAsync(s1.Id, agentId: 10);
-        await service.AcceptAsync(s2.Id, agentId: 20);
+        await service.AcceptAsync(s1.Id, agentId: "10");
+        await service.AcceptAsync(s2.Id, agentId: "20");
 
-        var agentSessions = await service.GetActiveSessionsForAgentAsync(10);
+        var agentSessions = await service.GetActiveSessionsForAgentAsync("10");
 
         Assert.Single(agentSessions);
         Assert.Equal("Visitor1", agentSessions[0].VisitorName);

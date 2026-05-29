@@ -19,7 +19,8 @@ public class TicketActivity
     // Polymorphic causer
     [MaxLength(255)]
     public string? CauserType { get; set; }
-    public int? CauserId { get; set; }
+    [MaxLength(255)]
+    public string? CauserId { get; set; }
 
     public string? Properties { get; set; } // JSON
 

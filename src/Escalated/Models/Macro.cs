@@ -18,7 +18,8 @@ public class Macro
     /// </summary>
     public string Actions { get; set; } = "[]";
 
-    public int? CreatedBy { get; set; }
+    [MaxLength(255)]
+    public string? CreatedBy { get; set; }
 
     public bool IsShared { get; set; } = true;
 

@@ -25,11 +25,11 @@ public interface IUserDirectory
     Task<UserDirectoryPage> ListAsync(string? search, int page, int pageSize, CancellationToken ct = default);
 
     /// <summary>Looks up a single user by id. Returns null when no match.</summary>
-    Task<UserDirectoryEntry?> FindAsync(int id, CancellationToken ct = default);
+    Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default);
 }
 
 /// <summary>Row shape consumed by <c>Escalated/Admin/Users/Index</c>.</summary>
-public record UserDirectoryEntry(int Id, string? Name, string? Email);
+public record UserDirectoryEntry(string Id, string? Name, string? Email);
 
 /// <summary>Paginator wrapper aligned with Laravel-style paginate() output.</summary>
 public record UserDirectoryPage(
@@ -48,6 +48,6 @@ public class NullUserDirectory : IUserDirectory
     public Task<UserDirectoryPage> ListAsync(string? search, int page, int pageSize, CancellationToken ct = default)
         => Task.FromResult(new UserDirectoryPage(Array.Empty<UserDirectoryEntry>(), 0, page, pageSize));
 
-    public Task<UserDirectoryEntry?> FindAsync(int id, CancellationToken ct = default)
+    public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default)
         => Task.FromResult<UserDirectoryEntry?>(null);
 }

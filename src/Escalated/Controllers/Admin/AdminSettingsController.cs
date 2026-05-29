@@ -313,7 +313,7 @@ public class AdminSettingsController : ControllerBase
     // --- Audit Logs ---
 
     [HttpGet("audit-logs")]
-    public async Task<IActionResult> AuditLogs([FromQuery] int? userId, [FromQuery] string? entityType,
+    public async Task<IActionResult> AuditLogs([FromQuery] string? userId, [FromQuery] string? entityType,
         [FromQuery] int page = 1, [FromQuery] int perPage = 50)
     {
         var (items, total) = await _auditLogService.ListAsync(userId, entityType, null, page, perPage);
@@ -447,7 +447,7 @@ public class AdminSettingsController : ControllerBase
         var userIdRaw = await _settingsService.GetAsync("guest_policy_user_id", "", ct) ?? "";
         var template = await _settingsService.GetAsync("guest_policy_signup_url_template", "", ct) ?? "";
 
-        int? userId = int.TryParse(userIdRaw, out var parsed) && parsed > 0 ? parsed : null;
+        var userId = string.IsNullOrWhiteSpace(userIdRaw) ? null : userIdRaw.Trim();
 
         return Ok(new
         {
@@ -472,10 +472,10 @@ public class AdminSettingsController : ControllerBase
         // can't leak back into behavior after a mode switch.
         if (mode == "guest_user")
         {
-            var userId = request.GuestPolicyUserId.GetValueOrDefault(0);
+            var userId = (request.GuestPolicyUserId ?? string.Empty).Trim();
             await _settingsService.SetAsync(
                 "guest_policy_user_id",
-                userId > 0 ? userId.ToString() : "",
+                string.IsNullOrEmpty(userId) ? "" : userId,
                 ct);
         }
         else
@@ -500,7 +500,7 @@ public class AdminSettingsController : ControllerBase
 
 public record PublicTicketsSettingsRequest(
     [property: JsonPropertyName("guest_policy_mode")] string? GuestPolicyMode,
-    [property: JsonPropertyName("guest_policy_user_id")] int? GuestPolicyUserId,
+    [property: JsonPropertyName("guest_policy_user_id")] string? GuestPolicyUserId,
     [property: JsonPropertyName("guest_policy_signup_url_template")] string? GuestPolicySignupUrlTemplate);
 
 public record CreateApiTokenRequest(string Name, string? Abilities = null, string? TokenableType = null,

@@ -42,11 +42,11 @@ public class PublicTicketsSettingsTests
 
         var result = await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
             GuestPolicyMode: "guest_user",
-            GuestPolicyUserId: 42,
+            GuestPolicyUserId: "42",
             GuestPolicySignupUrlTemplate: "https://example.com/signup"));
 
         var ok = Assert.IsType<OkObjectResult>(result);
-        AssertPolicy(ok.Value!, "guest_user", 42, "");
+        AssertPolicy(ok.Value!, "guest_user", "42", "");
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class PublicTicketsSettingsTests
 
         var result = await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
             GuestPolicyMode: "prompt_signup",
-            GuestPolicyUserId: 99,
+            GuestPolicyUserId: "99",
             GuestPolicySignupUrlTemplate: "https://example.com/join?t={{token}}"));
 
         var ok = Assert.IsType<OkObjectResult>(result);
@@ -69,7 +69,7 @@ public class PublicTicketsSettingsTests
         var controller = NewController(out _);
 
         await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
-            GuestPolicyMode: "guest_user", GuestPolicyUserId: 42, GuestPolicySignupUrlTemplate: null));
+            GuestPolicyMode: "guest_user", GuestPolicyUserId: "42", GuestPolicySignupUrlTemplate: null));
 
         var result = await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
             GuestPolicyMode: "unassigned", GuestPolicyUserId: null, GuestPolicySignupUrlTemplate: null));
@@ -85,7 +85,7 @@ public class PublicTicketsSettingsTests
 
         var result = await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
             GuestPolicyMode: "bogus-value",
-            GuestPolicyUserId: 1,
+            GuestPolicyUserId: "1",
             GuestPolicySignupUrlTemplate: "ignored"));
 
         var ok = Assert.IsType<OkObjectResult>(result);
@@ -109,17 +109,16 @@ public class PublicTicketsSettingsTests
     }
 
     [Fact]
-    public async Task Put_GuestUserMode_IgnoresZeroUserId_AsEmpty()
+    public async Task Put_GuestUserMode_IgnoresBlankUserId_AsEmpty()
     {
         var controller = NewController(out _);
 
         var result = await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
             GuestPolicyMode: "guest_user",
-            GuestPolicyUserId: 0,
+            GuestPolicyUserId: "   ",
             GuestPolicySignupUrlTemplate: null));
 
         var ok = Assert.IsType<OkObjectResult>(result);
-        // guest_policy_user_id is stored as empty string, surfaces as null in the GET payload.
         AssertPolicy(ok.Value!, "guest_user", null, "");
     }
 
@@ -129,20 +128,20 @@ public class PublicTicketsSettingsTests
         var controller = NewController(out _);
 
         await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
-            GuestPolicyMode: "guest_user", GuestPolicyUserId: 7, GuestPolicySignupUrlTemplate: null));
+            GuestPolicyMode: "guest_user", GuestPolicyUserId: "7", GuestPolicySignupUrlTemplate: null));
 
         await controller.UpdatePublicTicketsSettings(new PublicTicketsSettingsRequest(
-            GuestPolicyMode: "guest_user", GuestPolicyUserId: 15, GuestPolicySignupUrlTemplate: null));
+            GuestPolicyMode: "guest_user", GuestPolicyUserId: "15", GuestPolicySignupUrlTemplate: null));
 
         var result = await controller.GetPublicTicketsSettings();
         var ok = Assert.IsType<OkObjectResult>(result);
-        AssertPolicy(ok.Value!, "guest_user", 15, "");
+        AssertPolicy(ok.Value!, "guest_user", "15", "");
     }
 
-    private static void AssertPolicy(object payload, string expectedMode, int? expectedUserId, string expectedTemplate)
+    private static void AssertPolicy(object payload, string expectedMode, string? expectedUserId, string expectedTemplate)
     {
         Assert.Equal(expectedMode, GetProp<string>(payload, "guest_policy_mode"));
-        Assert.Equal(expectedUserId, GetProp<int?>(payload, "guest_policy_user_id"));
+        Assert.Equal(expectedUserId, GetProp<string?>(payload, "guest_policy_user_id"));
         Assert.Equal(expectedTemplate, GetProp<string>(payload, "guest_policy_signup_url_template"));
     }
 

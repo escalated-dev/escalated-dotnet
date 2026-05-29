@@ -19,7 +19,7 @@ public class AssignmentService
         _ticketService = ticketService;
     }
 
-    public async Task<Ticket> AssignAsync(Ticket ticket, int agentId, int? causerId = null,
+    public async Task<Ticket> AssignAsync(Ticket ticket, string agentId, string? causerId = null,
         CancellationToken ct = default)
     {
         ticket.AssignedTo = agentId;
@@ -34,7 +34,7 @@ public class AssignmentService
         return ticket;
     }
 
-    public async Task<Ticket> UnassignAsync(Ticket ticket, int? causerId = null,
+    public async Task<Ticket> UnassignAsync(Ticket ticket, string? causerId = null,
         CancellationToken ct = default)
     {
         var previousAgentId = ticket.AssignedTo;
@@ -43,7 +43,7 @@ public class AssignmentService
         _db.Tickets.Update(ticket);
 
         await _ticketService.LogActivityAsync(ticket, ActivityType.Unassigned, causerId,
-            new Dictionary<string, object> { ["previous_agent_id"] = previousAgentId ?? 0 }, ct);
+            new Dictionary<string, object> { ["previous_agent_id"] = previousAgentId ?? string.Empty }, ct);
 
         await _db.SaveChangesAsync(ct);
         await _events.DispatchAsync(new TicketUnassignedEvent(ticket, previousAgentId, causerId), ct);
@@ -65,7 +65,7 @@ public class AssignmentService
         if (!agents.Any()) return null;
 
         // Find the agent with the fewest open tickets
-        var agentLoads = new List<(int UserId, int OpenCount)>();
+        var agentLoads = new List<(string UserId, int OpenCount)>();
         foreach (var agentId in agents)
         {
             var count = await _db.Tickets
@@ -79,7 +79,7 @@ public class AssignmentService
         return await AssignAsync(ticket, bestAgent.UserId, null, ct);
     }
 
-    public async Task<AgentWorkload> GetAgentWorkloadAsync(int agentId, CancellationToken ct = default)
+    public async Task<AgentWorkload> GetAgentWorkloadAsync(string agentId, CancellationToken ct = default)
     {
         var openCount = await _db.Tickets
             .Where(t => t.AssignedTo == agentId)

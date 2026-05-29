@@ -33,9 +33,9 @@ public class AdminUsersControllerTests
     public async Task Index_ListsUsersWithAdminAgentFlags()
     {
         var (controller, db, directory) = NewController();
-        var admin = directory.Add(1, "Admin", "admin@example.com");
-        var customer = directory.Add(2, "Customer", "customer@example.com");
-        var agent = directory.Add(3, "Agent", "agent@example.com");
+        var admin = directory.Add("1", "Admin", "admin@example.com");
+        var customer = directory.Add("2", "Customer", "customer@example.com");
+        var agent = directory.Add("3", "Agent", "agent@example.com");
 
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AdminRoleSlug);
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AgentRoleSlug);
@@ -69,9 +69,9 @@ public class AdminUsersControllerTests
     {
         var (controller, db, directory) = NewController();
         // Insert out-of-order to prove the controller re-sorts the page.
-        var customer = directory.Add(1, "Customer", "customer@example.com");
-        var admin = directory.Add(2, "Admin", "admin@example.com");
-        var agent = directory.Add(3, "Agent", "agent@example.com");
+        var customer = directory.Add("1", "Customer", "customer@example.com");
+        var admin = directory.Add("2", "Admin", "admin@example.com");
+        var agent = directory.Add("3", "Agent", "agent@example.com");
 
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AdminRoleSlug);
         await GrantRoleAsync(db, agent.Id, AdminUsersController.AgentRoleSlug);
@@ -93,7 +93,7 @@ public class AdminUsersControllerTests
     public async Task UpdateRole_PromotesUserToAdmin_AlsoGrantsAgent()
     {
         var (controller, db, directory) = NewController();
-        var target = directory.Add(10, "Target", "target@example.com");
+        var target = directory.Add("10", "Target", "target@example.com");
 
         var result = await controller.UpdateRole(
             target.Id,
@@ -109,7 +109,7 @@ public class AdminUsersControllerTests
     public async Task UpdateRole_PromotesUserToAgentOnly()
     {
         var (controller, db, directory) = NewController();
-        var target = directory.Add(11, "Target", "target@example.com");
+        var target = directory.Add("11", "Target", "target@example.com");
 
         var result = await controller.UpdateRole(
             target.Id,
@@ -125,7 +125,7 @@ public class AdminUsersControllerTests
     public async Task UpdateRole_PreventsAdminFromDemotingThemselves()
     {
         var (controller, db, directory) = NewController();
-        var admin = directory.Add(42, "Admin", "admin@example.com");
+        var admin = directory.Add("42", "Admin", "admin@example.com");
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AdminRoleSlug);
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AgentRoleSlug);
 
@@ -145,7 +145,7 @@ public class AdminUsersControllerTests
     public async Task UpdateRole_DemotingAgentOffOfAnAdmin_AlsoRevokesAdmin()
     {
         var (controller, db, directory) = NewController();
-        var target = directory.Add(50, "Target", "target@example.com");
+        var target = directory.Add("50", "Target", "target@example.com");
         await GrantRoleAsync(db, target.Id, AdminUsersController.AdminRoleSlug);
         await GrantRoleAsync(db, target.Id, AdminUsersController.AgentRoleSlug);
 
@@ -165,9 +165,9 @@ public class AdminUsersControllerTests
     public async Task Index_FiltersUsersBySearchTerm()
     {
         var (controller, _, directory) = NewController();
-        directory.Add(1, "Admin", "admin@example.com");
-        directory.Add(2, "Jane", "jane@acme.test");
-        directory.Add(3, "Bob", "bob@globex.test");
+        directory.Add("1", "Admin", "admin@example.com");
+        directory.Add("2", "Jane", "jane@acme.test");
+        directory.Add("3", "Bob", "bob@globex.test");
 
         var result = await controller.Index(search: "acme");
 
@@ -179,7 +179,7 @@ public class AdminUsersControllerTests
         Assert.Equal("acme", response.Filters.Search);
     }
 
-    private static async Task GrantRoleAsync(EscalatedDbContext db, int userId, string slug)
+    private static async Task GrantRoleAsync(EscalatedDbContext db, string userId, string slug)
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Slug == slug)
             ?? db.Roles.Add(new Role
@@ -195,7 +195,7 @@ public class AdminUsersControllerTests
         await db.SaveChangesAsync();
     }
 
-    private static async Task<bool> HasRoleAsync(EscalatedDbContext db, int userId, string slug)
+    private static async Task<bool> HasRoleAsync(EscalatedDbContext db, string userId, string slug)
     {
         return await db.RoleUsers
             .AnyAsync(ru => ru.UserId == userId && ru.Role != null && ru.Role.Slug == slug);
@@ -211,7 +211,7 @@ public class AdminUsersControllerTests
     {
         private readonly List<UserDirectoryEntry> _users = new();
 
-        public UserDirectoryEntry Add(int id, string? name, string? email)
+        public UserDirectoryEntry Add(string id, string? name, string? email)
         {
             var entry = new UserDirectoryEntry(id, name, email);
             _users.Add(entry);
@@ -234,7 +234,7 @@ public class AdminUsersControllerTests
             return Task.FromResult(new UserDirectoryPage(items, all.Count, page, pageSize));
         }
 
-        public Task<UserDirectoryEntry?> FindAsync(int id, CancellationToken ct = default)
+        public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default)
             => Task.FromResult(_users.FirstOrDefault(u => u.Id == id));
     }
 }

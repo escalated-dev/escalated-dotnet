@@ -44,7 +44,7 @@ public class MergeServiceTests
         });
         await db.SaveChangesAsync();
 
-        await service.MergeAsync(source, target, 1);
+        await service.MergeAsync(source, target, "1");
 
         await db.Entry(source).ReloadAsync();
         Assert.Equal(TicketStatus.Closed, source.Status);

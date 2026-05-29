@@ -16,7 +16,7 @@ public class AdminSkillsControllerTests
     {
         private readonly List<UserDirectoryEntry> _users = new();
 
-        public UserDirectoryEntry Add(int id, string? name, string? email)
+        public UserDirectoryEntry Add(string id, string? name, string? email)
         {
             var e = new UserDirectoryEntry(id, name, email);
             _users.Add(e);
@@ -29,7 +29,7 @@ public class AdminSkillsControllerTests
             return Task.FromResult(new UserDirectoryPage(q.ToList(), q.Count(), page, pageSize));
         }
 
-        public Task<UserDirectoryEntry?> FindAsync(int id, CancellationToken ct = default)
+        public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default)
             => Task.FromResult(_users.FirstOrDefault(u => u.Id == id));
     }
 
@@ -49,10 +49,10 @@ public class AdminSkillsControllerTests
         db.Roles.Add(agentRole);
         await db.SaveChangesAsync();
 
-        dir.Add(10, "Agnes", "agnes@test");
-        dir.Add(11, "Ben", "ben@test");
-        db.RoleUsers.Add(new RoleUser { UserId = 10, RoleId = agentRole.Id });
-        db.RoleUsers.Add(new RoleUser { UserId = 11, RoleId = agentRole.Id });
+        dir.Add("10", "Agnes", "agnes@test");
+        dir.Add("11", "Ben", "ben@test");
+        db.RoleUsers.Add(new RoleUser { UserId = "10", RoleId = agentRole.Id });
+        db.RoleUsers.Add(new RoleUser { UserId = "11", RoleId = agentRole.Id });
         await db.SaveChangesAsync();
     }
 
@@ -67,7 +67,7 @@ public class AdminSkillsControllerTests
         return (t, d);
     }
 
-    private static async Task GrantRoleSlugAsync(EscalatedDbContext db, int userId, string slug)
+    private static async Task GrantRoleSlugAsync(EscalatedDbContext db, string userId, string slug)
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Slug == slug);
         if (role is null)
@@ -131,8 +131,8 @@ public class AdminSkillsControllerTests
                 RoutingDepartmentIds = new[] { dept.Id },
                 Agents = new[]
                 {
-                    new AgentSkillEntryDto { UserId = 10, Proficiency = 5 },
-                    new AgentSkillEntryDto { UserId = 11, Proficiency = 2 },
+                    new AgentSkillEntryDto { UserId = "10", Proficiency = 5 },
+                    new AgentSkillEntryDto { UserId = "11", Proficiency = 2 },
                 },
             });
 
@@ -192,8 +192,8 @@ public class AdminSkillsControllerTests
                 Agents =
                     new[]
                     {
-                        new AgentSkillEntryDto { UserId = 10, Proficiency = 4 },
-                        new AgentSkillEntryDto { UserId = 10, Proficiency = 1 }, // last wins within payload
+                        new AgentSkillEntryDto { UserId = "10", Proficiency = 4 },
+                        new AgentSkillEntryDto { UserId = "10", Proficiency = 1 }, // last wins within payload
                     },
             });
 

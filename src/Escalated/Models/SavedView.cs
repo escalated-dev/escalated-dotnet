@@ -11,7 +11,8 @@ public class SavedView
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    public int? UserId { get; set; }
+    [MaxLength(255)]
+    public string? UserId { get; set; }
 
     /// <summary>
     /// JSON object with filter configuration

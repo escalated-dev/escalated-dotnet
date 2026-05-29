@@ -13,7 +13,7 @@ public class SideConversationService
         _db = db;
     }
 
-    public async Task<SideConversation> CreateAsync(int ticketId, string subject, int createdBy,
+    public async Task<SideConversation> CreateAsync(int ticketId, string subject, string createdBy,
         CancellationToken ct = default)
     {
         var conversation = new SideConversation
@@ -30,7 +30,7 @@ public class SideConversationService
         return conversation;
     }
 
-    public async Task<SideConversationReply> AddReplyAsync(int conversationId, string body, int authorId,
+    public async Task<SideConversationReply> AddReplyAsync(int conversationId, string body, string authorId,
         CancellationToken ct = default)
     {
         var reply = new SideConversationReply

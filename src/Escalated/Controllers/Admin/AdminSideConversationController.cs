@@ -44,5 +44,5 @@ public class AdminSideConversationController : ControllerBase
     }
 }
 
-public record CreateSideConversationRequest(int TicketId, string Subject, int CreatedBy);
-public record SideConversationReplyRequest(string Body, int AuthorId);
+public record CreateSideConversationRequest(int TicketId, string Subject, string CreatedBy);
+public record SideConversationReplyRequest(string Body, string AuthorId);

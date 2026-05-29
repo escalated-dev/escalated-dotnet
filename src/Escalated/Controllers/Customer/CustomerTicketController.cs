@@ -26,7 +26,7 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index([FromQuery] int requesterId,
+    public async Task<IActionResult> Index([FromQuery] string requesterId,
         [FromQuery] TicketListFilters? filters, [FromQuery] int page = 1, [FromQuery] int perPage = 25)
     {
         filters ??= new TicketListFilters();
@@ -53,7 +53,7 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Show(int id, [FromQuery] int requesterId)
+    public async Task<IActionResult> Show(int id, [FromQuery] string requesterId)
     {
         var ticket = await _db.Tickets
             .Include(t => t.Replies.OrderByDescending(r => r.CreatedAt))
@@ -123,7 +123,7 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpPost("{id:int}/close")]
-    public async Task<IActionResult> Close(int id, [FromQuery] int requesterId)
+    public async Task<IActionResult> Close(int id, [FromQuery] string requesterId)
     {
         if (!_options.AllowCustomerClose)
             return StatusCode(403, new { error = "Customers cannot close tickets." });
@@ -137,7 +137,7 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpPost("{id:int}/reopen")]
-    public async Task<IActionResult> Reopen(int id, [FromQuery] int requesterId)
+    public async Task<IActionResult> Reopen(int id, [FromQuery] string requesterId)
     {
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
@@ -149,7 +149,7 @@ public class CustomerTicketController : ControllerBase
 }
 
 public record CreateTicketRequest(string Subject, string? Description = null,
-    int? RequesterId = null, string? RequesterType = null,
+    string? RequesterId = null, string? RequesterType = null,
     string? Priority = null, int? DepartmentId = null, string? TicketType = null);
 
-public record CustomerReplyRequest(string Body, int RequesterId);
+public record CustomerReplyRequest(string Body, string RequesterId);

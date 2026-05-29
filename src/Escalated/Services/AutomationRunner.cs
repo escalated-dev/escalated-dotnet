@@ -138,7 +138,7 @@ public class AutomationRunner
                         _db.Tickets.Update(ticket);
                         break;
                     case "assign":
-                        ticket.AssignedTo = int.Parse(value);
+                        ticket.AssignedTo = value;
                         ticket.UpdatedAt = DateTime.UtcNow;
                         _db.Tickets.Update(ticket);
                         break;

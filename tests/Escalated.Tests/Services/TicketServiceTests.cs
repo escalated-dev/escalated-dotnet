@@ -120,7 +120,7 @@ public class TicketServiceTests
         var service = CreateService(out var events);
         var ticket = await service.CreateAsync("Test", "desc");
 
-        var reply = await service.AddReplyAsync(ticket, "This is a reply", authorId: 1);
+        var reply = await service.AddReplyAsync(ticket, "This is a reply", authorId: "1");
 
         Assert.Equal("This is a reply", reply.Body);
         Assert.False(reply.IsInternalNote);
@@ -133,7 +133,7 @@ public class TicketServiceTests
         var service = CreateService(out var events);
         var ticket = await service.CreateAsync("Test", "desc");
 
-        var note = await service.AddReplyAsync(ticket, "Internal note", authorId: 1, isNote: true);
+        var note = await service.AddReplyAsync(ticket, "Internal note", authorId: "1", isNote: true);
 
         Assert.True(note.IsInternalNote);
         Assert.Equal("note", note.Type);

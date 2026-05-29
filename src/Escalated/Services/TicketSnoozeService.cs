@@ -22,7 +22,7 @@ public class TicketSnoozeService
     /// <summary>
     /// Snooze a ticket until a specified date. Sets status and records activity.
     /// </summary>
-    public async Task<Ticket> SnoozeAsync(Ticket ticket, DateTime snoozeUntil, int? causerId = null,
+    public async Task<Ticket> SnoozeAsync(Ticket ticket, DateTime snoozeUntil, string? causerId = null,
         CancellationToken ct = default)
     {
         ticket.SnoozedUntil = snoozeUntil;
@@ -42,7 +42,7 @@ public class TicketSnoozeService
     /// <summary>
     /// Unsnooze a ticket and reopen it.
     /// </summary>
-    public async Task<Ticket> UnsnoozeAsync(Ticket ticket, int? causerId = null,
+    public async Task<Ticket> UnsnoozeAsync(Ticket ticket, string? causerId = null,
         CancellationToken ct = default)
     {
         ticket.SnoozedUntil = null;

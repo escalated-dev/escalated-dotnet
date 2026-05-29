@@ -57,6 +57,8 @@ public class RolePermission
 public class RoleUser
 {
     public int RoleId { get; set; }
-    public int UserId { get; set; }
+
+    [MaxLength(255)]
+    public string UserId { get; set; } = string.Empty;
     public Role? Role { get; set; }
 }

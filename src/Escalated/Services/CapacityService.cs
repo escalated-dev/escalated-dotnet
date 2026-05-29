@@ -16,7 +16,7 @@ public class CapacityService
     /// <summary>
     /// Check if an agent can accept a new ticket on a given channel.
     /// </summary>
-    public async Task<bool> CanAcceptTicketAsync(int userId, string channel = "default",
+    public async Task<bool> CanAcceptTicketAsync(string userId, string channel = "default",
         CancellationToken ct = default)
     {
         var capacity = await GetOrCreateAsync(userId, channel, ct);
@@ -26,7 +26,7 @@ public class CapacityService
     /// <summary>
     /// Increment the agent's current load.
     /// </summary>
-    public async Task IncrementLoadAsync(int userId, string channel = "default",
+    public async Task IncrementLoadAsync(string userId, string channel = "default",
         CancellationToken ct = default)
     {
         var capacity = await GetOrCreateAsync(userId, channel, ct);
@@ -39,7 +39,7 @@ public class CapacityService
     /// <summary>
     /// Decrement the agent's current load.
     /// </summary>
-    public async Task DecrementLoadAsync(int userId, string channel = "default",
+    public async Task DecrementLoadAsync(string userId, string channel = "default",
         CancellationToken ct = default)
     {
         var capacity = await GetOrCreateAsync(userId, channel, ct);
@@ -63,7 +63,7 @@ public class CapacityService
     /// <summary>
     /// Set the max concurrent tickets for an agent on a channel.
     /// </summary>
-    public async Task SetMaxConcurrentAsync(int userId, int maxConcurrent, string channel = "default",
+    public async Task SetMaxConcurrentAsync(string userId, int maxConcurrent, string channel = "default",
         CancellationToken ct = default)
     {
         var capacity = await GetOrCreateAsync(userId, channel, ct);
@@ -73,7 +73,7 @@ public class CapacityService
         await _db.SaveChangesAsync(ct);
     }
 
-    private async Task<AgentCapacity> GetOrCreateAsync(int userId, string channel, CancellationToken ct)
+    private async Task<AgentCapacity> GetOrCreateAsync(string userId, string channel, CancellationToken ct)
     {
         var capacity = await _db.AgentCapacities
             .FirstOrDefaultAsync(a => a.UserId == userId && a.Channel == channel, ct);

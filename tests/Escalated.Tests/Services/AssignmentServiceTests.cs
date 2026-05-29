@@ -29,9 +29,9 @@ public class AssignmentServiceTests
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync();
 
-        var assigned = await service.AssignAsync(ticket, 42, 1);
+        var assigned = await service.AssignAsync(ticket, "42", "1");
 
-        Assert.Equal(42, assigned.AssignedTo);
+        Assert.Equal("42", assigned.AssignedTo);
         events.Verify(e => e.DispatchAsync(It.IsAny<TicketAssignedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -49,14 +49,14 @@ public class AssignmentServiceTests
             Reference = "ESC-00002",
             Status = TicketStatus.Open,
             Priority = TicketPriority.Medium,
-            AssignedTo = 42,
+            AssignedTo = "42",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync();
 
-        var unassigned = await service.UnassignAsync(ticket, 1);
+        var unassigned = await service.UnassignAsync(ticket, "1");
 
         Assert.Null(unassigned.AssignedTo);
         events.Verify(e => e.DispatchAsync(It.IsAny<TicketUnassignedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -76,7 +76,7 @@ public class AssignmentServiceTests
             Reference = "ESC-00001",
             Status = TicketStatus.Open,
             Priority = TicketPriority.Medium,
-            AssignedTo = 1,
+            AssignedTo = "1",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });
@@ -86,7 +86,7 @@ public class AssignmentServiceTests
             Reference = "ESC-00002",
             Status = TicketStatus.InProgress,
             Priority = TicketPriority.Medium,
-            AssignedTo = 1,
+            AssignedTo = "1",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });
@@ -96,14 +96,14 @@ public class AssignmentServiceTests
             Reference = "ESC-00003",
             Status = TicketStatus.Resolved,
             Priority = TicketPriority.Medium,
-            AssignedTo = 1,
+            AssignedTo = "1",
             ResolvedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
-        var workload = await service.GetAgentWorkloadAsync(1);
+        var workload = await service.GetAgentWorkloadAsync("1");
 
         Assert.Equal(2, workload.Open);
         Assert.Equal(1, workload.ResolvedToday);

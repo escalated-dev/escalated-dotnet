@@ -18,7 +18,7 @@ public class MacroService
     /// <summary>
     /// Apply a macro's actions to a ticket.
     /// </summary>
-    public async Task<Ticket> ApplyAsync(Macro macro, Ticket ticket, int causerId,
+    public async Task<Ticket> ApplyAsync(Macro macro, Ticket ticket, string causerId,
         CancellationToken ct = default)
     {
         var actions = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(macro.Actions)
@@ -41,7 +41,7 @@ public class MacroService
                     break;
                 case "assign":
                     ticket = await _assignmentService.AssignAsync(
-                        ticket, int.Parse(value), causerId, ct);
+                        ticket, value, causerId, ct);
                     break;
                 case "tags":
                     var tagIds = JsonSerializer.Deserialize<int[]>(value) ?? Array.Empty<int>();

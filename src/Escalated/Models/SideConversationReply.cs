@@ -14,7 +14,8 @@ public class SideConversationReply
     [Required]
     public string Body { get; set; } = string.Empty;
 
-    public int? AuthorId { get; set; }
+    [MaxLength(255)]
+    public string? AuthorId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

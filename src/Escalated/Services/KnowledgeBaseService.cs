@@ -14,7 +14,7 @@ public class KnowledgeBaseService
     }
 
     public async Task<Article> CreateArticleAsync(string title, string body, int? categoryId = null,
-        int? authorId = null, CancellationToken ct = default)
+        string? authorId = null, CancellationToken ct = default)
     {
         var slug = GenerateSlug(title);
         var article = new Article

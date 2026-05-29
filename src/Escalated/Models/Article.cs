@@ -20,7 +20,8 @@ public class Article
 
     public int? CategoryId { get; set; }
 
-    public int? AuthorId { get; set; }
+    [MaxLength(255)]
+    public string? AuthorId { get; set; }
 
     [MaxLength(50)]
     public string Status { get; set; } = "draft"; // draft, published

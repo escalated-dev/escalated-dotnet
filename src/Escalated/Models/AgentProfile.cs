@@ -8,7 +8,8 @@ public class AgentProfile
     public int Id { get; set; }
 
     [Required]
-    public int UserId { get; set; }
+    [MaxLength(255)]
+    public string UserId { get; set; } = string.Empty;
 
     [MaxLength(50)]
     public string? AgentType { get; set; } // "full" or "light"

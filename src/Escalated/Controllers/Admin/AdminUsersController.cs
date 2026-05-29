@@ -52,7 +52,7 @@ public class AdminUsersController : ControllerBase
     public async Task<IActionResult> Index(
         [FromQuery] string? search,
         [FromQuery] int page = 1,
-        [FromQuery] int? currentUserId = null,
+        [FromQuery] string? currentUserId = null,
         CancellationToken ct = default)
     {
         const int perPage = 20;
@@ -109,7 +109,7 @@ public class AdminUsersController : ControllerBase
     public record IndexResponse(
         [property: JsonPropertyName("users")] PaginatedUsers Users,
         [property: JsonPropertyName("filters")] IndexFilters Filters,
-        [property: JsonPropertyName("currentUserId")] int? CurrentUserId);
+        [property: JsonPropertyName("currentUserId")] string? CurrentUserId);
 
     public record IndexFilters([property: JsonPropertyName("search")] string Search);
 
@@ -138,11 +138,11 @@ public class AdminUsersController : ControllerBase
     /// An admin cannot remove their own admin role — the request is rejected so they
     /// can't lock themselves out of the panel they're using.
     /// </summary>
-    [HttpPatch("{userId:int}/role")]
+    [HttpPatch("{userId}/role")]
     public async Task<IActionResult> UpdateRole(
-        int userId,
+        string userId,
         [FromBody] UpdateRoleRequest request,
-        [FromQuery] int? currentUserId = null,
+        [FromQuery] string? currentUserId = null,
         CancellationToken ct = default)
     {
         if (request is null || (request.Role != "admin" && request.Role != "agent"))
@@ -160,8 +160,8 @@ public class AdminUsersController : ControllerBase
         // the admin panel they're trying to use.
         if (request.Role == "admin"
             && !request.Value
-            && currentUserId.HasValue
-            && currentUserId.Value == target.Id)
+            && !string.IsNullOrEmpty(currentUserId)
+            && currentUserId == target.Id)
         {
             return BadRequest(new { error = "You cannot remove your own admin role." });
         }
@@ -215,10 +215,10 @@ public class AdminUsersController : ControllerBase
         return role;
     }
 
-    private Task<bool> HasRoleAsync(int userId, int roleId, CancellationToken ct)
+    private Task<bool> HasRoleAsync(string userId, int roleId, CancellationToken ct)
         => _db.RoleUsers.AnyAsync(ru => ru.UserId == userId && ru.RoleId == roleId, ct);
 
-    private async Task SetRoleAsync(int userId, int roleId, bool value, CancellationToken ct)
+    private async Task SetRoleAsync(string userId, int roleId, bool value, CancellationToken ct)
     {
         var existing = await _db.RoleUsers
             .FirstOrDefaultAsync(ru => ru.UserId == userId && ru.RoleId == roleId, ct);
@@ -238,11 +238,11 @@ public class AdminUsersController : ControllerBase
         [property: JsonPropertyName("role")] string Role,
         [property: JsonPropertyName("value")] bool Value);
 
-    private record RoleAssignment(int UserId, string Slug);
+    private record RoleAssignment(string UserId, string Slug);
 
     /// <summary>Row shape returned to the shared Vue page.</summary>
     public record UserRow(
-        [property: JsonPropertyName("id")] int Id,
+        [property: JsonPropertyName("id")] string Id,
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("email")] string? Email,
         [property: JsonPropertyName("is_admin")] bool IsAdmin,

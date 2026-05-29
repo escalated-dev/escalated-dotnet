@@ -15,7 +15,7 @@ public class AdminSavedViewController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index([FromQuery] int userId)
+    public async Task<IActionResult> Index([FromQuery] string userId)
     {
         var views = await _service.GetForUserAsync(userId);
         return Ok(views);
@@ -46,6 +46,6 @@ public class AdminSavedViewController : ControllerBase
     }
 }
 
-public record CreateSavedViewRequest(string Name, string Filters, int? UserId = null,
+public record CreateSavedViewRequest(string Name, string Filters, string? UserId = null,
     bool IsShared = false, string? SortBy = null, string? SortDir = null);
 public record UpdateSavedViewRequest(string? Name = null, string? Filters = null, bool? IsShared = null);

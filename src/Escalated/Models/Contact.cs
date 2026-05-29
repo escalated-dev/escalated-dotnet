@@ -31,7 +31,8 @@ public class Contact
     public string? Name { get; set; }
 
     /// <summary>Linked host-app user id once the contact creates an account.</summary>
-    public int? UserId { get; set; }
+    [MaxLength(255)]
+    public string? UserId { get; set; }
 
     /// <summary>
     /// Free-form metadata as JSON-serialized string. Callers usually

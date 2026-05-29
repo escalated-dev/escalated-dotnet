@@ -354,9 +354,9 @@ public class AdminSkillsController : ControllerBase
         int[] RoutingDepartmentIds,
         AgentSkillAssignmentDto[] Agents);
 
-    public sealed record AgentSkillAssignmentDto(int UserId, int Proficiency);
+    public sealed record AgentSkillAssignmentDto(string UserId, int Proficiency);
 
-    public sealed record AgentPick(int Id, string? Name, string? Email);
+    public sealed record AgentPick(string Id, string? Name, string? Email);
 
     public sealed record TagPick(int Id, string Name);
 

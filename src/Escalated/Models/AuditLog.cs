@@ -7,7 +7,8 @@ public class AuditLog
     [Key]
     public int Id { get; set; }
 
-    public int? UserId { get; set; }
+    [MaxLength(255)]
+    public string? UserId { get; set; }
 
     [Required]
     [MaxLength(255)]

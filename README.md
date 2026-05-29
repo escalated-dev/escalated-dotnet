@@ -140,6 +140,28 @@ dotnet ef database update --context EscalatedDbContext
 
 Visit `/support` -- you're live.
 
+### Host user keys (UUID / string support)
+
+Escalated stores references to your app's users (ticket requester, assignee,
+reply author, etc.) as **strings**, so it works whether your user primary key
+is an `int`, a `Guid`, or any other string. A numeric id is simply stored and
+exchanged as its string form.
+
+Your `IUserDirectory` implementation therefore exchanges user ids as `string`:
+
+```csharp
+public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default)
+{
+    // look up your user by its (string) id and return:
+    //   new UserDirectoryEntry(user.Id.ToString(), user.Name, user.Email)
+}
+```
+
+> **Upgrade note:** earlier versions used `int` here (`FindAsync(int id)` and
+> `UserDirectoryEntry(int Id, ...)`); admin user APIs also now return user ids
+> as JSON strings. Update your `IUserDirectory` implementation to the `string`
+> signatures shown above. Integer ids keep working — pass them as strings.
+
 ## Inbound email
 
 Point your Postmark, Mailgun, or AWS SES (via SNS HTTP subscription) inbound webhook at:

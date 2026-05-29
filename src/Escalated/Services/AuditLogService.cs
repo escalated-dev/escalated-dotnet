@@ -17,7 +17,7 @@ public class AuditLogService
     /// <summary>
     /// Log an audit entry for an entity mutation.
     /// </summary>
-    public async Task LogAsync(string entityType, int entityId, string action, int? userId = null,
+    public async Task LogAsync(string entityType, int entityId, string action, string? userId = null,
         object? oldValues = null, object? newValues = null, string? ipAddress = null,
         string? userAgent = null, CancellationToken ct = default)
     {
@@ -55,12 +55,12 @@ public class AuditLogService
     /// Query all audit logs with optional filters.
     /// </summary>
     public async Task<(List<AuditLog> Items, int TotalCount)> ListAsync(
-        int? userId = null, string? entityType = null, string? action = null,
+        string? userId = null, string? entityType = null, string? action = null,
         int page = 1, int perPage = 50, CancellationToken ct = default)
     {
         var query = _db.AuditLogs.AsQueryable();
 
-        if (userId.HasValue) query = query.Where(a => a.UserId == userId.Value);
+        if (!string.IsNullOrEmpty(userId)) query = query.Where(a => a.UserId == userId);
         if (!string.IsNullOrEmpty(entityType)) query = query.Where(a => a.EntityType == entityType);
         if (!string.IsNullOrEmpty(action)) query = query.Where(a => a.Action == action);
 

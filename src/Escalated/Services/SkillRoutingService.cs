@@ -19,7 +19,7 @@ public class SkillRoutingService
     /// <i>every</i> matching skill row. Ranking is proficiency sum (required skills only)
     /// descending, then current open workload ascending.
     /// </summary>
-    public async Task<List<int>> FindMatchingAgentIdsAsync(Ticket ticket, CancellationToken ct = default)
+    public async Task<List<string>> FindMatchingAgentIdsAsync(Ticket ticket, CancellationToken ct = default)
     {
         var tagIds = await _db.TicketTags
             .Where(tt => tt.TicketId == ticket.Id)
@@ -49,7 +49,7 @@ public class SkillRoutingService
         var requiredCount = requiredSkillIds.Count;
         if (requiredCount == 0)
         {
-            return new List<int>();
+            return new List<string>();
         }
 
         var candidateRows = await _db.AgentSkills
@@ -66,17 +66,17 @@ public class SkillRoutingService
 
         if (candidateRows.Count == 0)
         {
-            return new List<int>();
+            return new List<string>();
         }
 
         var userIds = candidateRows.Select(r => r.UserId).ToList();
 
         var openCounts = await _db.Tickets
             .Where(t =>
-                t.AssignedTo.HasValue && userIds.Contains(t.AssignedTo.Value)
+                t.AssignedTo != null && userIds.Contains(t.AssignedTo)
                                          && t.Status != TicketStatus.Resolved
                                          && t.Status != TicketStatus.Closed)
-            .GroupBy(t => t.AssignedTo!.Value)
+            .GroupBy(t => t.AssignedTo!)
             .Select(g => new { UserId = g.Key, Open = g.Count() })
             .ToListAsync(ct);
 
@@ -91,7 +91,7 @@ public class SkillRoutingService
     }
 
     /// <summary>Best match (same ordering as list), or <c>null</c> when no eligible router.</summary>
-    public async Task<int?> FindBestAgentAsync(Ticket ticket, CancellationToken ct = default)
+    public async Task<string?> FindBestAgentAsync(Ticket ticket, CancellationToken ct = default)
     {
         var agents = await FindMatchingAgentIdsAsync(ticket, ct);
         return agents.Count == 0 ? null : agents[0];
