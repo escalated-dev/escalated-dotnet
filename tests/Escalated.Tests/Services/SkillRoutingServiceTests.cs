@@ -9,7 +9,7 @@ namespace Escalated.Tests.Services;
 
 public class SkillRoutingServiceTests
 {
-    private sealed record SkillRow(int UserId, int? TagsProf, int? DeptsProf);
+    private sealed record SkillRow(string UserId, int? TagsProf, int? DeptsProf);
 
     private static async Task<(EscalatedDbContext Db, Ticket Ticket)> SeedAsync(string ticketRef, IList<SkillRow> abilities)
     {
@@ -82,15 +82,15 @@ public class SkillRoutingServiceTests
             "ESC-R1",
             new SkillRow[]
             {
-                new(10, 5, 5),
-                new(11, 5, null),
+                new("10", 5, 5),
+                new("11", 5, null),
             });
 
         try
         {
             var ids = await new SkillRoutingService(db).FindMatchingAgentIdsAsync(ticket);
             Assert.Single(ids);
-            Assert.Equal(10, ids[0]);
+            Assert.Equal("10", ids[0]);
         }
         finally
         {
@@ -105,8 +105,8 @@ public class SkillRoutingServiceTests
             "ESC-R2",
             new SkillRow[]
             {
-                new(501, 5, 5),
-                new(502, 2, 2),
+                new("501", 5, 5),
+                new("502", 2, 2),
             });
 
         try
@@ -120,7 +120,7 @@ public class SkillRoutingServiceTests
                     Subject = "load",
                     Status = TicketStatus.Open,
                     Priority = TicketPriority.Low,
-                    AssignedTo = 501,
+                    AssignedTo = "501",
                     CreatedAt = now,
                     UpdatedAt = now,
                 });
@@ -134,7 +134,7 @@ public class SkillRoutingServiceTests
                     Subject = "load",
                     Status = TicketStatus.Open,
                     Priority = TicketPriority.Low,
-                    AssignedTo = 502,
+                    AssignedTo = "502",
                     CreatedAt = now,
                     UpdatedAt = now,
                 });
@@ -147,10 +147,10 @@ public class SkillRoutingServiceTests
 
             var service = new SkillRoutingService(db);
             var ids = await service.FindMatchingAgentIdsAsync(ticket);
-            Assert.Equal(new[] { 501, 502 }, ids);
+            Assert.Equal(new[] { "501", "502" }, ids);
 
             var best = await service.FindBestAgentAsync(ticket);
-            Assert.Equal(501, best);
+            Assert.Equal("501", best);
         }
         finally
         {
@@ -165,8 +165,8 @@ public class SkillRoutingServiceTests
             "ESC-R3",
             new SkillRow[]
             {
-                new(702, 4, 4),
-                new(703, 4, 4),
+                new("702", 4, 4),
+                new("703", 4, 4),
             });
 
         try
@@ -179,7 +179,7 @@ public class SkillRoutingServiceTests
                     Reference = $"BLK-702-{ticket.Reference}-{i}",
                     Subject = "x",
                     Status = TicketStatus.Open,
-                    AssignedTo = 702,
+                    AssignedTo = "702",
                     CreatedAt = now,
                     UpdatedAt = now,
                 });
@@ -191,7 +191,7 @@ public class SkillRoutingServiceTests
             ticket = await db.Tickets.AsNoTracking().Include(t => t.Tags).SingleAsync(t => t.Reference == ticket.Reference);
 
             var ids = await new SkillRoutingService(db).FindMatchingAgentIdsAsync(ticket);
-            Assert.Equal(new[] { 703, 702 }, ids.ToArray());
+            Assert.Equal(new[] { "703", "702" }, ids.ToArray());
         }
         finally
         {

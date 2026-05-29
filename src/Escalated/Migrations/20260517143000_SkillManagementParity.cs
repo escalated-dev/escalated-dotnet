@@ -97,7 +97,7 @@ public partial class SkillManagementParity : Migration
 
                     CREATE TABLE escalated_agent_skill_par (
                         Id INTEGER NOT NULL CONSTRAINT PK_escalated_agent_skill PRIMARY KEY AUTOINCREMENT,
-                        UserId INTEGER NOT NULL,
+                        UserId TEXT NOT NULL,
                         SkillId INTEGER NOT NULL,
                         Proficiency INTEGER NOT NULL DEFAULT 3,
                         CreatedAt TEXT NOT NULL,
@@ -143,7 +143,7 @@ public partial class SkillManagementParity : Migration
 
                     CREATE TABLE escalated_agent_skill (
                         "Id" SERIAL CONSTRAINT "PK_escalated_agent_skill" PRIMARY KEY,
-                        "UserId" INTEGER NOT NULL,
+                        "UserId" character varying(255) NOT NULL,
                         "SkillId" INTEGER NOT NULL,
                         "Proficiency" INTEGER NOT NULL DEFAULT 3,
                         CONSTRAINT "CK_escalated_agent_skill_proficiency" CHECK ("Proficiency" BETWEEN 1 AND 5),
@@ -187,7 +187,7 @@ public partial class SkillManagementParity : Migration
 
                     CREATE TABLE dbo.escalated_agent_skill (
                         Id INT IDENTITY CONSTRAINT PK_escalated_agent_skill PRIMARY KEY,
-                        UserId INT NOT NULL,
+                        UserId NVARCHAR(255) NOT NULL,
                         SkillId INT NOT NULL,
                         Proficiency INT NOT NULL CONSTRAINT CK_escalated_agent_skill_proficiency
                             CHECK (Proficiency BETWEEN 1 AND 5),

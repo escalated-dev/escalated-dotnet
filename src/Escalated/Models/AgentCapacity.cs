@@ -8,7 +8,8 @@ public class AgentCapacity
     public int Id { get; set; }
 
     [Required]
-    public int UserId { get; set; }
+    [MaxLength(255)]
+    public string UserId { get; set; } = string.Empty;
 
     [MaxLength(50)]
     public string Channel { get; set; } = "default";

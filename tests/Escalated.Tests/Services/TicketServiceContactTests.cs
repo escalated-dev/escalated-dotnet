@@ -60,7 +60,7 @@ public class TicketServiceContactTests
 
         var ticket = await service.CreateAsync(
             subject: "Help", description: "d",
-            requesterId: 42, requesterType: "User");
+            requesterId: "42", requesterType: "User");
 
         Assert.Null(ticket.ContactId);
         Assert.Empty(db.Contacts);

@@ -34,7 +34,7 @@ public class AgentTicketController : ControllerBase
     }
 
     /// <summary>Serializes the visible custom actions for a ticket, adding url + method.</summary>
-    private List<Dictionary<string, object?>> CustomActionsForTicket(Ticket ticket, int? userId)
+    private List<Dictionary<string, object?>> CustomActionsForTicket(Ticket ticket, string? userId)
     {
         var actions = _actions.ForTicket(ticket, userId).Select(a => new Dictionary<string, object?>(a)).ToList();
         foreach (var a in actions)
@@ -198,7 +198,7 @@ public class AgentTicketController : ControllerBase
     }
 
     [HttpGet("dashboard")]
-    public async Task<IActionResult> Dashboard([FromQuery] int agentId)
+    public async Task<IActionResult> Dashboard([FromQuery] string agentId)
     {
         var workload = await _assignmentService.GetAgentWorkloadAsync(agentId);
         return Ok(workload);
@@ -225,7 +225,7 @@ public class AgentTicketController : ControllerBase
                         break;
                     case "assign":
                         if (request.Value != null)
-                            await _assignmentService.AssignAsync(ticket, int.Parse(request.Value), request.CauserId);
+                            await _assignmentService.AssignAsync(ticket, request.Value, request.CauserId);
                         break;
                     case "change_priority":
                         if (request.Value != null)
@@ -243,6 +243,6 @@ public class AgentTicketController : ControllerBase
     }
 }
 
-public record BulkActionRequest(int[] TicketIds, string Action, int? CauserId = null, string? Value = null);
+public record BulkActionRequest(int[] TicketIds, string Action, string? CauserId = null, string? Value = null);
 
-public record CustomActionRequest(int? UserId = null, Dictionary<string, object>? Payload = null);
+public record CustomActionRequest(string? UserId = null, Dictionary<string, object>? Payload = null);

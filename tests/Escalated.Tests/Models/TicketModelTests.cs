@@ -40,7 +40,7 @@ public class TicketModelTests
         var ticket = new Ticket
         {
             RequesterType = "User",
-            RequesterId = 1,
+            RequesterId = "1",
             GuestToken = null
         };
         Assert.False(ticket.IsGuest);

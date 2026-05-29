@@ -18,7 +18,7 @@ public interface ITicketActionRegistry
     /// The visible actions for a ticket/user, serialized for the UI. The
     /// controller adds the <c>url</c> and <c>method</c> before responding.
     /// </summary>
-    IReadOnlyList<Dictionary<string, object?>> ForTicket(Ticket ticket, int? userId);
+    IReadOnlyList<Dictionary<string, object?>> ForTicket(Ticket ticket, string? userId);
 }
 
 /// <inheritdoc />
@@ -36,7 +36,7 @@ public class TicketActionRegistry : ITicketActionRegistry
     public TicketActionConfig? Find(string key) =>
         _actions.FirstOrDefault(a => a.Key == key);
 
-    public IReadOnlyList<Dictionary<string, object?>> ForTicket(Ticket ticket, int? userId) =>
+    public IReadOnlyList<Dictionary<string, object?>> ForTicket(Ticket ticket, string? userId) =>
         _actions
             .Where(a => a.Visible)
             .Select(a => new Dictionary<string, object?>

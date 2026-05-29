@@ -28,7 +28,7 @@ public class TicketSnoozeServiceTests
         await db.SaveChangesAsync();
 
         var snoozeUntil = DateTime.UtcNow.AddDays(1);
-        var snoozed = await service.SnoozeAsync(ticket, snoozeUntil, 1);
+        var snoozed = await service.SnoozeAsync(ticket, snoozeUntil, "1");
 
         Assert.Equal(snoozeUntil, snoozed.SnoozedUntil);
     }
@@ -54,7 +54,7 @@ public class TicketSnoozeServiceTests
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync();
 
-        var unsnoozed = await service.UnsnoozeAsync(ticket, 1);
+        var unsnoozed = await service.UnsnoozeAsync(ticket, "1");
 
         Assert.Null(unsnoozed.SnoozedUntil);
     }

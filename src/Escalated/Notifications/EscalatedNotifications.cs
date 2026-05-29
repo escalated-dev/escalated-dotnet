@@ -12,7 +12,7 @@ public interface IEscalatedNotificationSender
 {
     Task SendNewTicketNotificationAsync(Ticket ticket, CancellationToken ct = default);
     Task SendReplyNotificationAsync(Reply reply, Ticket ticket, CancellationToken ct = default);
-    Task SendAssignmentNotificationAsync(Ticket ticket, int agentId, CancellationToken ct = default);
+    Task SendAssignmentNotificationAsync(Ticket ticket, string agentId, CancellationToken ct = default);
     Task SendStatusChangeNotificationAsync(Ticket ticket, string oldStatus, string newStatus, CancellationToken ct = default);
     Task SendSlaBreachNotificationAsync(Ticket ticket, string breachType, CancellationToken ct = default);
     Task SendEscalationNotificationAsync(Ticket ticket, CancellationToken ct = default);
@@ -26,7 +26,7 @@ public class NullNotificationSender : IEscalatedNotificationSender
 {
     public Task SendNewTicketNotificationAsync(Ticket ticket, CancellationToken ct) => Task.CompletedTask;
     public Task SendReplyNotificationAsync(Reply reply, Ticket ticket, CancellationToken ct) => Task.CompletedTask;
-    public Task SendAssignmentNotificationAsync(Ticket ticket, int agentId, CancellationToken ct) => Task.CompletedTask;
+    public Task SendAssignmentNotificationAsync(Ticket ticket, string agentId, CancellationToken ct) => Task.CompletedTask;
     public Task SendStatusChangeNotificationAsync(Ticket ticket, string oldStatus, string newStatus, CancellationToken ct) => Task.CompletedTask;
     public Task SendSlaBreachNotificationAsync(Ticket ticket, string breachType, CancellationToken ct) => Task.CompletedTask;
     public Task SendEscalationNotificationAsync(Ticket ticket, CancellationToken ct) => Task.CompletedTask;

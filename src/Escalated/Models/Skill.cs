@@ -41,7 +41,8 @@ public class AgentSkill
     [Key]
     public int Id { get; set; }
 
-    public int UserId { get; set; }
+    [MaxLength(255)]
+    public string UserId { get; set; } = string.Empty;
     public int SkillId { get; set; }
 
     /// <summary>1 (beginner) .. 5 (expert).</summary>

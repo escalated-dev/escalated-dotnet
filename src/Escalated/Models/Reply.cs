@@ -23,7 +23,8 @@ public class Reply
     // Polymorphic author
     [MaxLength(255)]
     public string? AuthorType { get; set; }
-    public int? AuthorId { get; set; }
+    [MaxLength(255)]
+    public string? AuthorId { get; set; }
 
     // Email threading
     [MaxLength(255)]

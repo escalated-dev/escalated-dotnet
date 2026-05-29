@@ -101,7 +101,7 @@ public class EscalationService
                     await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(value), null, ct);
                     break;
                 case "assign_to":
-                    await _assignmentService.AssignAsync(ticket, int.Parse(value), null, ct);
+                    await _assignmentService.AssignAsync(ticket, value, null, ct);
                     break;
                 case "change_department":
                     await _ticketService.ChangeDepartmentAsync(ticket, int.Parse(value), null, ct);

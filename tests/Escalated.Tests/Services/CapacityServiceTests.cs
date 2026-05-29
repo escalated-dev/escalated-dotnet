@@ -11,7 +11,7 @@ public class CapacityServiceTests
         var db = TestHelpers.CreateInMemoryDb();
         var service = new CapacityService(db);
 
-        var canAccept = await service.CanAcceptTicketAsync(1);
+        var canAccept = await service.CanAcceptTicketAsync("1");
 
         Assert.True(canAccept);
     }
@@ -22,14 +22,14 @@ public class CapacityServiceTests
         var db = TestHelpers.CreateInMemoryDb();
         var service = new CapacityService(db);
 
-        await service.IncrementLoadAsync(1);
-        await service.IncrementLoadAsync(1);
+        await service.IncrementLoadAsync("1");
+        await service.IncrementLoadAsync("1");
 
         var capacities = await service.GetAllCapacitiesAsync();
         Assert.Single(capacities);
         Assert.Equal(2, capacities[0].CurrentCount);
 
-        await service.DecrementLoadAsync(1);
+        await service.DecrementLoadAsync("1");
         capacities = await service.GetAllCapacitiesAsync();
         Assert.Equal(1, capacities[0].CurrentCount);
     }
@@ -40,11 +40,11 @@ public class CapacityServiceTests
         var db = TestHelpers.CreateInMemoryDb();
         var service = new CapacityService(db);
 
-        await service.SetMaxConcurrentAsync(1, 2);
-        await service.IncrementLoadAsync(1);
-        await service.IncrementLoadAsync(1);
+        await service.SetMaxConcurrentAsync("1", 2);
+        await service.IncrementLoadAsync("1");
+        await service.IncrementLoadAsync("1");
 
-        var canAccept = await service.CanAcceptTicketAsync(1);
+        var canAccept = await service.CanAcceptTicketAsync("1");
 
         Assert.False(canAccept);
     }
@@ -55,7 +55,7 @@ public class CapacityServiceTests
         var db = TestHelpers.CreateInMemoryDb();
         var service = new CapacityService(db);
 
-        await service.DecrementLoadAsync(1);
+        await service.DecrementLoadAsync("1");
 
         var capacities = await service.GetAllCapacitiesAsync();
         Assert.Equal(0, capacities[0].CurrentCount);

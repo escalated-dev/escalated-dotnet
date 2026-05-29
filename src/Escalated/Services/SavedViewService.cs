@@ -13,7 +13,7 @@ public class SavedViewService
         _db = db;
     }
 
-    public async Task<SavedView> CreateAsync(string name, string filters, int? userId = null,
+    public async Task<SavedView> CreateAsync(string name, string filters, string? userId = null,
         bool isShared = false, string? sortBy = null, string? sortDir = null,
         CancellationToken ct = default)
     {
@@ -33,7 +33,7 @@ public class SavedViewService
         return view;
     }
 
-    public async Task<List<SavedView>> GetForUserAsync(int userId, CancellationToken ct = default)
+    public async Task<List<SavedView>> GetForUserAsync(string userId, CancellationToken ct = default)
     {
         return await _db.SavedViews
             .Where(v => v.UserId == userId || v.IsShared)

@@ -15,7 +15,8 @@ public class SideConversation
     [MaxLength(255)]
     public string Subject { get; set; } = string.Empty;
 
-    public int? CreatedBy { get; set; }
+    [MaxLength(255)]
+    public string? CreatedBy { get; set; }
 
     [MaxLength(50)]
     public string Status { get; set; } = "open"; // open, closed

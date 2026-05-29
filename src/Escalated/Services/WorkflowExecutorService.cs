@@ -142,8 +142,8 @@ public class WorkflowExecutorService
 
     private async Task AssignAgentAsync(Ticket ticket, string value, CancellationToken ct)
     {
-        if (!int.TryParse(value, out var agentId) || agentId <= 0) return;
-        await _assignments.AssignAsync(ticket, agentId, ct: ct);
+        if (string.IsNullOrWhiteSpace(value)) return;
+        await _assignments.AssignAsync(ticket, value, ct: ct);
     }
 
     private async Task SetDepartmentAsync(Ticket ticket, string value, CancellationToken ct)

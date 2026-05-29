@@ -220,7 +220,7 @@ public class AdminTicketController : ControllerBase
     }
 
     [HttpPost("{id:int}/unsnooze")]
-    public async Task<IActionResult> Unsnooze(int id, [FromQuery] int? causerId = null)
+    public async Task<IActionResult> Unsnooze(int id, [FromQuery] string? causerId = null)
     {
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
@@ -252,14 +252,14 @@ public class AdminTicketController : ControllerBase
 }
 
 // Request DTOs
-public record ReplyRequest(string Body, int? AuthorId = null);
-public record AssignRequest(int AgentId, int? CauserId = null);
-public record StatusRequest(string Status, int? CauserId = null);
-public record PriorityRequest(string Priority, int? CauserId = null);
-public record TagsRequest(int[]? Add = null, int[]? Remove = null, int? CauserId = null);
-public record DepartmentRequest(int DepartmentId, int? CauserId = null);
-public record MacroRequest(int MacroId, int CauserId);
+public record ReplyRequest(string Body, string? AuthorId = null);
+public record AssignRequest(string AgentId, string? CauserId = null);
+public record StatusRequest(string Status, string? CauserId = null);
+public record PriorityRequest(string Priority, string? CauserId = null);
+public record TagsRequest(int[]? Add = null, int[]? Remove = null, string? CauserId = null);
+public record DepartmentRequest(int DepartmentId, string? CauserId = null);
+public record MacroRequest(int MacroId, string CauserId);
 public record SplitRequest(int ReplyId, string? Subject = null);
-public record MergeRequest(int TargetTicketId, int? MergedByUserId = null);
-public record SnoozeRequest(DateTime SnoozeUntil, int? CauserId = null);
+public record MergeRequest(int TargetTicketId, string? MergedByUserId = null);
+public record SnoozeRequest(DateTime SnoozeUntil, string? CauserId = null);
 public record LinkRequest(int LinkedTicketId, string? LinkType = null);

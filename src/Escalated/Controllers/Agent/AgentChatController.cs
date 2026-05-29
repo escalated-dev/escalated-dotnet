@@ -33,7 +33,7 @@ public class AgentChatController : ControllerBase
     /// List active chat sessions for the requesting agent.
     /// </summary>
     [HttpGet("active")]
-    public async Task<IActionResult> ActiveSessions([FromQuery] int agentId)
+    public async Task<IActionResult> ActiveSessions([FromQuery] string agentId)
     {
         var sessions = await _chatService.GetActiveSessionsForAgentAsync(agentId);
         return Ok(sessions);
@@ -102,6 +102,6 @@ public class AgentChatController : ControllerBase
     }
 }
 
-public record AcceptChatRequest(int AgentId);
-public record ChatMessageRequest(string Body, int AgentId);
-public record EndChatRequest(int AgentId);
+public record AcceptChatRequest(string AgentId);
+public record ChatMessageRequest(string Body, string AgentId);
+public record EndChatRequest(string AgentId);

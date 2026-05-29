@@ -30,9 +30,9 @@ using (var scope = app.Services.CreateScope())
             new Department { Name = "Billing", Slug = "billing", IsActive = true, CreatedAt = now, UpdatedAt = now }
         );
         ctx.AgentProfiles.AddRange(
-            new AgentProfile { UserId = 1, AgentType = "full", MaxTickets = 50, Signature = "Alice (Admin)", CreatedAt = now, UpdatedAt = now },
-            new AgentProfile { UserId = 2, AgentType = "full", MaxTickets = 50, Signature = "Bob (Agent)", CreatedAt = now, UpdatedAt = now },
-            new AgentProfile { UserId = 3, AgentType = "full", MaxTickets = 50, Signature = "Carol (Agent)", CreatedAt = now, UpdatedAt = now }
+            new AgentProfile { UserId = "1", AgentType = "full", MaxTickets = 50, Signature = "Alice (Admin)", CreatedAt = now, UpdatedAt = now },
+            new AgentProfile { UserId = "2", AgentType = "full", MaxTickets = 50, Signature = "Bob (Agent)", CreatedAt = now, UpdatedAt = now },
+            new AgentProfile { UserId = "3", AgentType = "full", MaxTickets = 50, Signature = "Carol (Agent)", CreatedAt = now, UpdatedAt = now }
         );
         ctx.SaveChanges();
     }

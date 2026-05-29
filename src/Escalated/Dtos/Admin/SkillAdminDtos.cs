@@ -36,8 +36,10 @@ public sealed class UpdateSkillDto
 
 public sealed class AgentSkillEntryDto
 {
-    [Range(1, int.MaxValue)]
-    public required int UserId { get; init; }
+    [Required]
+    [MinLength(1)]
+    [MaxLength(255)]
+    public required string UserId { get; init; }
 
     [Range(1, 5)]
     public required int Proficiency { get; init; }

@@ -21,7 +21,7 @@ public class TicketService
         _options = options.Value;
     }
 
-    public async Task<Ticket> CreateAsync(string subject, string? description, int? requesterId = null,
+    public async Task<Ticket> CreateAsync(string subject, string? description, string? requesterId = null,
         string? requesterType = null, TicketPriority? priority = null, int? departmentId = null,
         string? guestName = null, string? guestEmail = null, string? ticketType = null,
         CancellationToken ct = default)
@@ -89,7 +89,7 @@ public class TicketService
         return ticket;
     }
 
-    public async Task<Ticket> ChangeStatusAsync(Ticket ticket, TicketStatus newStatus, int? causerId = null,
+    public async Task<Ticket> ChangeStatusAsync(Ticket ticket, TicketStatus newStatus, string? causerId = null,
         CancellationToken ct = default)
     {
         return newStatus switch
@@ -102,7 +102,7 @@ public class TicketService
         };
     }
 
-    public async Task<Ticket> ChangePriorityAsync(Ticket ticket, TicketPriority newPriority, int? causerId = null,
+    public async Task<Ticket> ChangePriorityAsync(Ticket ticket, TicketPriority newPriority, string? causerId = null,
         CancellationToken ct = default)
     {
         var oldPriority = ticket.Priority;
@@ -121,7 +121,7 @@ public class TicketService
         return ticket;
     }
 
-    public async Task<Ticket> ChangeDepartmentAsync(Ticket ticket, int departmentId, int? causerId = null,
+    public async Task<Ticket> ChangeDepartmentAsync(Ticket ticket, int departmentId, string? causerId = null,
         CancellationToken ct = default)
     {
         var oldDeptId = ticket.DepartmentId;
@@ -140,7 +140,7 @@ public class TicketService
         return ticket;
     }
 
-    public async Task<Reply> AddReplyAsync(Ticket ticket, string body, int? authorId = null,
+    public async Task<Reply> AddReplyAsync(Ticket ticket, string body, string? authorId = null,
         string? authorType = null, bool isNote = false, CancellationToken ct = default)
     {
         var reply = new Reply
@@ -172,7 +172,7 @@ public class TicketService
         return reply;
     }
 
-    public async Task<Ticket> AddTagsAsync(Ticket ticket, int[] tagIds, int? causerId = null,
+    public async Task<Ticket> AddTagsAsync(Ticket ticket, int[] tagIds, string? causerId = null,
         CancellationToken ct = default)
     {
         foreach (var tagId in tagIds)
@@ -192,7 +192,7 @@ public class TicketService
         return ticket;
     }
 
-    public async Task<Ticket> RemoveTagsAsync(Ticket ticket, int[] tagIds, int? causerId = null,
+    public async Task<Ticket> RemoveTagsAsync(Ticket ticket, int[] tagIds, string? causerId = null,
         CancellationToken ct = default)
     {
         var tagsToRemove = await _db.TicketTags
@@ -237,8 +237,8 @@ public class TicketService
         if (filters.Priority.HasValue)
             query = query.Where(t => t.Priority == filters.Priority.Value);
 
-        if (filters.AssignedTo.HasValue)
-            query = query.Where(t => t.AssignedTo == filters.AssignedTo.Value);
+        if (!string.IsNullOrEmpty(filters.AssignedTo))
+            query = query.Where(t => t.AssignedTo == filters.AssignedTo);
 
         if (filters.Unassigned == true)
             query = query.Where(t => t.AssignedTo == null);
@@ -263,8 +263,8 @@ public class TicketService
         if (!string.IsNullOrEmpty(filters.TicketType))
             query = query.Where(t => t.TicketType == filters.TicketType);
 
-        if (filters.RequesterId.HasValue)
-            query = query.Where(t => t.RequesterId == filters.RequesterId.Value);
+        if (!string.IsNullOrEmpty(filters.RequesterId))
+            query = query.Where(t => t.RequesterId == filters.RequesterId);
 
         // Sort
         query = (filters.SortBy?.ToLower(), filters.SortDir?.ToLower()) switch
@@ -286,7 +286,7 @@ public class TicketService
 
     // Private transition methods
 
-    private async Task<Ticket> MarkResolvedAsync(Ticket ticket, int? causerId, CancellationToken ct)
+    private async Task<Ticket> MarkResolvedAsync(Ticket ticket, string? causerId, CancellationToken ct)
     {
         var oldStatus = ticket.Status;
         if (!oldStatus.CanTransitionTo(TicketStatus.Resolved))
@@ -309,7 +309,7 @@ public class TicketService
         return ticket;
     }
 
-    private async Task<Ticket> MarkClosedAsync(Ticket ticket, int? causerId, CancellationToken ct)
+    private async Task<Ticket> MarkClosedAsync(Ticket ticket, string? causerId, CancellationToken ct)
     {
         var oldStatus = ticket.Status;
         if (!oldStatus.CanTransitionTo(TicketStatus.Closed))
@@ -332,7 +332,7 @@ public class TicketService
         return ticket;
     }
 
-    private async Task<Ticket> MarkReopenedAsync(Ticket ticket, int? causerId, CancellationToken ct)
+    private async Task<Ticket> MarkReopenedAsync(Ticket ticket, string? causerId, CancellationToken ct)
     {
         var oldStatus = ticket.Status;
         if (!oldStatus.CanTransitionTo(TicketStatus.Reopened))
@@ -356,7 +356,7 @@ public class TicketService
         return ticket;
     }
 
-    private async Task<Ticket> MarkEscalatedAsync(Ticket ticket, int? causerId, CancellationToken ct)
+    private async Task<Ticket> MarkEscalatedAsync(Ticket ticket, string? causerId, CancellationToken ct)
     {
         var oldStatus = ticket.Status;
         if (!oldStatus.CanTransitionTo(TicketStatus.Escalated))
@@ -378,7 +378,7 @@ public class TicketService
         return ticket;
     }
 
-    private async Task<Ticket> TransitionToAsync(Ticket ticket, TicketStatus newStatus, int? causerId, CancellationToken ct)
+    private async Task<Ticket> TransitionToAsync(Ticket ticket, TicketStatus newStatus, string? causerId, CancellationToken ct)
     {
         var oldStatus = ticket.Status;
         if (!oldStatus.CanTransitionTo(newStatus))
@@ -399,7 +399,7 @@ public class TicketService
         return ticket;
     }
 
-    public async Task LogActivityAsync(Ticket ticket, ActivityType type, int? causerId,
+    public async Task LogActivityAsync(Ticket ticket, ActivityType type, string? causerId,
         Dictionary<string, object>? properties = null, CancellationToken ct = default)
     {
         var activity = new TicketActivity
@@ -463,13 +463,13 @@ public class TicketListFilters
 {
     public TicketStatus? Status { get; set; }
     public TicketPriority? Priority { get; set; }
-    public int? AssignedTo { get; set; }
+    public string? AssignedTo { get; set; }
     public bool? Unassigned { get; set; }
     public int? DepartmentId { get; set; }
     public string? Search { get; set; }
     public bool? SlaBreach { get; set; }
     public string? TicketType { get; set; }
-    public int? RequesterId { get; set; }
+    public string? RequesterId { get; set; }
     public string? SortBy { get; set; }
     public string? SortDir { get; set; }
 }

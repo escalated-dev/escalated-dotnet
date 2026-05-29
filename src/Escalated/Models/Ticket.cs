@@ -32,9 +32,11 @@ public class Ticket
     // Polymorphic requester
     [MaxLength(255)]
     public string? RequesterType { get; set; }
-    public int? RequesterId { get; set; }
+    [MaxLength(255)]
+    public string? RequesterId { get; set; }
 
-    public int? AssignedTo { get; set; }
+    [MaxLength(255)]
+    public string? AssignedTo { get; set; }
     public int? DepartmentId { get; set; }
     public int? SlaPolicyId { get; set; }
     public int? MergedIntoId { get; set; }

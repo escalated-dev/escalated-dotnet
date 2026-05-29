@@ -24,7 +24,8 @@ public class ChatRoutingRule
     /// <summary>
     /// Target agent to route to when conditions match.
     /// </summary>
-    public int? AgentId { get; set; }
+    [MaxLength(255)]
+    public string? AgentId { get; set; }
 
     /// <summary>
     /// JSON-encoded conditions (e.g. page URL patterns, visitor metadata).

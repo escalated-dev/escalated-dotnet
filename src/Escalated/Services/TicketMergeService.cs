@@ -17,7 +17,7 @@ public class TicketMergeService
     /// <summary>
     /// Merge source ticket into target ticket. Moves replies, adds system notes, and closes source.
     /// </summary>
-    public async Task MergeAsync(Ticket source, Ticket target, int? mergedByUserId = null,
+    public async Task MergeAsync(Ticket source, Ticket target, string? mergedByUserId = null,
         CancellationToken ct = default)
     {
         using var transaction = await _db.Database.BeginTransactionAsync(ct);
