@@ -43,6 +43,8 @@ public static class EscalatedServiceCollectionExtensions
         // implementation to surface their user table in the admin users page).
         services.TryAddSingleton<IUserDirectory, NullUserDirectory>();
 
+        services.TryAddSingleton<ITicketSubjectResolver, NullTicketSubjectResolver>();
+
         // Register services
         services.AddScoped<TicketService>();
         services.AddScoped<SlaService>();
@@ -52,6 +54,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<TicketMergeService>();
         services.AddScoped<TicketSplitService>();
         services.AddScoped<TicketSnoozeService>();
+        services.AddScoped<TicketSubjectService>();
         services.AddScoped<WebhookDispatcher>();
         services.AddScoped<AutomationRunner>();
         services.AddScoped<CapacityService>();

@@ -78,6 +78,21 @@ public class EscalatedOptions
     /// Host-defined custom ticket action buttons for the agent ticket screen.
     /// </summary>
     public List<TicketActionConfig> TicketActions { get; set; } = new();
+
+    /// <summary>
+    /// Host-app models a ticket can be <em>about</em> (see <see cref="TicketSubjectsOptions"/>).
+    /// </summary>
+    public TicketSubjectsOptions TicketSubjects { get; set; } = new();
+}
+
+/// <summary>
+/// Allowlist of morph types (CLR type names or host aliases) the agent API may attach.
+/// Leave <see cref="Types"/> empty to disable API attach; programmatic attach still works
+/// when the list is empty.
+/// </summary>
+public class TicketSubjectsOptions
+{
+    public List<string> Types { get; set; } = new();
 }
 
 /// <summary>

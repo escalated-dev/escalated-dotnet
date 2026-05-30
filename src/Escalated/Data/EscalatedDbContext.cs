@@ -13,6 +13,7 @@ public class EscalatedDbContext : DbContext
     public DbSet<TicketActivity> TicketActivities => Set<TicketActivity>();
     public DbSet<TicketStatusModel> TicketStatuses => Set<TicketStatusModel>();
     public DbSet<TicketLink> TicketLinks => Set<TicketLink>();
+    public DbSet<TicketSubjectLink> TicketSubjectLinks => Set<TicketSubjectLink>();
     public DbSet<TicketTag> TicketTags => Set<TicketTag>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Department> Departments => Set<Department>();

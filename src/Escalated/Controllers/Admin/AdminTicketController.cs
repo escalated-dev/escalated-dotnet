@@ -18,11 +18,12 @@ public class AdminTicketController : ControllerBase
     private readonly TicketSplitService _splitService;
     private readonly TicketMergeService _mergeService;
     private readonly TicketSnoozeService _snoozeService;
+    private readonly TicketSubjectService _subjectService;
     private readonly EscalatedDbContext _db;
 
     public AdminTicketController(TicketService ticketService, AssignmentService assignmentService,
         MacroService macroService, TicketSplitService splitService, TicketMergeService mergeService,
-        TicketSnoozeService snoozeService, EscalatedDbContext db)
+        TicketSnoozeService snoozeService, TicketSubjectService subjectService, EscalatedDbContext db)
     {
         _ticketService = ticketService;
         _assignmentService = assignmentService;
@@ -30,6 +31,7 @@ public class AdminTicketController : ControllerBase
         _splitService = splitService;
         _mergeService = mergeService;
         _snoozeService = snoozeService;
+        _subjectService = subjectService;
         _db = db;
     }
 
@@ -59,6 +61,7 @@ public class AdminTicketController : ControllerBase
             .Include(t => t.ChatSessions)
             .Include(t => t.LinksAsParent).ThenInclude(l => l.ChildTicket)
             .Include(t => t.LinksAsChild).ThenInclude(l => l.ParentTicket)
+            .Include(t => t.Subjects.OrderBy(s => s.Position))
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null) return NotFound();
@@ -92,6 +95,8 @@ public class AdminTicketController : ControllerBase
             ticket.RequesterTicketCount = await _db.Tickets
                 .CountAsync(t => t.GuestEmail == ticket.GuestEmail);
         }
+
+        await _subjectService.PopulateTicketSubjectsAsync(ticket);
 
         return Ok(ticket);
     }

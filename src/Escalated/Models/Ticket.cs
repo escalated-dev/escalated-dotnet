@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Escalated.Dtos;
 using Escalated.Enums;
 
 namespace Escalated.Models;
@@ -91,6 +92,7 @@ public class Ticket
     public ICollection<SideConversation> SideConversations { get; set; } = new List<SideConversation>();
     public ICollection<TicketLink> LinksAsParent { get; set; } = new List<TicketLink>();
     public ICollection<TicketLink> LinksAsChild { get; set; } = new List<TicketLink>();
+    public ICollection<TicketSubjectLink> Subjects { get; set; } = new List<TicketSubjectLink>();
     public SatisfactionRating? SatisfactionRating { get; set; }
     public ICollection<CustomFieldValue> CustomFieldValues { get; set; } = new List<CustomFieldValue>();
     public ICollection<ChatSession> ChatSessions { get; set; } = new List<ChatSession>();
@@ -171,6 +173,11 @@ public class Ticket
     [NotMapped]
     [JsonPropertyName("related_tickets")]
     public IEnumerable<object>? RelatedTickets { get; set; }
+
+    /// <summary>Host entities this ticket is about (Project, Customer, …).</summary>
+    [NotMapped]
+    [JsonPropertyName("subjects")]
+    public IReadOnlyList<TicketSubjectResponse>? SubjectsPayload { get; set; }
 
     public bool IsOpen() => Status.IsOpen();
 

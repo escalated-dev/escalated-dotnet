@@ -78,6 +78,17 @@ public static class EscalatedModelConfiguration
             e.HasIndex(l => new { l.ParentTicketId, l.ChildTicketId });
         });
 
+        modelBuilder.Entity<TicketSubjectLink>(e =>
+        {
+            e.ToTable($"{prefix}ticket_subjects");
+            e.HasIndex(l => new { l.TicketId, l.SubjectType, l.SubjectId }).IsUnique();
+            e.HasIndex(l => new { l.SubjectType, l.SubjectId });
+            e.HasOne(l => l.Ticket)
+                .WithMany(t => t.Subjects)
+                .HasForeignKey(l => l.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<TicketTag>(e =>
         {
             e.ToTable($"{prefix}ticket_tag");
