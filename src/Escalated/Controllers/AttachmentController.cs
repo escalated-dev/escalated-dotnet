@@ -39,7 +39,18 @@ public class AttachmentController : ControllerBase
             return File(stream, attachment.MimeType, attachment.Filename);
         }
 
-        // For other storage disks, the Path may already be a full URL
+        if (!IsSafeRedirectUrl(attachment.Path))
+        {
+            return BadRequest(new { error = "Attachment storage path is not a valid download URL." });
+        }
+
+        // For other storage disks, the Path must be an absolute HTTP(S) URL.
         return Redirect(attachment.Path);
+    }
+
+    private static bool IsSafeRedirectUrl(string path)
+    {
+        return Uri.TryCreate(path, UriKind.Absolute, out var uri) &&
+               (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
     }
 }
