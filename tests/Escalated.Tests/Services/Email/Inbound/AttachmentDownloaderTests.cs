@@ -43,6 +43,27 @@ public class AttachmentDownloaderTests
         }
     }
 
+    private class UnknownLengthContent : HttpContent
+    {
+        private readonly byte[] _bytes;
+
+        public UnknownLengthContent(byte[] bytes)
+        {
+            _bytes = bytes;
+        }
+
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+        {
+            return stream.WriteAsync(_bytes, 0, _bytes.Length);
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return false;
+        }
+    }
+
     private static AttachmentDownloader CreateDownloader(
         StubHandler handler,
         RecordingStorage storage,
@@ -151,6 +172,53 @@ public class AttachmentDownloaderTests
         await Assert.ThrowsAsync<AttachmentTooLargeException>(() =>
             downloader.DownloadAsync(Pending("https://x/big"), 1, null));
 
+        Assert.Empty(storage.Puts);
+    }
+
+    [Fact]
+    public async Task DownloadAsync_OverSizeLimitWithoutContentLength_ThrowsTooLarge()
+    {
+        var handler = new StubHandler
+        {
+            Respond = _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new UnknownLengthContent(new byte[100]),
+            },
+        };
+        var storage = new RecordingStorage();
+        var db = TestHelpers.CreateInMemoryDb();
+        var downloader = CreateDownloader(handler, storage, db,
+            new AttachmentDownloaderOptions { MaxBytes = 10 });
+
+        await Assert.ThrowsAsync<AttachmentTooLargeException>(() =>
+            downloader.DownloadAsync(Pending("https://x/big"), 1, null));
+
+        Assert.Empty(storage.Puts);
+    }
+
+    [Theory]
+    [InlineData("file:///tmp/attachment.txt")]
+    [InlineData("https://localhost/attachment")]
+    [InlineData("https://localhost.localdomain/attachment")]
+    [InlineData("https://service.localhost/attachment")]
+    [InlineData("http://0.0.0.0/attachment")]
+    [InlineData("http://127.0.0.1/attachment")]
+    [InlineData("http://10.1.2.3/attachment")]
+    [InlineData("http://172.16.1.2/attachment")]
+    [InlineData("http://192.168.1.2/attachment")]
+    [InlineData("http://169.254.169.254/latest/meta-data")]
+    [InlineData("http://[::1]/attachment")]
+    public async Task DownloadAsync_RejectsUnsafeDownloadUrls(string url)
+    {
+        var handler = new StubHandler();
+        var storage = new RecordingStorage();
+        var db = TestHelpers.CreateInMemoryDb();
+        var downloader = CreateDownloader(handler, storage, db);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            downloader.DownloadAsync(Pending(url), 1, null));
+
+        Assert.Null(handler.LastRequest);
         Assert.Empty(storage.Puts);
     }
 

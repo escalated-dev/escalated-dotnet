@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Escalated.Data;
@@ -61,25 +62,30 @@ public class AttachmentDownloader
             throw new ArgumentException("Pending attachment has no download URL.", nameof(pending));
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, pending.DownloadUrl);
+        var downloadUri = ValidateDownloadUri(pending.DownloadUrl);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, downloadUri);
         if (_options.BasicAuth is { } auth)
         {
             var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{auth.Username}:{auth.Password}"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
         }
 
-        using var response = await _http.SendAsync(request, ct);
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
         if (!response.IsSuccessStatusCode)
         {
             throw new InvalidOperationException(
                 $"Attachment download failed: {pending.DownloadUrl} → HTTP {(int)response.StatusCode}");
         }
 
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        if (_options.MaxBytes > 0 && bytes.LongLength > _options.MaxBytes)
+        if (_options.MaxBytes > 0 &&
+            response.Content.Headers.ContentLength is { } contentLength &&
+            contentLength > _options.MaxBytes)
         {
-            throw new AttachmentTooLargeException(pending.Name, bytes.LongLength, _options.MaxBytes);
+            throw new AttachmentTooLargeException(pending.Name, contentLength, _options.MaxBytes);
         }
+
+        var bytes = await ReadContentWithinLimitAsync(response.Content, pending.Name, _options.MaxBytes, ct);
 
         var contentType = !string.IsNullOrEmpty(pending.ContentType)
             ? pending.ContentType
@@ -160,6 +166,103 @@ public class AttachmentDownloader
             return "attachment";
         }
         return cleaned;
+    }
+
+    private static Uri ValidateDownloadUri(string downloadUrl)
+    {
+        if (!Uri.TryCreate(downloadUrl, UriKind.Absolute, out var uri))
+        {
+            throw new InvalidOperationException("Attachment download URL must be absolute.");
+        }
+
+        if (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp)
+        {
+            throw new InvalidOperationException("Attachment download URL must use HTTP or HTTPS.");
+        }
+
+        if (IsLocalAddress(uri.Host))
+        {
+            throw new InvalidOperationException("Attachment download URL cannot target a local address.");
+        }
+
+        return uri;
+    }
+
+    private static bool IsLocalAddress(string host)
+    {
+        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+            host.Equals("localhost.localdomain", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return IPAddress.TryParse(host, out var address) && IsPrivateOrLocalAddress(address);
+    }
+
+    private static bool IsPrivateOrLocalAddress(IPAddress address)
+    {
+        if (IPAddress.IsLoopback(address) ||
+            address.Equals(IPAddress.Any) ||
+            address.Equals(IPAddress.IPv6Any))
+        {
+            return true;
+        }
+
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        var bytes = address.GetAddressBytes();
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            return bytes[0] == 0 ||
+                   bytes[0] == 10 ||
+                   bytes[0] == 127 ||
+                   bytes[0] == 169 && bytes[1] == 254 ||
+                   bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31 ||
+                   bytes[0] == 192 && bytes[1] == 168 ||
+                   bytes[0] >= 224;
+        }
+
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            return address.IsIPv6LinkLocal ||
+                   address.IsIPv6Multicast ||
+                   address.IsIPv6SiteLocal ||
+                   bytes[0] == 0xfc ||
+                   bytes[0] == 0xfd;
+        }
+
+        return false;
+    }
+
+    private static async Task<byte[]> ReadContentWithinLimitAsync(
+        HttpContent content,
+        string attachmentName,
+        long maxBytes,
+        CancellationToken ct)
+    {
+        await using var responseStream = await content.ReadAsStreamAsync(ct);
+        using var buffer = new MemoryStream();
+        var readBuffer = new byte[81920];
+
+        while (true)
+        {
+            var read = await responseStream.ReadAsync(readBuffer, ct);
+            if (read == 0)
+            {
+                return buffer.ToArray();
+            }
+
+            if (maxBytes > 0 && buffer.Length + read > maxBytes)
+            {
+                throw new AttachmentTooLargeException(attachmentName, buffer.Length + read, maxBytes);
+            }
+
+            buffer.Write(readBuffer, 0, read);
+        }
     }
 }
 
