@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -66,12 +67,26 @@ public class WebhookDispatcher
         _db.WebhookDeliveries.Add(delivery);
         await _db.SaveChangesAsync(ct);
 
+        if (!TryValidateWebhookUri(webhook.Url, out var webhookUri))
+        {
+            delivery.ResponseCode = 0;
+            delivery.ResponseBody = "Webhook URL must be an absolute HTTP(S) URL that does not target a local or private address.";
+            delivery.Attempts = attempt;
+
+            _db.WebhookDeliveries.Update(delivery);
+            await _db.SaveChangesAsync(ct);
+
+            _logger.LogWarning("Webhook delivery blocked for webhook {WebhookId}, event {Event}, attempt {Attempt}: unsafe URL",
+                webhook.Id, eventName, attempt);
+            return;
+        }
+
         try
         {
             var client = _httpClientFactory.CreateClient("EscalatedWebhook");
             client.Timeout = TimeSpan.FromSeconds(10);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, webhook.Url)
+            var request = new HttpRequestMessage(HttpMethod.Post, webhookUri)
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
             };
@@ -148,5 +163,83 @@ public class WebhookDispatcher
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    public static bool IsSafeWebhookUrl(string webhookUrl)
+    {
+        return TryValidateWebhookUri(webhookUrl, out _);
+    }
+
+    private static bool TryValidateWebhookUri(string webhookUrl, out Uri uri)
+    {
+        uri = null!;
+
+        if (!Uri.TryCreate(webhookUrl, UriKind.Absolute, out var parsed))
+        {
+            return false;
+        }
+
+        if (parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)
+        {
+            return false;
+        }
+
+        if (IsLocalAddress(parsed.Host))
+        {
+            return false;
+        }
+
+        uri = parsed;
+        return true;
+    }
+
+    private static bool IsLocalAddress(string host)
+    {
+        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+            host.Equals("localhost.localdomain", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return IPAddress.TryParse(host, out var address) && IsPrivateOrLocalAddress(address);
+    }
+
+    private static bool IsPrivateOrLocalAddress(IPAddress address)
+    {
+        if (IPAddress.IsLoopback(address) ||
+            address.Equals(IPAddress.Any) ||
+            address.Equals(IPAddress.IPv6Any))
+        {
+            return true;
+        }
+
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        var bytes = address.GetAddressBytes();
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            return bytes[0] == 0 ||
+                   bytes[0] == 10 ||
+                   bytes[0] == 127 ||
+                   bytes[0] == 169 && bytes[1] == 254 ||
+                   bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31 ||
+                   bytes[0] == 192 && bytes[1] == 168 ||
+                   bytes[0] >= 224;
+        }
+
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            return address.IsIPv6LinkLocal ||
+                   address.IsIPv6Multicast ||
+                   address.IsIPv6SiteLocal ||
+                   bytes[0] == 0xfc ||
+                   bytes[0] == 0xfd;
+        }
+
+        return false;
     }
 }

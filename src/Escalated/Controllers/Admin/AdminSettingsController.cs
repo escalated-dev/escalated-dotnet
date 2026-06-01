@@ -234,6 +234,11 @@ public class AdminSettingsController : ControllerBase
     [HttpPost("webhooks")]
     public async Task<IActionResult> CreateWebhook([FromBody] Webhook webhook)
     {
+        if (!WebhookDispatcher.IsSafeWebhookUrl(webhook.Url))
+        {
+            return BadRequest(new { error = "Webhook URL must be an absolute HTTP(S) URL that does not target a local or private address." });
+        }
+
         webhook.CreatedAt = DateTime.UtcNow;
         webhook.UpdatedAt = DateTime.UtcNow;
         _db.Webhooks.Add(webhook);
