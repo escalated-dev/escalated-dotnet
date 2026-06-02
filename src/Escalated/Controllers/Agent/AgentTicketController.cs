@@ -20,10 +20,11 @@ public class AgentTicketController : ControllerBase
     private readonly EscalatedDbContext _db;
     private readonly ITicketActionRegistry _actions;
     private readonly IEscalatedEventDispatcher _events;
+    private readonly TicketSubjectService _subjectService;
 
     public AgentTicketController(TicketService ticketService, AssignmentService assignmentService,
         MacroService macroService, EscalatedDbContext db, ITicketActionRegistry actions,
-        IEscalatedEventDispatcher events)
+        IEscalatedEventDispatcher events, TicketSubjectService subjectService)
     {
         _ticketService = ticketService;
         _assignmentService = assignmentService;
@@ -31,6 +32,7 @@ public class AgentTicketController : ControllerBase
         _db = db;
         _actions = actions;
         _events = events;
+        _subjectService = subjectService;
     }
 
     /// <summary>Serializes the visible custom actions for a ticket, adding url + method.</summary>
@@ -70,6 +72,7 @@ public class AgentTicketController : ControllerBase
             .Include(t => t.ChatSessions)
             .Include(t => t.LinksAsParent).ThenInclude(l => l.ChildTicket)
             .Include(t => t.LinksAsChild).ThenInclude(l => l.ParentTicket)
+            .Include(t => t.Subjects.OrderBy(s => s.Position))
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null) return NotFound();
@@ -105,6 +108,8 @@ public class AgentTicketController : ControllerBase
         }
 
         ticket.CustomActions = CustomActionsForTicket(ticket, null);
+
+        await _subjectService.PopulateTicketSubjectsAsync(ticket);
 
         return Ok(ticket);
     }

@@ -46,6 +46,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Import system** -- Multi-step wizard with pluggable adapters
 - **Side conversations** -- Internal team threads on tickets
 - **Ticket merging and linking** -- Merge duplicate tickets and relate issues
+- **Ticket subjects** -- Attach host-app entities (Project, Customer, asset) a ticket is about
 - **Ticket splitting** -- Split a reply into a new ticket
 - **Ticket snooze** -- Snooze until a future date with auto-wake background service
 - **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
@@ -161,6 +162,67 @@ public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = def
 > `UserDirectoryEntry(int Id, ...)`); admin user APIs also now return user ids
 > as JSON strings. Update your `IUserDirectory` implementation to the `string`
 > signatures shown above. Integer ids keep working — pass them as strings.
+
+## Ticket subjects
+
+A ticket has a **requester** (the person who raised it) and a **subject line**
+(free text). Sometimes a ticket is also *about* one or more host-app entities —
+a Project, a Customer, an asset — that aren't people. Attach them as ticket
+**subjects** so agents see what the ticket concerns and can jump straight to it
+in your app.
+
+Implement `ITicketSubject` on any attachable host model:
+
+```csharp
+public class Project : ITicketSubject
+{
+    public string TicketSubjectTitle() => Name;
+
+    public string? TicketSubjectSubtitle() => Customer == null ? null : $"Project · {Customer.Name}";
+
+    public string? TicketSubjectUrl() => $"/projects/{Id}";
+
+    public string? TicketSubjectColor() => "#2563eb";
+
+    public string? TicketSubjectIcon() => "folder";
+}
+```
+
+Register a resolver so Escalated can load host models by stored `(type, id)`:
+
+```csharp
+builder.Services.AddSingleton<ITicketSubjectResolver, MyTicketSubjectResolver>();
+```
+
+Attach, detach, or sync subjects programmatically via `TicketSubjectService`, or
+through the admin API when types are allowlisted in config:
+
+```json
+"Escalated": {
+  "TicketSubjects": {
+    "Types": [
+      "App.Models.Project",
+      "App.Models.Customer"
+    ]
+  }
+}
+```
+
+Each attached subject is serialized on ticket responses as
+`{ type, id, role, title, subtitle, url, color, icon, missing }`. When the
+resolver cannot find a host record, `missing` is `true` and `title` falls back
+to `TypeName#id`. `subject_id` is stored as a string, so integer, UUID, or
+string-keyed host models all work.
+
+Admin endpoints:
+
+```
+POST   /support/admin/tickets/{id}/subjects       { "type", "id", "role?" }
+DELETE /support/admin/tickets/{ticketId}/subjects/{subjectLinkId}
+```
+
+Programmatic attach works for any type when the allowlist is empty; the admin
+API only accepts allowlisted types.
 
 ## Inbound email
 
