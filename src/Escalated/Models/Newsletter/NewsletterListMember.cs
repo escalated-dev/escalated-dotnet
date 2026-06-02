@@ -18,7 +18,7 @@ public class NewsletterListMember
     public int ContactId { get; set; }
 
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
-    public long? AddedBy { get; set; }
+    public string? AddedBy { get; set; }
 
     [ForeignKey(nameof(ListId))]
     public NewsletterList? List { get; set; }

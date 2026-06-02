@@ -41,8 +41,8 @@ public class Newsletter
 
     public DateTime? ScheduledAt { get; set; }
     public DateTime? SentAt { get; set; }
-    public long? CreatedBy { get; set; }
-    public long? SentBy { get; set; }
+    public string? CreatedBy { get; set; }
+    public string? SentBy { get; set; }
 
     public int SummaryTotal { get; set; }
     public int SummarySent { get; set; }
