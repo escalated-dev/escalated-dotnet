@@ -20,7 +20,7 @@ public class NewsletterList
     [Column(TypeName = "json")]
     public string? FilterJson { get; set; }
 
-    public long? CreatedBy { get; set; }
+    public string? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
