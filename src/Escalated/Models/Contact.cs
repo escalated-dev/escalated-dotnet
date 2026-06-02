@@ -40,6 +40,12 @@ public class Contact
     /// </summary>
     public string Metadata { get; set; } = "{}";
 
+    /// <summary>
+    /// Set when the contact one-click unsubscribes from marketing newsletters.
+    /// Null means the contact is sendable; non-null suppresses future broadcasts.
+    /// </summary>
+    public DateTime? MarketingOptOutAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
