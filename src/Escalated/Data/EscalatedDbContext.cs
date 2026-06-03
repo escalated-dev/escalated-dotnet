@@ -1,4 +1,5 @@
 using Escalated.Models;
+using Escalated.Models.Newsletter;
 using Microsoft.EntityFrameworkCore;
 
 namespace Escalated.Data;
@@ -58,6 +59,11 @@ public class EscalatedDbContext : DbContext
     public DbSet<ChatRoutingRule> ChatRoutingRules => Set<ChatRoutingRule>();
     public DbSet<Workflow> Workflows => Set<Workflow>();
     public DbSet<WorkflowLog> WorkflowLogs => Set<WorkflowLog>();
+    public DbSet<NewsletterList> NewsletterLists => Set<NewsletterList>();
+    public DbSet<NewsletterListMember> NewsletterListMembers => Set<NewsletterListMember>();
+    public DbSet<NewsletterTemplate> NewsletterTemplates => Set<NewsletterTemplate>();
+    public DbSet<Newsletter> Newsletters => Set<Newsletter>();
+    public DbSet<NewsletterDelivery> NewsletterDeliveries => Set<NewsletterDelivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

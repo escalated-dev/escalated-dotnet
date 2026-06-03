@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Escalated.Models.Newsletter;
@@ -39,9 +40,13 @@ public class NewsletterDelivery
     public string? FailureReason { get; set; }
     public short AttemptCount { get; set; }
     public DateTime? ClaimedAt { get; set; }
+    public DateTime? NextAttemptAt { get; set; }
     public bool IsTest { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [ForeignKey(nameof(NewsletterId))]
     public Newsletter? Newsletter { get; set; }
+
+    [ForeignKey(nameof(ContactId))]
+    public Contact? Contact { get; set; }
 }

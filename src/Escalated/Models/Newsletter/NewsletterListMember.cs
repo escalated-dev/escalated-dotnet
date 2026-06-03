@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Escalated.Models.Newsletter;
@@ -22,4 +23,7 @@ public class NewsletterListMember
 
     [ForeignKey(nameof(ListId))]
     public NewsletterList? List { get; set; }
+
+    [ForeignKey(nameof(ContactId))]
+    public Contact? Contact { get; set; }
 }
