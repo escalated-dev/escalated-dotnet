@@ -11,7 +11,7 @@ namespace Escalated.Migrations;
 /// Agent-skill DDL is intentionally provider-scripted — See <see cref="EscalatedModelConfiguration"/>.
 /// </summary>
 [DbContext(typeof(EscalatedDbContext))]
-[Migration("20260517143000")]
+[Migration("20260517143000_SkillManagementParity")]
 public partial class SkillManagementParity : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

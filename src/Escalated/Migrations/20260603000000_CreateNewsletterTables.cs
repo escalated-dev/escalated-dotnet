@@ -14,7 +14,7 @@ namespace Escalated.Migrations;
 /// CreateTicketSubjectsTable).
 /// </summary>
 [DbContext(typeof(EscalatedDbContext))]
-[Migration("20260603000000")]
+[Migration("20260603000000_CreateNewsletterTables")]
 public partial class CreateNewsletterTables : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
