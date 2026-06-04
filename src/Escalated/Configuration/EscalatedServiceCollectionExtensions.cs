@@ -1,3 +1,4 @@
+using Escalated.Controllers.Newsletter;
 using Escalated.Data;
 using Escalated.Events;
 using Escalated.Services;
@@ -78,6 +79,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<NewsletterTracker>();
         services.AddScoped<NewsletterPermissionService>();
         services.AddScoped<NewsletterPermissionSeeder>();
+        services.AddScoped<NewsletterEnabledFilter>();
         services.TryAddSingleton<INewsletterClock, SystemNewsletterClock>();
         services.TryAddSingleton<INewsletterRateLimitStore, MemoryNewsletterRateLimitStore>();
         services.TryAddScoped<INewsletterEmailSender, NullNewsletterEmailSender>();

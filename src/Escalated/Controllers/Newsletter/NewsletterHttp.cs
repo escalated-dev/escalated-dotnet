@@ -107,6 +107,15 @@ internal static class NewsletterHttp
         return value.GetRawText();
     }
 
+    public static string? JsonObjectOrArray(JsonElement body, string key)
+    {
+        if (!body.TryGetProperty(key, out var value) || value.ValueKind is JsonValueKind.Null)
+            return null;
+        if (value.ValueKind is not (JsonValueKind.Array or JsonValueKind.Object))
+            throw new InvalidOperationException($"{key} must be an array or object");
+        return value.GetRawText();
+    }
+
     public static string DecodeTrackedUrl(string encoded)
     {
         try
