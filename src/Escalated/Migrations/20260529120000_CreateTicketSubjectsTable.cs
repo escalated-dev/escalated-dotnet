@@ -11,7 +11,7 @@ namespace Escalated.Migrations;
 /// distinct from the requester and the subject line.
 /// </summary>
 [DbContext(typeof(EscalatedDbContext))]
-[Migration("20260529120000")]
+[Migration("20260529120000_CreateTicketSubjectsTable")]
 public partial class CreateTicketSubjectsTable : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

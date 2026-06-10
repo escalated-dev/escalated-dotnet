@@ -65,6 +65,16 @@ public class EscalatedOptions
     public bool EnableRealTime { get; set; }
 
     /// <summary>
+    /// Master switch for newsletter routes and dispatch. Defaults off.
+    /// </summary>
+    public bool EnableNewsletters { get; set; }
+
+    /// <summary>
+    /// Newsletter broadcast and tracking configuration.
+    /// </summary>
+    public NewsletterOptions Newsletters { get; set; } = new();
+
+    /// <summary>
     /// CSAT configuration.
     /// </summary>
     public CsatOptions Csat { get; set; } = new();
@@ -167,4 +177,22 @@ public class CsatOptions
 {
     public bool Enabled { get; set; } = true;
     public bool SendOnResolved { get; set; } = true;
+}
+
+public class NewsletterOptions
+{
+    public string? DefaultFrom { get; set; }
+    public string? DefaultReplyTo { get; set; }
+    public string DefaultTheme { get; set; } = "default";
+    public int RateLimitPerMinute { get; set; } = 60;
+    public int BatchSize { get; set; } = 50;
+    public bool TrackingEnabled { get; set; } = true;
+    public double AutoPauseBounceRate { get; set; } = 0.05;
+    public int AutoPauseThreshold { get; set; } = 100;
+    public int ClaimTimeoutMinutes { get; set; } = 10;
+    public string BrandAccent { get; set; } = "#2563eb";
+    public string? BrandLogoUrl { get; set; }
+    public string? BrandPhysicalAddress { get; set; }
+    public string BaseUrl { get; set; } = "http://localhost";
+    public string? ThemesDir { get; set; }
 }

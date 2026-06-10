@@ -1,4 +1,5 @@
 using Escalated.Models;
+using Escalated.Models.Newsletter;
 using Microsoft.EntityFrameworkCore;
 
 namespace Escalated.Data;
@@ -43,6 +44,7 @@ public static class EscalatedModelConfiguration
             e.ToTable($"{prefix}contacts");
             e.HasIndex(c => c.Email).IsUnique();
             e.HasIndex(c => c.UserId);
+            e.HasIndex(c => c.MarketingOptOutAt);
         });
 
         modelBuilder.Entity<Reply>(e =>
@@ -314,6 +316,8 @@ public static class EscalatedModelConfiguration
         {
             e.ToTable($"{prefix}settings");
             e.HasIndex(s => s.Key).IsUnique();
+            e.Property(s => s.Type).HasMaxLength(32).IsRequired();
+            e.Property(s => s.Group).HasMaxLength(100);
         });
 
         modelBuilder.Entity<Automation>(e =>
@@ -375,6 +379,69 @@ public static class EscalatedModelConfiguration
             e.Ignore(l => l.ActionDetails);
             e.Ignore(l => l.DurationMs);
             e.Ignore(l => l.Status);
+        });
+
+        modelBuilder.Entity<NewsletterList>(e =>
+        {
+            e.ToTable($"{prefix}newsletter_lists");
+            e.HasIndex(l => l.Kind);
+            e.HasIndex(l => l.CreatedBy);
+            e.Property(l => l.Name).HasMaxLength(255).IsRequired();
+            e.Property(l => l.Kind).HasMaxLength(16).IsRequired();
+            e.Property(l => l.CreatedBy).HasMaxLength(255);
+            e.HasMany(l => l.Members).WithOne(m => m.List).HasForeignKey(m => m.ListId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NewsletterListMember>(e =>
+        {
+            e.ToTable($"{prefix}newsletter_list_members");
+            e.HasIndex(m => new { m.ListId, m.ContactId }).IsUnique();
+            e.HasIndex(m => m.ContactId);
+            e.Property(m => m.AddedBy).HasMaxLength(255);
+            e.HasOne(m => m.Contact).WithMany().HasForeignKey(m => m.ContactId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NewsletterTemplate>(e =>
+        {
+            e.ToTable($"{prefix}newsletter_templates");
+            e.Property(t => t.Name).HasMaxLength(255).IsRequired();
+            e.Property(t => t.Theme).HasMaxLength(64).IsRequired();
+            e.Property(t => t.SubjectTemplate).HasMaxLength(998);
+            e.Property(t => t.BodyMarkdown).IsRequired();
+            e.Property(t => t.CreatedBy).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<Newsletter>(e =>
+        {
+            e.ToTable($"{prefix}newsletters");
+            e.HasIndex(n => n.Status);
+            e.HasIndex(n => n.ScheduledAt);
+            e.HasIndex(n => new { n.Status, n.ScheduledAt });
+            e.HasIndex(n => n.CreatedBy);
+            e.Property(n => n.Subject).HasMaxLength(998).IsRequired();
+            e.Property(n => n.FromEmail).HasMaxLength(320).IsRequired();
+            e.Property(n => n.FromName).HasMaxLength(255);
+            e.Property(n => n.ReplyTo).HasMaxLength(320);
+            e.Property(n => n.Theme).HasMaxLength(64);
+            e.Property(n => n.Status).HasMaxLength(16).IsRequired();
+            e.Property(n => n.CreatedBy).HasMaxLength(255);
+            e.Property(n => n.SentBy).HasMaxLength(255);
+            e.HasOne(n => n.TargetList).WithMany().HasForeignKey(n => n.TargetListId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(n => n.Template).WithMany().HasForeignKey(n => n.TemplateId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<NewsletterDelivery>(e =>
+        {
+            e.ToTable($"{prefix}newsletter_deliveries");
+            e.HasIndex(d => new { d.NewsletterId, d.Status });
+            e.HasIndex(d => d.ContactId);
+            e.HasIndex(d => new { d.Status, d.ClaimedAt });
+            e.HasIndex(d => d.TrackingToken).IsUnique();
+            e.Property(d => d.EmailAtSend).HasMaxLength(320).IsRequired();
+            e.Property(d => d.Status).HasMaxLength(16).IsRequired();
+            e.Property(d => d.TrackingToken).HasMaxLength(40).IsRequired();
+            e.HasOne(d => d.Newsletter).WithMany().HasForeignKey(d => d.NewsletterId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(d => d.Contact).WithMany().HasForeignKey(d => d.ContactId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
