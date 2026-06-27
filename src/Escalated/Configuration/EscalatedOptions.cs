@@ -93,6 +93,39 @@ public class EscalatedOptions
     /// Host-app models a ticket can be <em>about</em> (see <see cref="TicketSubjectsOptions"/>).
     /// </summary>
     public TicketSubjectsOptions TicketSubjects { get; set; } = new();
+
+    /// <summary>
+    /// Host-app authentication callbacks for the general JSON API
+    /// (<c>/api/v1/auth/*</c>) consumed by the Flutter app. Escalated owns no
+    /// credentials, so it ships no password-hashing dependency.
+    /// </summary>
+    public ApiAuthOptions ApiAuth { get; set; } = new();
+}
+
+/// <summary>
+/// Host-app authentication callbacks. Each returns the JSON payload to send
+/// (e.g. token + user) on success, or <c>null</c> for an auth failure (401).
+/// An unconfigured (null) callback makes its endpoint respond <c>501</c>.
+/// </summary>
+public class ApiAuthOptions
+{
+    /// <summary>Authenticate a login request (email/password etc.).</summary>
+    public Func<Dictionary<string, object?>, Task<Dictionary<string, object?>?>>? Authenticate { get; set; }
+
+    /// <summary>Register a new account.</summary>
+    public Func<Dictionary<string, object?>, Task<Dictionary<string, object?>?>>? Register { get; set; }
+
+    /// <summary>Validate a token and return the associated user.</summary>
+    public Func<string, Task<Dictionary<string, object?>?>>? Validate { get; set; }
+
+    /// <summary>Exchange/refresh a token.</summary>
+    public Func<string, Task<Dictionary<string, object?>?>>? Refresh { get; set; }
+
+    /// <summary>Update the authenticated user's profile.</summary>
+    public Func<string, Dictionary<string, object?>, Task<Dictionary<string, object?>?>>? UpdateProfile { get; set; }
+
+    /// <summary>Invalidate a token (best-effort).</summary>
+    public Func<string, Task>? Logout { get; set; }
 }
 
 /// <summary>
