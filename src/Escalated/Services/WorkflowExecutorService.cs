@@ -120,10 +120,31 @@ public class WorkflowExecutorService
             case "insert_canned_reply":
                 await InsertCannedReplyAsync(ticket, value, ct);
                 break;
+            case "add_follower":
+                await AddFollowerAsync(ticket, value, ct);
+                break;
             default:
                 _logger.LogWarning("[WorkflowExecutor] unknown action type: {Type}", type);
                 break;
         }
+    }
+
+    private async Task AddFollowerAsync(Ticket ticket, string value, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(value) || value == "0")
+        {
+            return;
+        }
+
+        var exists = await _db.TicketFollowers
+            .AnyAsync(f => f.TicketId == ticket.Id && f.UserId == value, ct);
+        if (exists)
+        {
+            return;
+        }
+
+        _db.TicketFollowers.Add(new TicketFollower { TicketId = ticket.Id, UserId = value });
+        await _db.SaveChangesAsync(ct);
     }
 
     private async Task ChangePriorityAsync(Ticket ticket, string value, CancellationToken ct)
