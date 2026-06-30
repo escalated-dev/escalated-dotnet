@@ -55,6 +55,13 @@ public static class EscalatedModelConfiguration
             e.HasQueryFilter(r => r.DeletedAt == null);
         });
 
+        modelBuilder.Entity<TicketFollower>(e =>
+        {
+            e.ToTable($"{prefix}ticket_followers");
+            e.HasIndex(f => new { f.TicketId, f.UserId }).IsUnique();
+            e.HasIndex(f => f.UserId);
+        });
+
         modelBuilder.Entity<Attachment>(e =>
         {
             e.ToTable($"{prefix}attachments");
