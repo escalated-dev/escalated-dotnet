@@ -11,12 +11,15 @@ public class AssignmentService
     private readonly EscalatedDbContext _db;
     private readonly IEscalatedEventDispatcher _events;
     private readonly TicketService _ticketService;
+    private readonly SkillRoutingService? _skillRouting;
 
-    public AssignmentService(EscalatedDbContext db, IEscalatedEventDispatcher events, TicketService ticketService)
+    public AssignmentService(EscalatedDbContext db, IEscalatedEventDispatcher events, TicketService ticketService,
+        SkillRoutingService? skillRouting = null)
     {
         _db = db;
         _events = events;
         _ticketService = ticketService;
+        _skillRouting = skillRouting;
     }
 
     public async Task<Ticket> AssignAsync(Ticket ticket, string agentId, string? causerId = null,
@@ -55,6 +58,19 @@ public class AssignmentService
     /// </summary>
     public async Task<Ticket?> AutoAssignAsync(Ticket ticket, CancellationToken ct = default)
     {
+        // Prefer explicit skill-based routing (matching tags / departments to
+        // agent skills) when it is wired in and resolves a candidate. Falls
+        // back to department-load balancing below when no skilled agent
+        // matches or skill routing is unavailable.
+        if (_skillRouting is not null)
+        {
+            var skilledAgentId = await _skillRouting.FindBestAgentAsync(ticket, ct);
+            if (skilledAgentId is not null)
+            {
+                return await AssignAsync(ticket, skilledAgentId, null, ct);
+            }
+        }
+
         if (!ticket.DepartmentId.HasValue) return null;
 
         // Find agents in the department's role (simplified: uses agent_profiles)

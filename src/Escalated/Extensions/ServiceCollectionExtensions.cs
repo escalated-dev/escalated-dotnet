@@ -46,6 +46,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<TwoFactorService>();
         services.AddScoped<WebhookDispatcher>();
         services.AddScoped<WorkflowEngine>();
+        services.AddScoped<WorkflowExecutorService>();
+        services.AddScoped<WorkflowRunnerService>();
 
         // Inbound email: router + default Postmark parser.
         // Host apps can add more parsers by registering them as
@@ -66,7 +68,10 @@ public static class ServiceCollectionExtensions
     {
         if (!services.Any(d => d.ServiceType == typeof(IEscalatedEventDispatcher)))
         {
-            services.AddSingleton<IEscalatedEventDispatcher, NullEventDispatcher>();
+            // Default to the real dispatcher so configured Workflows fire on
+            // ticket/reply events. Host apps that want no side-effects can
+            // register NullEventDispatcher (or their own) before AddEscalated.
+            services.AddSingleton<IEscalatedEventDispatcher, WorkflowEventDispatcher>();
         }
     }
 

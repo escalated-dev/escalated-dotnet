@@ -34,8 +34,11 @@ public static class EscalatedServiceCollectionExtensions
                 options.UseSqlServer(configuration.GetConnectionString("Escalated")));
         }
 
-        // Register event dispatcher (no-op default; host apps can override)
-        services.AddSingleton<IEscalatedEventDispatcher, NullEventDispatcher>();
+        // Register the default event dispatcher. It bridges domain events to
+        // the Workflow engine so configured Workflows fire on ticket/reply
+        // events. Host apps can opt out (e.g. NullEventDispatcher) or supply
+        // their own by registering an IEscalatedEventDispatcher first.
+        services.TryAddSingleton<IEscalatedEventDispatcher, WorkflowEventDispatcher>();
 
         // Custom ticket action registry (host apps can override for dynamic
         // per-ticket/user visibility).
@@ -59,6 +62,11 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<TicketSubjectService>();
         services.AddScoped<WebhookDispatcher>();
         services.AddScoped<AutomationRunner>();
+        // Workflow engine: condition evaluator, action executor, and the
+        // runner the event dispatcher drives.
+        services.AddScoped<WorkflowEngine>();
+        services.AddScoped<WorkflowExecutorService>();
+        services.AddScoped<WorkflowRunnerService>();
         services.AddScoped<CapacityService>();
         services.AddScoped<SkillRoutingService>();
         services.AddScoped<BusinessHoursCalculator>();
@@ -112,6 +120,12 @@ public static class EscalatedServiceCollectionExtensions
 
         // Register newsletter dispatch worker. It is inert unless enabled.
         services.AddHostedService<NewsletterDispatchWorker>();
+
+        // Register the time-based schedulers. Without these, Automations, SLA
+        // breach detection, and escalation rules never run.
+        services.AddHostedService<AutomationBackgroundService>();
+        services.AddHostedService<SlaMonitorBackgroundService>();
+        services.AddHostedService<EscalationBackgroundService>();
 
         return services;
     }
