@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient();
         services.TryAddSingletonEvent();
         services.TryAddSingletonUserDirectory();
+        services.TryAddSingletonNotificationSender();
         services.AddEscalatedLocalization();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<AssignmentService>();
@@ -80,6 +81,17 @@ public static class ServiceCollectionExtensions
         if (!services.Any(d => d.ServiceType == typeof(IUserDirectory)))
         {
             services.AddSingleton<IUserDirectory, NullUserDirectory>();
+        }
+    }
+
+    private static void TryAddSingletonNotificationSender(this IServiceCollection services)
+    {
+        if (!services.Any(d => d.ServiceType == typeof(Notifications.IEscalatedNotificationSender)))
+        {
+            // No-op default so @-mention (and other) notifications resolve even
+            // before the host wires up its own delivery. Hosts register their
+            // own IEscalatedNotificationSender before/after AddEscalated.
+            services.AddSingleton<Notifications.IEscalatedNotificationSender, Notifications.NullNotificationSender>();
         }
     }
 

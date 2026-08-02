@@ -13,12 +13,15 @@ public class TicketService
     private readonly EscalatedDbContext _db;
     private readonly IEscalatedEventDispatcher _events;
     private readonly EscalatedOptions _options;
+    private readonly MentionService? _mentions;
 
-    public TicketService(EscalatedDbContext db, IEscalatedEventDispatcher events, IOptions<EscalatedOptions> options)
+    public TicketService(EscalatedDbContext db, IEscalatedEventDispatcher events, IOptions<EscalatedOptions> options,
+        MentionService? mentions = null)
     {
         _db = db;
         _events = events;
         _options = options.Value;
+        _mentions = mentions;
     }
 
     public async Task<Ticket> CreateAsync(string subject, string? description, string? requesterId = null,
@@ -168,6 +171,12 @@ public class TicketService
             await _events.DispatchAsync(new InternalNoteAddedEvent(reply), ct);
         else
             await _events.DispatchAsync(new ReplyCreatedEvent(reply), ct);
+
+        // @-mentions are an internal-collaboration feature: only internal
+        // notes resolve, persist and notify mentions. Public replies (which
+        // reach the requester) never mention colleagues.
+        if (isNote && _mentions is not null)
+            await _mentions.ProcessMentionsAsync(reply, ticket, ct);
 
         return reply;
     }
