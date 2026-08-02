@@ -10,6 +10,7 @@ public class EscalatedDbContext : DbContext
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<Reply> Replies => Set<Reply>();
+    public DbSet<Mention> Mentions => Set<Mention>();
     public DbSet<TicketFollower> TicketFollowers => Set<TicketFollower>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<TicketActivity> TicketActivities => Set<TicketActivity>();

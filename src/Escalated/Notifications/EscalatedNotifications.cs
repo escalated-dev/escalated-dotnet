@@ -12,6 +12,14 @@ public interface IEscalatedNotificationSender
 {
     Task SendNewTicketNotificationAsync(Ticket ticket, CancellationToken ct = default);
     Task SendReplyNotificationAsync(Reply reply, Ticket ticket, CancellationToken ct = default);
+
+    /// <summary>
+    /// Notifies a host user that they were @-mentioned in an internal note.
+    /// Mirrors the Laravel reference <c>MentionNotification</c>: the mentioned
+    /// agent is told who mentioned them and on which ticket.
+    /// </summary>
+    Task SendMentionNotificationAsync(Reply reply, Ticket ticket, string mentionedUserId, CancellationToken ct = default);
+
     Task SendAssignmentNotificationAsync(Ticket ticket, string agentId, CancellationToken ct = default);
     Task SendStatusChangeNotificationAsync(Ticket ticket, string oldStatus, string newStatus, CancellationToken ct = default);
     Task SendSlaBreachNotificationAsync(Ticket ticket, string breachType, CancellationToken ct = default);
@@ -26,6 +34,7 @@ public class NullNotificationSender : IEscalatedNotificationSender
 {
     public Task SendNewTicketNotificationAsync(Ticket ticket, CancellationToken ct) => Task.CompletedTask;
     public Task SendReplyNotificationAsync(Reply reply, Ticket ticket, CancellationToken ct) => Task.CompletedTask;
+    public Task SendMentionNotificationAsync(Reply reply, Ticket ticket, string mentionedUserId, CancellationToken ct) => Task.CompletedTask;
     public Task SendAssignmentNotificationAsync(Ticket ticket, string agentId, CancellationToken ct) => Task.CompletedTask;
     public Task SendStatusChangeNotificationAsync(Ticket ticket, string oldStatus, string newStatus, CancellationToken ct) => Task.CompletedTask;
     public Task SendSlaBreachNotificationAsync(Ticket ticket, string breachType, CancellationToken ct) => Task.CompletedTask;
