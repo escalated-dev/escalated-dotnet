@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   test:
+    name: dotnet test - sqlite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -27,4 +28,49 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Test
+        run: dotnet test --no-build --verbosity normal
+
+  # The same suite against PostgreSQL, which is one of the two providers this
+  # package ships an EF Core driver for. Until now the tests ran on the EF Core
+  # InMemory provider, which is not a database at all -- no SQL, no types, no
+  # constraints -- so nothing here had ever been executed against a server.
+  postgres:
+    name: dotnet test - postgres
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: escalated_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        env:
+          # Read by tests/Escalated.Tests/TestDatabase.cs. An unrecognised value
+          # throws rather than falling back, so a broken leg fails instead of
+          # quietly running SQLite and reporting green.
+          ESCALATED_TEST_DATABASE: postgres
+          ESCALATED_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=escalated_test;Username=postgres;Password=postgres
         run: dotnet test --no-build --verbosity normal

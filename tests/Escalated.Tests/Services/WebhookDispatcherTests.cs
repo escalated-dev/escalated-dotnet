@@ -1,4 +1,5 @@
 using System.Net;
+using Escalated.Data;
 using Escalated.Models;
 using Escalated.Services;
 using Microsoft.EntityFrameworkCore;
@@ -94,15 +95,7 @@ public class WebhookDispatcherTests
             .Returns(new HttpClient(handler));
 
         var dispatcher = new WebhookDispatcher(db, httpFactory.Object, logger.Object);
-        var webhook = new Webhook
-        {
-            Id = 1,
-            Url = url,
-            Events = """["ticket.created"]""",
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-        };
+        var webhook = await SaveWebhookAsync(db, url);
 
         await dispatcher.SendAsync(webhook, "ticket.created", new { id = 123 });
 
@@ -124,15 +117,7 @@ public class WebhookDispatcherTests
             .Returns(new HttpClient(handler));
 
         var dispatcher = new WebhookDispatcher(db, httpFactory.Object, logger.Object);
-        var webhook = new Webhook
-        {
-            Id = 1,
-            Url = "https://example.com/hook",
-            Events = """["ticket.created"]""",
-            Active = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-        };
+        var webhook = await SaveWebhookAsync(db, "https://example.com/hook");
 
         await dispatcher.SendAsync(webhook, "ticket.created", new { id = 123 });
 
@@ -140,5 +125,30 @@ public class WebhookDispatcherTests
         Assert.Equal("https://example.com/hook", handler.LastRequest!.RequestUri!.ToString());
         var delivery = await db.WebhookDeliveries.SingleAsync();
         Assert.Equal(200, delivery.ResponseCode);
+    }
+
+    /// <summary>
+    /// The webhook has to exist before a delivery can reference it.
+    ///
+    /// <para>These tests used to build one in memory and never save it. The EF
+    /// Core InMemory provider enforces no foreign keys, so the delivery row
+    /// pointing at a webhook that was not there went unnoticed; SQLite and
+    /// PostgreSQL both refuse it.</para>
+    /// </summary>
+    private static async Task<Webhook> SaveWebhookAsync(EscalatedDbContext db, string url)
+    {
+        var webhook = new Webhook
+        {
+            Url = url,
+            Events = """["ticket.created"]""",
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        db.Webhooks.Add(webhook);
+        await db.SaveChangesAsync();
+
+        return webhook;
     }
 }

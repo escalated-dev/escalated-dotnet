@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`CREATE TABLE escalated_agent_skill` failed on PostgreSQL.** The check
+  constraint on `Proficiency` spelled the column unquoted, and PostgreSQL folds
+  an unquoted identifier to lower case — so it asked for a column named
+  `proficiency`, which does not exist, and refused the statement. The package
+  could not create its own schema on one of the two providers it ships a driver
+  for. SQLite compares identifiers case insensitively and never noticed.
+
+### Changed
+- **The test suite runs on a real database.** It ran on the EF Core InMemory
+  provider, which is not a database: no SQL, no types, no constraints. SQLite is
+  now the default — real SQL, real types, real constraints, and still nothing to
+  install — and `ESCALATED_TEST_DATABASE=postgres` runs the same 384 tests
+  against a PostgreSQL server, each with a schema of its own.
+
+  An unrecognised value throws rather than falling back, because a CI leg that
+  quietly ran SQLite would report green having tested nothing the matrix exists
+  for. `DatabaseProviderTests` is the one test that notices — including that the
+  provider is relational at all.
+
+  Two test bugs surfaced immediately, both things InMemory cannot enforce: the
+  webhook dispatcher tests wrote a delivery row referencing a webhook that was
+  never saved, and a mention test inserted two mentions for one agent on one
+  reply, which the unique index forbids.
+
 ### Added
 - **Configurable database connection, documented and guarded.**
   `EscalatedDbContext` has always had its own connection string, so Escalated's

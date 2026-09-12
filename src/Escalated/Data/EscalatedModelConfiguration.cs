@@ -193,12 +193,16 @@ public static class EscalatedModelConfiguration
 
         modelBuilder.Entity<AgentSkill>(e =>
         {
+            // The column name is quoted. PostgreSQL folds an unquoted
+            // identifier to lower case, so an unquoted Proficiency here asked
+            // for a column named "proficiency" -- which does not exist, and
+            // CREATE TABLE failed outright. SQLite compares identifiers case
+            // insensitively and never noticed.
+            var proficiencyRange = $"\"{nameof(AgentSkill.Proficiency)}\" BETWEEN 1 AND 5";
+
             e.ToTable(
                 $"{prefix}agent_skill",
-                tb =>
-                    tb.HasCheckConstraint(
-                        "CK_escalated_agent_skill_proficiency",
-                        $"{nameof(AgentSkill.Proficiency)} BETWEEN 1 AND 5"));
+                tb => tb.HasCheckConstraint("CK_escalated_agent_skill_proficiency", proficiencyRange));
             e.HasOne(a => a.Skill).WithMany(s => s.AgentSkills).HasForeignKey(a => a.SkillId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(a => new { a.UserId, a.SkillId }).IsUnique();
         });

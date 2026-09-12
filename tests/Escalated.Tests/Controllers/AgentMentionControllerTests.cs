@@ -39,6 +39,25 @@ public class AgentMentionControllerTests
         return (new AgentMentionController(db), db, reply);
     }
 
+    private static async Task<Reply> AddReplyAsync(EscalatedDbContext db, int ticketId)
+    {
+        var reply = new Reply
+        {
+            TicketId = ticketId,
+            Body = "cc @grace again",
+            AuthorId = "1",
+            IsInternalNote = true,
+            Type = "note",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        db.Replies.Add(reply);
+        await db.SaveChangesAsync();
+
+        return reply;
+    }
+
     private static int DataCount(IActionResult result)
     {
         var ok = Assert.IsType<OkObjectResult>(result);
@@ -62,8 +81,15 @@ public class AgentMentionControllerTests
     public async Task Index_UnreadOnly_FiltersReadMentions()
     {
         var (ctrl, db, reply) = await SeedAsync();
+
+        // Two replies, not two mentions on one: (ReplyId, UserId) is unique, so
+        // the same agent cannot be mentioned twice on the same reply. The EF
+        // Core InMemory provider enforced no such constraint, which is how this
+        // used to pass while asserting a row the schema forbids.
+        var second = await AddReplyAsync(db, reply.TicketId);
+
         db.Mentions.Add(new Mention { ReplyId = reply.Id, UserId = "7", ReadAt = DateTime.UtcNow });
-        db.Mentions.Add(new Mention { ReplyId = reply.Id, UserId = "7", CreatedAt = DateTime.UtcNow.AddMinutes(1) });
+        db.Mentions.Add(new Mention { ReplyId = second.Id, UserId = "7", CreatedAt = DateTime.UtcNow.AddMinutes(1) });
         await db.SaveChangesAsync();
 
         Assert.Equal(2, DataCount(await ctrl.Index("7")));
