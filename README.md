@@ -141,6 +141,59 @@ dotnet ef database update --context EscalatedDbContext
 
 Visit `/support` -- you're live.
 
+### Separate databases
+
+`EscalatedDbContext` has its own connection string, so Escalated's tables go
+wherever `ConnectionStrings:Escalated` points. Nothing requires that to be your
+application's database — it can be a schema shared with a legacy system, a
+separate reporting store, or simply a database you would rather not mix support
+data into:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=MyApp;Trusted_Connection=true;",
+    "Escalated": "Server=support-db;Database=Support;Trusted_Connection=true;"
+  }
+}
+```
+
+Nothing else changes. `AddEscalated` already resolves that string, and
+`dotnet ef database update --context EscalatedDbContext` migrates only that
+database — your own `DbContext` keeps its own migrations.
+
+The two connections need not even be the same provider:
+
+```csharp
+builder.Services.AddEscalated(builder.Configuration, options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Escalated")));
+```
+
+#### Your users stay where they are
+
+Escalated owns no `User` entity. The admin users page reads your users through
+`IUserDirectory`, which you implement against **your** `DbContext`, with your
+query, on your connection:
+
+```csharp
+builder.Services.AddSingleton<IUserDirectory, MyUserDirectory>();
+```
+
+Registered before `AddEscalated`, your implementation wins; without one, a
+`NullUserDirectory` returns an empty page rather than querying a database that
+may have no users table in it.
+
+That is also why no Escalated entity declares a foreign key to your users:
+`Ticket.RequesterId`, `Ticket.AssignedTo` and `Reply.AuthorId` are plain
+unconstrained columns, so the two databases need never meet. Tests fail the
+build if an entity, a foreign key or any raw SQL in the package names a
+host-owned table.
+
+No query joins the two, because no database can join across two connections. The
+cost is that Escalated cannot filter or sort its tables by a column that lives on
+your user — assignment, skill routing and agent load all resolve ids from
+Escalated's tables first, then ask your directory for the people.
+
 ### Host user keys (UUID / string support)
 
 Escalated stores references to your app's users (ticket requester, assignee,
