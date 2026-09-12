@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-12
+
 ### Fixed
 - **`CREATE TABLE escalated_agent_skill` failed on PostgreSQL.** The check
   constraint on `Proficiency` spelled the column unquoted, and PostgreSQL folds
