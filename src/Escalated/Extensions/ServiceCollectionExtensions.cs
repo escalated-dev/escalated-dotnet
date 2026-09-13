@@ -1,9 +1,5 @@
-using Escalated.Events;
-using Escalated.Localization;
-using Escalated.Services;
+using Escalated.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Localization;
 
 namespace Escalated.Extensions;
 
@@ -13,108 +9,13 @@ public static class ServiceCollectionExtensions
     /// Registers all Escalated services in the DI container so the
     /// library's controllers (added via AddApplicationPart) can resolve
     /// their constructor dependencies.
+    ///
+    /// Registers exactly what <c>AddEscalated(configuration, configureDb)</c>
+    /// does, except that the host registers <c>EscalatedDbContext</c> and binds
+    /// <c>EscalatedOptions</c> itself.
     /// </summary>
     public static IServiceCollection AddEscalated(this IServiceCollection services)
     {
-        services.AddHttpClient();
-        services.TryAddSingletonEvent();
-        services.TryAddSingletonUserDirectory();
-        services.TryAddSingletonNotificationSender();
-        services.AddEscalatedLocalization();
-        services.AddScoped<AdvancedReportingService>();
-        services.AddScoped<AssignmentService>();
-        services.AddScoped<AuditLogService>();
-        services.AddScoped<AutomationRunner>();
-        services.AddScoped<BusinessHoursCalculator>();
-        services.AddScoped<CapacityService>();
-        services.AddScoped<ChatAvailabilityService>();
-        services.AddScoped<ChatRoutingService>();
-        services.AddScoped<ChatSessionService>();
-        services.AddScoped<EscalationService>();
-        services.AddScoped<ImportService>();
-        services.AddScoped<KnowledgeBaseService>();
-        services.AddScoped<MacroService>();
-        services.AddScoped<MentionService>();
-        services.AddScoped<SavedViewService>();
-        services.AddScoped<SettingsService>();
-        services.AddScoped<SideConversationService>();
-        services.AddScoped<SkillRoutingService>();
-        services.AddScoped<SlaService>();
-        services.AddScoped<TicketMergeService>();
-        services.AddScoped<TicketService>();
-        services.AddScoped<TicketSnoozeService>();
-        services.AddScoped<TicketSplitService>();
-        services.AddScoped<TwoFactorService>();
-        services.AddScoped<WebhookDispatcher>();
-        services.AddScoped<WorkflowEngine>();
-        services.AddScoped<WorkflowExecutorService>();
-        services.AddScoped<WorkflowRunnerService>();
-
-        // Inbound email: router + default Postmark parser.
-        // Host apps can add more parsers by registering them as
-        // IInboundEmailParser; the controller dispatches by Name.
-        services.AddScoped<Services.Email.Inbound.InboundEmailRouter>(sp =>
-            new Services.Email.Inbound.InboundEmailRouter(
-                sp.GetRequiredService<Data.EscalatedDbContext>(),
-                sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Configuration.EscalatedOptions>>().Value));
-        services.AddScoped<Services.Email.Inbound.IInboundEmailParser,
-            Services.Email.Inbound.PostmarkInboundParser>();
-        services.AddScoped<Services.Email.Inbound.IInboundEmailParser,
-            Services.Email.Inbound.MailgunInboundParser>();
-        services.AddScoped<Services.Email.Inbound.InboundEmailService>();
-        return services;
-    }
-
-    private static void TryAddSingletonEvent(this IServiceCollection services)
-    {
-        if (!services.Any(d => d.ServiceType == typeof(IEscalatedEventDispatcher)))
-        {
-            // Default to the real dispatcher so configured Workflows fire on
-            // ticket/reply events. Host apps that want no side-effects can
-            // register NullEventDispatcher (or their own) before AddEscalated.
-            services.AddSingleton<IEscalatedEventDispatcher, WorkflowEventDispatcher>();
-        }
-    }
-
-    private static void TryAddSingletonUserDirectory(this IServiceCollection services)
-    {
-        if (!services.Any(d => d.ServiceType == typeof(IUserDirectory)))
-        {
-            services.AddSingleton<IUserDirectory, NullUserDirectory>();
-        }
-    }
-
-    private static void TryAddSingletonNotificationSender(this IServiceCollection services)
-    {
-        if (!services.Any(d => d.ServiceType == typeof(Notifications.IEscalatedNotificationSender)))
-        {
-            // No-op default so @-mention (and other) notifications resolve even
-            // before the host wires up its own delivery. Hosts register their
-            // own IEscalatedNotificationSender before/after AddEscalated.
-            services.AddSingleton<Notifications.IEscalatedNotificationSender, Notifications.NullNotificationSender>();
-        }
-    }
-
-    /// <summary>
-    /// Registers a chained <see cref="IStringLocalizer"/> stack that
-    /// resolves strings from plugin-local overrides under
-    /// <c>Resources/Overrides/</c> first, falling through to the
-    /// vendored central catalog at <c>Resources/locales/*.json</c>
-    /// (sourced from escalated-dev/escalated-locale; will swap back
-    /// to a runtime dep on the <c>Escalated.Locale</c> NuGet package
-    /// once that publish pipeline is online).
-    /// </summary>
-    private static void AddEscalatedLocalization(this IServiceCollection services)
-    {
-        // Standard ASP.NET Core localization (resx + JSON readers).
-        services.AddLocalization(opts => opts.ResourcesPath = "Resources/Overrides");
-
-        // Decorate the default factory: chain plugin-local first,
-        // central (vendored) catalog second.
-        services.Replace(ServiceDescriptor.Singleton<IStringLocalizerFactory>(sp =>
-        {
-            var inner = ActivatorUtilities.CreateInstance<ResourceManagerStringLocalizerFactory>(sp);
-            return new EscalatedLocalizerFactory(inner);
-        }));
+        return services.AddEscalatedServices();
     }
 }
