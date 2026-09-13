@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **A host that added the package's controllers served no requests at all.**
+  The six newsletter controllers are `[ApiController]`s with no routes, and MVC
+  refuses to build its endpoint table when any `[ApiController]` action is not
+  attribute routed. It checks on the first request and throws for every
+  endpoint, so `GET /support/admin/tickets` failed with `InvalidOperationException`
+  on the demo host, newsletters enabled or not.
+  - The newsletter controllers now carry the reference routes
+    (`/admin/newsletters*`, `/escalated/n/*`, `/escalated/webhooks/newsletter/*`),
+    and still return 404 while `EnableNewsletters` is off.
+  - `MapEscalated` no longer maps conventional newsletter routes, which could
+    never reach attribute-routed actions.
+- **Any response containing a ticket failed to serialize.** `Ticket.Subjects`
+  and `Ticket.SubjectsPayload` both became `subjects` under MVC's camelCase
+  naming, which System.Text.Json rejects for the whole type. The raw links are no
+  longer serialized; `subjects` carries the resolved payload the README documents.
+
 ## [0.1.1] - 2026-09-13
 
 ### Fixed

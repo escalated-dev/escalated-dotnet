@@ -92,6 +92,10 @@ public class Ticket
     public ICollection<SideConversation> SideConversations { get; set; } = new List<SideConversation>();
     public ICollection<TicketLink> LinksAsParent { get; set; } = new List<TicketLink>();
     public ICollection<TicketLink> LinksAsChild { get; set; } = new List<TicketLink>();
+    // Serialized as "subjects" through SubjectsPayload (resolved title, url, ...).
+    // The raw links would take the same camelCase name, and System.Text.Json
+    // rejects the whole type when two properties share one.
+    [JsonIgnore]
     public ICollection<TicketSubjectLink> Subjects { get; set; } = new List<TicketSubjectLink>();
     public SatisfactionRating? SatisfactionRating { get; set; }
     public ICollection<CustomFieldValue> CustomFieldValues { get; set; } = new List<CustomFieldValue>();

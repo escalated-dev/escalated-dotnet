@@ -14,6 +14,7 @@ namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
+[Route("admin/newsletters")]
 public class AdminNewsletterController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
@@ -58,7 +59,7 @@ public class AdminNewsletterController : ControllerBase
         return NewsletterHttp.Inertia(this, "Escalated/Admin/Newsletters/Index", new { newsletters, tab });
     }
 
-    [HttpGet]
+    [HttpGet("new")]
     public async Task<IActionResult> Create(CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -84,7 +85,7 @@ public class AdminNewsletterController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/{data.Id}");
     }
 
-    [HttpPost]
+    [HttpPost("preview")]
     public async Task<IActionResult> Preview([FromBody] JsonElement body, CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -103,7 +104,7 @@ public class AdminNewsletterController : ControllerBase
         return Ok(new { html = _renderer.Render(delivery, newsletter, contact) });
     }
 
-    [HttpPost]
+    [HttpPost("test")]
     public async Task<IActionResult> Test([FromBody] JsonElement body, CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.send", ct);
@@ -117,7 +118,7 @@ public class AdminNewsletterController : ControllerBase
         return Ok(new { ok = true });
     }
 
-    [HttpGet]
+    [HttpGet("{newsletter:int}")]
     public async Task<IActionResult> Show(int newsletter, [FromQuery] string tab = "overview", [FromQuery] string? status = null, CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -137,6 +138,7 @@ public class AdminNewsletterController : ControllerBase
         });
     }
 
+    [HttpGet("{newsletter:int}/edit")]
     public async Task<IActionResult> Edit(int newsletter, CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -150,7 +152,7 @@ public class AdminNewsletterController : ControllerBase
         });
     }
 
-    [HttpPut]
+    [HttpPut("{newsletter:int}")]
     public async Task<IActionResult> Update(int newsletter, [FromBody] JsonElement body, CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -177,7 +179,7 @@ public class AdminNewsletterController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/{entity.Id}");
     }
 
-    [HttpDelete]
+    [HttpDelete("{newsletter:int}")]
     public async Task<IActionResult> Destroy(int newsletter, CancellationToken ct = default)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);

@@ -11,6 +11,7 @@ namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
+[Route("admin/newsletters/templates")]
 public class AdminNewsletterTemplateController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
@@ -37,7 +38,7 @@ public class AdminNewsletterTemplateController : ControllerBase
         return NewsletterHttp.Inertia(this, "Escalated/Admin/Newsletters/Templates/Index", new { templates });
     }
 
-    [HttpGet]
+    [HttpGet("new")]
     public async Task<IActionResult> Create(CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -55,7 +56,7 @@ public class AdminNewsletterTemplateController : ControllerBase
         return NewsletterHttp.Redirect(this, "/admin/newsletters/templates");
     }
 
-    [HttpGet]
+    [HttpGet("{template:int}")]
     public async Task<IActionResult> Show(int template, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -67,7 +68,7 @@ public class AdminNewsletterTemplateController : ControllerBase
         });
     }
 
-    [HttpPut]
+    [HttpPut("{template:int}")]
     public async Task<IActionResult> Update(int template, [FromBody] JsonElement body, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -83,7 +84,7 @@ public class AdminNewsletterTemplateController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/templates/{entity.Id}");
     }
 
-    [HttpDelete]
+    [HttpDelete("{template:int}")]
     public async Task<IActionResult> Destroy(int template, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
