@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-13
+
+### Fixed
+- **Both `AddEscalated` overloads left services unregistered.** They kept
+  separate lists that had drifted apart, and nothing fails at startup when a
+  registration is missing -- a controller is only built when a request reaches
+  it.
+  - Following the README (`AddEscalated(configuration, configureDb)`), inbound
+    email returned 500s, `WebhookDispatcher` could not be resolved, and
+    `MentionService` was never registered, so @-mentions in internal notes were
+    dropped silently.
+  - The parameterless `AddEscalated()` could not build nine controllers,
+    including the admin and agent ticket controllers and every newsletter
+    controller, and registered none of the background services, so automations,
+    SLA monitoring and escalations never ran.
+
+  Both now register the same services, and calling both no longer registers
+  every background service twice.
+
+### Changed
+- EF Core 9.0.20 in every project, together, and the ASP.NET Core test
+  packages to their latest patches.
+
 ## [0.1.0] - 2026-09-12
 
 ### Fixed
