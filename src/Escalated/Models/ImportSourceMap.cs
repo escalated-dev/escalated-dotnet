@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -25,6 +26,7 @@ public class ImportSourceMap
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     [ForeignKey(nameof(ImportJobId))]
     public ImportJob? ImportJob { get; set; }
 }

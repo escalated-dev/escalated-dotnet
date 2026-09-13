@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -26,6 +27,7 @@ public class WebhookDelivery
     public DateTime? DeliveredAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     [ForeignKey(nameof(WebhookId))]
     public Webhook? Webhook { get; set; }
 }

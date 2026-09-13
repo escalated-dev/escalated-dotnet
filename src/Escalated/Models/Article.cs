@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -60,8 +61,10 @@ public class ArticleCategory
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     [ForeignKey(nameof(ParentId))]
     public ArticleCategory? Parent { get; set; }
     public ICollection<ArticleCategory> Children { get; set; } = new List<ArticleCategory>();
+    [JsonIgnore]
     public ICollection<Article> Articles { get; set; } = new List<Article>();
 }

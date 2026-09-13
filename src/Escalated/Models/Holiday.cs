@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -22,6 +23,7 @@ public class Holiday
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     [ForeignKey(nameof(ScheduleId))]
     public BusinessSchedule? Schedule { get; set; }
 }

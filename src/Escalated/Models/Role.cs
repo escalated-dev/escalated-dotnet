@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -43,6 +44,7 @@ public class Permission
     [MaxLength(100)]
     public string? Group { get; set; }
 
+    [JsonIgnore]
     public ICollection<Role> Roles { get; set; } = new List<Role>();
 }
 
@@ -60,5 +62,6 @@ public class RoleUser
 
     [MaxLength(255)]
     public string UserId { get; set; } = string.Empty;
+    [JsonIgnore]
     public Role? Role { get; set; }
 }

@@ -31,6 +31,7 @@ public class TicketActivity
     [JsonPropertyName("created_at_human")]
     public string CreatedAtHuman => FormatHuman(CreatedAt);
 
+    [JsonIgnore]
     [ForeignKey(nameof(TicketId))]
     public Ticket? Ticket { get; set; }
 
