@@ -1,3 +1,4 @@
+using Escalated.Controllers.Admin;
 using Escalated.Data;
 using Escalated.Models;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +40,9 @@ public class NewsletterPermissionService
         if (roles.Count == 0)
             return false;
 
-        if (await _db.Roles.AnyAsync(r => roles.Contains(r.Id) && r.Slug == "admin", ct))
+        // The admin role is the one the admin users page grants and the default admin
+        // policy requires. Any other role holds only the permissions attached to it.
+        if (await _db.Roles.AnyAsync(r => roles.Contains(r.Id) && r.Slug == AdminUsersController.AdminRoleSlug, ct))
             return true;
 
         return await _db.RolePermissions
@@ -78,7 +81,7 @@ public class NewsletterPermissionSeeder
 
         await _db.SaveChangesAsync(ct);
 
-        var admin = await _db.Roles.SingleOrDefaultAsync(r => r.Slug == "admin", ct);
+        var admin = await _db.Roles.SingleOrDefaultAsync(r => r.Slug == AdminUsersController.AdminRoleSlug, ct);
         if (admin is not null)
         {
             await AttachAsync(admin.Id, manage.Id, ct);

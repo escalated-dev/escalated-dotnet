@@ -51,6 +51,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `WebhookDispatcher` takes an `IServiceScopeFactory` and a `TimeProvider`, and
   optionally an `IHostApplicationLifetime`. `AddEscalated` registers
   `TimeProvider.System` unless the host has registered one.
+- **An Escalated admin was refused every newsletter action.**
+  `NewsletterPermissionService` gave every newsletter permission to a role with
+  the slug `admin`, but the admin role the admin users page grants, and the
+  default admin policy requires, is `escalated-admin`. Nothing in the package
+  creates an `admin` role, so behind the default policies nobody could open
+  `/admin/newsletters` without a `newsletters.manage` permission attached by
+  hand. The `escalated-admin` role now holds `newsletters.manage` and
+  `newsletters.send`, and `NewsletterPermissionSeeder` attaches both to it.
+
+### Changed
+- A role with the slug `admin` no longer passes the newsletter permission check
+  by its slug. Like any other role, it holds the permissions attached to it.
 
 ## [0.1.2] - 2026-09-13
 
