@@ -2,6 +2,7 @@ using Escalated.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Api;
 
@@ -17,6 +18,7 @@ namespace Escalated.Controllers.Api;
 /// </summary>
 [ApiController]
 [Route("support/api/v1/auth")]
+[AllowAnonymous]
 public class ApiAuthController : ControllerBase
 {
     private readonly ApiAuthOptions _auth;

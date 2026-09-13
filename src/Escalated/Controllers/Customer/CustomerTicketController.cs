@@ -6,11 +6,14 @@ using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Customer;
 
 [ApiController]
 [Route("support/tickets")]
+[Authorize(Policy = EscalatedPolicies.Customer)]
 public class CustomerTicketController : ControllerBase
 {
     private readonly TicketService _ticketService;
@@ -26,9 +29,12 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index([FromQuery] string requesterId,
-        [FromQuery] TicketListFilters? filters, [FromQuery] int page = 1, [FromQuery] int perPage = 25)
+    public async Task<IActionResult> Index([FromQuery] TicketListFilters? filters,
+        [FromQuery] int page = 1, [FromQuery] int perPage = 25)
     {
+        if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
+
+        // The signed-in customer's own tickets, whatever requesterId the query carries.
         filters ??= new TicketListFilters();
         filters.RequesterId = requesterId;
         var (items, totalCount) = await _ticketService.ListAsync(filters, page, perPage);
@@ -40,10 +46,12 @@ public class CustomerTicketController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTicketRequest request)
     {
+        if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
+
         var ticket = await _ticketService.CreateAsync(
             request.Subject,
             request.Description,
-            requesterId: request.RequesterId,
+            requesterId: requesterId,
             requesterType: request.RequesterType,
             priority: request.Priority != null ? TicketPriorityExtensions.Parse(request.Priority) : null,
             departmentId: request.DepartmentId,
@@ -53,8 +61,10 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Show(int id, [FromQuery] string requesterId)
+    public async Task<IActionResult> Show(int id)
     {
+        if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
+
         var ticket = await _db.Tickets
             .Include(t => t.Replies.OrderByDescending(r => r.CreatedAt))
                 .ThenInclude(r => r.Attachments)
@@ -112,19 +122,23 @@ public class CustomerTicketController : ControllerBase
     [HttpPost("{id:int}/reply")]
     public async Task<IActionResult> Reply(int id, [FromBody] CustomerReplyRequest request)
     {
+        if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
+
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        if (ticket.RequesterId != request.RequesterId)
+        if (ticket.RequesterId != requesterId)
             return Forbid();
 
-        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, request.RequesterId);
+        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, requesterId);
         return Ok(reply);
     }
 
     [HttpPost("{id:int}/close")]
-    public async Task<IActionResult> Close(int id, [FromQuery] string requesterId)
+    public async Task<IActionResult> Close(int id)
     {
+        if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
+
         if (!_options.AllowCustomerClose)
             return StatusCode(403, new { error = "Customers cannot close tickets." });
 
@@ -137,8 +151,10 @@ public class CustomerTicketController : ControllerBase
     }
 
     [HttpPost("{id:int}/reopen")]
-    public async Task<IActionResult> Reopen(int id, [FromQuery] string requesterId)
+    public async Task<IActionResult> Reopen(int id)
     {
+        if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
+
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
         if (ticket.RequesterId != requesterId) return Forbid();
@@ -149,7 +165,7 @@ public class CustomerTicketController : ControllerBase
 }
 
 public record CreateTicketRequest(string Subject, string? Description = null,
-    string? RequesterId = null, string? RequesterType = null,
+    string? RequesterType = null,
     string? Priority = null, int? DepartmentId = null, string? TicketType = null);
 
-public record CustomerReplyRequest(string Body, string RequesterId);
+public record CustomerReplyRequest(string Body);

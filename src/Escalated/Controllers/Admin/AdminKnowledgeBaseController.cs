@@ -3,11 +3,14 @@ using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
 [ApiController]
 [Route("support/admin/knowledge-base")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminKnowledgeBaseController : ControllerBase
 {
     private readonly KnowledgeBaseService _kbService;
@@ -33,7 +36,7 @@ public class AdminKnowledgeBaseController : ControllerBase
     public async Task<IActionResult> CreateArticle([FromBody] CreateArticleRequest request)
     {
         var article = await _kbService.CreateArticleAsync(
-            request.Title, request.Body, request.CategoryId, request.AuthorId);
+            request.Title, request.Body, request.CategoryId, this.CurrentUserId());
         return Ok(article);
     }
 
@@ -85,6 +88,6 @@ public class AdminKnowledgeBaseController : ControllerBase
     }
 }
 
-public record CreateArticleRequest(string Title, string Body, int? CategoryId = null, string? AuthorId = null);
+public record CreateArticleRequest(string Title, string Body, int? CategoryId = null);
 public record UpdateArticleRequest(string? Title = null, string? Body = null, int? CategoryId = null);
 public record CreateCategoryRequest(string Name, int? ParentId = null);

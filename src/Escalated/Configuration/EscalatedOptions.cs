@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 namespace Escalated.Configuration;
 
 public class EscalatedOptions
@@ -100,6 +102,15 @@ public class EscalatedOptions
     /// credentials, so it ships no password-hashing dependency.
     /// </summary>
     public ApiAuthOptions ApiAuth { get; set; } = new();
+
+    /// <summary>
+    /// Resolves the host user id Escalated acts as from the principal your
+    /// authentication signed in. Unset, Escalated reads the <c>NameIdentifier</c>
+    /// claim, then <c>sub</c>, then <c>id</c> (see
+    /// <see cref="Authorization.EscalatedUser.DefaultResolveId"/>). Set it when your
+    /// user id lives in another claim.
+    /// </summary>
+    public Func<ClaimsPrincipal, string?>? UserIdResolver { get; set; }
 }
 
 /// <summary>

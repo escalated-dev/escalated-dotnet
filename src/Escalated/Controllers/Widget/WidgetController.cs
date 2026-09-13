@@ -3,6 +3,7 @@ using Escalated.Enums;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Widget;
 
@@ -12,6 +13,7 @@ namespace Escalated.Controllers.Widget;
 /// </summary>
 [ApiController]
 [Route("support/widget")]
+[AllowAnonymous]
 public class WidgetController : ControllerBase
 {
     private readonly TicketService _ticketService;

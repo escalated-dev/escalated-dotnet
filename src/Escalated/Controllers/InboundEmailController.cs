@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers;
 
@@ -30,6 +31,7 @@ namespace Escalated.Controllers;
 /// </summary>
 [ApiController]
 [Route("support/webhook/email")]
+[AllowAnonymous]
 public class InboundEmailController : ControllerBase
 {
     private readonly EscalatedDbContext _db;

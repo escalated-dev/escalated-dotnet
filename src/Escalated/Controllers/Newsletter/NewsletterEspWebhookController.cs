@@ -5,12 +5,14 @@ using Escalated.Models;
 using Escalated.Services.Newsletter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
 [Route("escalated/webhooks/newsletter")]
+[AllowAnonymous]
 public class NewsletterEspWebhookController : ControllerBase
 {
     private static readonly Regex MessageIdTokenRegex = new(

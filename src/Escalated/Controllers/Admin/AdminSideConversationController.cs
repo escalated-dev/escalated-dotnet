@@ -1,10 +1,13 @@
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
 [ApiController]
 [Route("support/admin/side-conversations")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminSideConversationController : ControllerBase
 {
     private readonly SideConversationService _service;
@@ -24,14 +27,18 @@ public class AdminSideConversationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateSideConversationRequest request)
     {
-        var conversation = await _service.CreateAsync(request.TicketId, request.Subject, request.CreatedBy);
+        if (this.CurrentUserId() is not { } userId) return Unauthorized();
+
+        var conversation = await _service.CreateAsync(request.TicketId, request.Subject, userId);
         return Ok(conversation);
     }
 
     [HttpPost("{id:int}/reply")]
     public async Task<IActionResult> Reply(int id, [FromBody] SideConversationReplyRequest request)
     {
-        var reply = await _service.AddReplyAsync(id, request.Body, request.AuthorId);
+        if (this.CurrentUserId() is not { } userId) return Unauthorized();
+
+        var reply = await _service.AddReplyAsync(id, request.Body, userId);
         return Ok(reply);
     }
 
@@ -44,5 +51,5 @@ public class AdminSideConversationController : ControllerBase
     }
 }
 
-public record CreateSideConversationRequest(int TicketId, string Subject, string CreatedBy);
-public record SideConversationReplyRequest(string Body, string AuthorId);
+public record CreateSideConversationRequest(int TicketId, string Subject);
+public record SideConversationReplyRequest(string Body);

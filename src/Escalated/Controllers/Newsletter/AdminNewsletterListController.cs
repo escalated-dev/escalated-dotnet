@@ -7,12 +7,15 @@ using Escalated.Services.Newsletter;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
 [Route("admin/newsletters/lists")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminNewsletterListController : ControllerBase
 {
     private static readonly Regex EmailRegex = new(
@@ -249,5 +252,5 @@ public class AdminNewsletterListController : ControllerBase
         };
     }
 
-    private string? UserId() => User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value ?? User.Identity?.Name;
+    private string? UserId() => this.CurrentUserId();
 }

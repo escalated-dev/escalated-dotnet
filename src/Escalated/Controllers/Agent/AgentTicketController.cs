@@ -7,11 +7,14 @@ using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Agent;
 
 [ApiController]
 [Route("support/agent/tickets")]
+[Authorize(Policy = EscalatedPolicies.Agent)]
 public class AgentTicketController : ControllerBase
 {
     private readonly TicketService _ticketService;
@@ -107,7 +110,7 @@ public class AgentTicketController : ControllerBase
                 .CountAsync(t => t.GuestEmail == ticket.GuestEmail);
         }
 
-        ticket.CustomActions = CustomActionsForTicket(ticket, null);
+        ticket.CustomActions = CustomActionsForTicket(ticket, this.CurrentUserId());
 
         await _subjectService.PopulateTicketSubjectsAsync(ticket);
 
@@ -127,7 +130,7 @@ public class AgentTicketController : ControllerBase
         if (!config.Enabled)
             return StatusCode(403, new { error = "Custom action is not enabled." });
 
-        var userId = request?.UserId;
+        var userId = this.CurrentUserId();
 
         // Record an internal note for auditability.
         await _ticketService.AddReplyAsync(ticket, $"Custom action \"{action}\" was triggered.",
@@ -145,7 +148,7 @@ public class AgentTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, request.AuthorId, null, false);
+        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, this.CurrentUserId(), null, false);
         return Ok(reply);
     }
 
@@ -155,7 +158,7 @@ public class AgentTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, request.AuthorId, null, true);
+        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, this.CurrentUserId(), null, true);
         return Ok(reply);
     }
 
@@ -165,7 +168,7 @@ public class AgentTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _assignmentService.AssignAsync(ticket, request.AgentId, request.CauserId);
+        ticket = await _assignmentService.AssignAsync(ticket, request.AgentId, this.CurrentUserId());
         return Ok(ticket);
     }
 
@@ -175,7 +178,7 @@ public class AgentTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _ticketService.ChangeStatusAsync(ticket, TicketStatusExtensions.Parse(request.Status), request.CauserId);
+        ticket = await _ticketService.ChangeStatusAsync(ticket, TicketStatusExtensions.Parse(request.Status), this.CurrentUserId());
         return Ok(ticket);
     }
 
@@ -185,26 +188,30 @@ public class AgentTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(request.Priority), request.CauserId);
+        ticket = await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(request.Priority), this.CurrentUserId());
         return Ok(ticket);
     }
 
     [HttpPost("{id:int}/macro")]
     public async Task<IActionResult> ApplyMacro(int id, [FromBody] Admin.MacroRequest request)
     {
+        if (this.CurrentUserId() is not { } causerId) return Unauthorized();
+
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
         var macro = await _db.Macros.FindAsync(request.MacroId);
         if (macro == null) return NotFound("Macro not found.");
 
-        ticket = await _macroService.ApplyAsync(macro, ticket, request.CauserId);
+        ticket = await _macroService.ApplyAsync(macro, ticket, causerId);
         return Ok(ticket);
     }
 
     [HttpGet("dashboard")]
-    public async Task<IActionResult> Dashboard([FromQuery] string agentId)
+    public async Task<IActionResult> Dashboard()
     {
+        if (this.CurrentUserId() is not { } agentId) return Unauthorized();
+
         var workload = await _assignmentService.GetAgentWorkloadAsync(agentId);
         return Ok(workload);
     }
@@ -212,6 +219,7 @@ public class AgentTicketController : ControllerBase
     [HttpPost("bulk")]
     public async Task<IActionResult> BulkAction([FromBody] BulkActionRequest request)
     {
+        var causerId = this.CurrentUserId();
         var results = new List<object>();
         foreach (var ticketId in request.TicketIds)
         {
@@ -223,18 +231,18 @@ public class AgentTicketController : ControllerBase
                 switch (request.Action)
                 {
                     case "close":
-                        await _ticketService.ChangeStatusAsync(ticket, TicketStatus.Closed, request.CauserId);
+                        await _ticketService.ChangeStatusAsync(ticket, TicketStatus.Closed, causerId);
                         break;
                     case "resolve":
-                        await _ticketService.ChangeStatusAsync(ticket, TicketStatus.Resolved, request.CauserId);
+                        await _ticketService.ChangeStatusAsync(ticket, TicketStatus.Resolved, causerId);
                         break;
                     case "assign":
                         if (request.Value != null)
-                            await _assignmentService.AssignAsync(ticket, request.Value, request.CauserId);
+                            await _assignmentService.AssignAsync(ticket, request.Value, causerId);
                         break;
                     case "change_priority":
                         if (request.Value != null)
-                            await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(request.Value), request.CauserId);
+                            await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(request.Value), causerId);
                         break;
                 }
                 results.Add(new { ticketId, success = true });
@@ -248,6 +256,6 @@ public class AgentTicketController : ControllerBase
     }
 }
 
-public record BulkActionRequest(int[] TicketIds, string Action, string? CauserId = null, string? Value = null);
+public record BulkActionRequest(int[] TicketIds, string Action, string? Value = null);
 
-public record CustomActionRequest(string? UserId = null, Dictionary<string, object>? Payload = null);
+public record CustomActionRequest(Dictionary<string, object>? Payload = null);

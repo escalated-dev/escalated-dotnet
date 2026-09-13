@@ -9,12 +9,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NewsletterDelivery = Escalated.Models.Newsletter.NewsletterDelivery;
 using NewsletterEntity = Escalated.Models.Newsletter.Newsletter;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
 [Route("admin/newsletters")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminNewsletterController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
@@ -248,7 +251,7 @@ public class AdminNewsletterController : ControllerBase
 
     private bool MailConfigured() => _options.Value.Newsletters.DefaultFrom is not null;
 
-    private string? UserId() => User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value ?? User.Identity?.Name;
+    private string? UserId() => this.CurrentUserId();
 
     private static NewsletterDelivery PreviewDelivery(NewsletterEntity newsletter, Contact contact, string token) => new()
     {

@@ -4,6 +4,8 @@ using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
@@ -28,6 +30,7 @@ namespace Escalated.Controllers.Admin;
 /// </summary>
 [ApiController]
 [Route("support/admin/users")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminUsersController : ControllerBase
 {
     public const string AdminRoleSlug = "escalated-admin";
@@ -52,7 +55,6 @@ public class AdminUsersController : ControllerBase
     public async Task<IActionResult> Index(
         [FromQuery] string? search,
         [FromQuery] int page = 1,
-        [FromQuery] string? currentUserId = null,
         CancellationToken ct = default)
     {
         const int perPage = 20;
@@ -102,7 +104,7 @@ public class AdminUsersController : ControllerBase
         return Ok(new IndexResponse(
             Users: new PaginatedUsers(rows, safePage, perPage, total, lastPage),
             Filters: new IndexFilters(term),
-            CurrentUserId: currentUserId));
+            CurrentUserId: this.CurrentUserId()));
     }
 
     /// <summary>Top-level shape consumed by <c>Escalated/Admin/Users/Index</c>.</summary>
@@ -142,9 +144,10 @@ public class AdminUsersController : ControllerBase
     public async Task<IActionResult> UpdateRole(
         string userId,
         [FromBody] UpdateRoleRequest request,
-        [FromQuery] string? currentUserId = null,
         CancellationToken ct = default)
     {
+        var currentUserId = this.CurrentUserId();
+
         if (request is null || (request.Role != "admin" && request.Role != "agent"))
         {
             return BadRequest(new { error = "Role must be 'admin' or 'agent'." });

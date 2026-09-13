@@ -1,10 +1,13 @@
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
 [ApiController]
 [Route("support/admin/two-factor")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminTwoFactorController : ControllerBase
 {
     private readonly TwoFactorService _twoFactorService;

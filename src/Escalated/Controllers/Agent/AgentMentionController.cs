@@ -1,18 +1,20 @@
 using Escalated.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Agent;
 
 /// <summary>
 /// The authenticated agent's @-mention inbox. Mirrors the Laravel reference
 /// <c>Mention</c> model's <c>forUser</c> / <c>unread</c> scopes and
-/// <c>markAsRead</c>. The plugin does not own auth, so — like
-/// <see cref="AgentTicketController.Dashboard"/> — the agent is identified by
-/// a <c>userId</c> query parameter supplied by the host.
+/// <c>markAsRead</c>. The agent is the user the host signed in; a <c>userId</c>
+/// in the query string is ignored.
 /// </summary>
 [ApiController]
 [Route("support/agent/mentions")]
+[Authorize(Policy = EscalatedPolicies.Agent)]
 public class AgentMentionController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
@@ -23,9 +25,9 @@ public class AgentMentionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index([FromQuery] string userId, [FromQuery] bool unreadOnly = false)
+    public async Task<IActionResult> Index([FromQuery] bool unreadOnly = false)
     {
-        if (string.IsNullOrEmpty(userId)) return Ok(new { data = Array.Empty<object>() });
+        if (this.CurrentUserId() is not { } userId) return Unauthorized();
 
         var query = _db.Mentions.Where(m => m.UserId == userId);
         if (unreadOnly) query = query.Where(m => m.ReadAt == null);
@@ -52,8 +54,10 @@ public class AgentMentionController : ControllerBase
     }
 
     [HttpPost("{id:int}/read")]
-    public async Task<IActionResult> MarkRead(int id, [FromQuery] string userId)
+    public async Task<IActionResult> MarkRead(int id)
     {
+        if (this.CurrentUserId() is not { } userId) return Unauthorized();
+
         var mention = await _db.Mentions.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
         if (mention == null) return NotFound();
 

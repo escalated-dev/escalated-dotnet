@@ -4,6 +4,8 @@ using Escalated.Data;
 using Escalated.Models;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace Escalated.Tests.Controllers;
 
@@ -37,6 +39,20 @@ public class AgentMentionControllerTests
         await db.SaveChangesAsync();
 
         return (new AgentMentionController(db), db, reply);
+    }
+
+    /// <summary>The inbox belongs to the signed-in agent, as host authentication identifies them.</summary>
+    private static AgentMentionController SignedInAs(AgentMentionController ctrl, string userId)
+    {
+        ctrl.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId) }, "test")),
+            },
+        };
+
+        return ctrl;
     }
 
     private static async Task<Reply> AddReplyAsync(EscalatedDbContext db, int ticketId)
@@ -74,7 +90,7 @@ public class AgentMentionControllerTests
         db.Mentions.Add(new Mention { ReplyId = reply.Id, UserId = "9" });
         await db.SaveChangesAsync();
 
-        Assert.Equal(1, DataCount(await ctrl.Index("7")));
+        Assert.Equal(1, DataCount(await SignedInAs(ctrl, "7").Index()));
     }
 
     [Fact]
@@ -92,8 +108,8 @@ public class AgentMentionControllerTests
         db.Mentions.Add(new Mention { ReplyId = second.Id, UserId = "7", CreatedAt = DateTime.UtcNow.AddMinutes(1) });
         await db.SaveChangesAsync();
 
-        Assert.Equal(2, DataCount(await ctrl.Index("7")));
-        Assert.Equal(1, DataCount(await ctrl.Index("7", unreadOnly: true)));
+        Assert.Equal(2, DataCount(await SignedInAs(ctrl, "7").Index()));
+        Assert.Equal(1, DataCount(await SignedInAs(ctrl, "7").Index(unreadOnly: true)));
     }
 
     [Fact]
@@ -104,7 +120,7 @@ public class AgentMentionControllerTests
         db.Mentions.Add(mention);
         await db.SaveChangesAsync();
 
-        var result = await ctrl.MarkRead(mention.Id, "7");
+        var result = await SignedInAs(ctrl, "7").MarkRead(mention.Id);
 
         Assert.IsType<OkObjectResult>(result);
         var stored = Assert.Single(db.Mentions);
@@ -119,7 +135,7 @@ public class AgentMentionControllerTests
         db.Mentions.Add(mention);
         await db.SaveChangesAsync();
 
-        var result = await ctrl.MarkRead(mention.Id, "999");
+        var result = await SignedInAs(ctrl, "999").MarkRead(mention.Id);
 
         Assert.IsType<NotFoundResult>(result);
     }

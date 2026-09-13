@@ -1,5 +1,6 @@
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Widget;
 
@@ -8,6 +9,7 @@ namespace Escalated.Controllers.Widget;
 /// </summary>
 [ApiController]
 [Route("support/widget/chat")]
+[AllowAnonymous]
 public class WidgetChatController : ControllerBase
 {
     private readonly ChatSessionService _chatService;

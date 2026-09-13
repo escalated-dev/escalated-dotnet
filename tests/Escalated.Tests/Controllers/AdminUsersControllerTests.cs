@@ -5,6 +5,8 @@ using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace Escalated.Tests.Controllers;
 
@@ -28,6 +30,14 @@ public class AdminUsersControllerTests
         var controller = new AdminUsersController(db, directory);
         return (controller, db, directory);
     }
+
+    private static ControllerContext SignedInAs(string userId) => new()
+    {
+        HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId) }, "test")),
+        },
+    };
 
     [Fact]
     public async Task Index_ListsUsersWithAdminAgentFlags()
@@ -129,10 +139,11 @@ public class AdminUsersControllerTests
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AdminRoleSlug);
         await GrantRoleAsync(db, admin.Id, AdminUsersController.AgentRoleSlug);
 
+        controller.ControllerContext = SignedInAs(admin.Id);
+
         var result = await controller.UpdateRole(
             admin.Id,
-            new AdminUsersController.UpdateRoleRequest("admin", false),
-            currentUserId: admin.Id);
+            new AdminUsersController.UpdateRoleRequest("admin", false));
 
         Assert.IsType<BadRequestObjectResult>(result);
 

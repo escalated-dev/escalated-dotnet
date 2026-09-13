@@ -22,8 +22,9 @@ public class MvcBootTests
     public async Task HostServesARequest()
     {
         await using var host = await EscalatedTestHost.StartAsync();
+        await host.GrantRoleAsync("admin-1", "escalated-admin");
 
-        var response = await host.Client.GetAsync("/support/admin/tickets");
+        var response = await host.ClientFor("admin-1").GetAsync("/support/admin/tickets");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

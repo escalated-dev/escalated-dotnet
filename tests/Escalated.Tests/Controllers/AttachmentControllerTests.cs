@@ -2,6 +2,9 @@ using Escalated.Controllers;
 using Escalated.Models;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Moq;
 
 namespace Escalated.Tests.Controllers;
 
@@ -10,7 +13,21 @@ public class AttachmentControllerTests
     private static AttachmentController NewController(out Data.EscalatedDbContext db)
     {
         db = TestHelpers.CreateInMemoryDb();
-        return new AttachmentController(db, TestHelpers.DefaultOptions());
+        return new AttachmentController(db, TestHelpers.DefaultOptions(), StaffAuthorization());
+    }
+
+    /// <summary>
+    /// These tests are about storage paths, so the caller is staff, who may download
+    /// any attachment. Who may download what is covered in Hosting/AuthorizationTests.
+    /// </summary>
+    private static IAuthorizationService StaffAuthorization()
+    {
+        var authorization = new Mock<IAuthorizationService>();
+        authorization
+            .Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<object?>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+
+        return authorization.Object;
     }
 
     [Fact]
