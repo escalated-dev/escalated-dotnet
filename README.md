@@ -271,6 +271,12 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
+The newsletter admin pages also check a permission: `newsletters.manage`, plus
+`newsletters.send` to send. The `escalated-admin` role holds both. If you replace
+the admin policy, attach them to your own roles in Escalated's `RolePermissions`
+table; `NewsletterPermissionSeeder` creates the two permissions and attaches them
+to `escalated-admin`.
+
 ### Who a request acts as
 
 The acting user is always the signed-in user: the requester of a ticket a customer
