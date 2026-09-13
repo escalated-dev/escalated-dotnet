@@ -64,6 +64,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A role with the slug `admin` no longer passes the newsletter permission check
   by its slug. Like any other role, it holds the permissions attached to it.
 
+### Security
+- **Any admin could change or delete another admin's saved view.**
+  `AdminSavedViewController` listed only the signed-in admin's own and shared
+  views, but `PUT` and `DELETE /support/admin/saved-views/{id}` acted on whatever
+  id they were given. Both now answer 403 unless the view has no owner or belongs
+  to the caller, as the Laravel reference does. A shared view can be used by
+  everyone but changed only by its owner.
+
 ## [0.1.2] - 2026-09-13
 
 ### Security
