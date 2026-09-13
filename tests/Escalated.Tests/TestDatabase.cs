@@ -70,6 +70,59 @@ public static class TestDatabase
         return postgres;
     }
 
+    /// <summary>
+    /// A database for something other than a hand-built context to use: a DI
+    /// container or a test server registers <see cref="EscalatedDbContext"/>
+    /// with <see cref="Lease.Configure"/>, and every context it resolves then
+    /// shares one database. Dispose the lease to drop it.
+    /// </summary>
+    public static Lease LeaseDatabase()
+    {
+        if (Provider == "sqlite")
+        {
+            // One open connection for the lease's lifetime, for the same reason
+            // CreateSqlite keeps one: closing it discards the in-memory schema.
+            var connection = new SqliteConnection("DataSource=:memory:");
+            connection.Open();
+
+            return new Lease(
+                options => options.UseSqlite(connection),
+                context => context.Database.EnsureCreated(),
+                connection.Dispose);
+        }
+
+        var schema = NextSchema();
+        CreateSchema(schema);
+        var connectionString = $"{ConnectionString()};Search Path={schema};Pooling=false";
+
+        return new Lease(
+            options => options.UseNpgsql(connectionString),
+            context => context.Database.GetService<IRelationalDatabaseCreator>().CreateTables(),
+            () => DropSchema(schema));
+    }
+
+    /// <summary>A database registered by configuration rather than by instance.</summary>
+    public sealed class Lease : IDisposable
+    {
+        private readonly Action<EscalatedDbContext> createTables;
+        private readonly Action release;
+
+        internal Lease(Action<DbContextOptionsBuilder> configure, Action<EscalatedDbContext> createTables, Action release)
+        {
+            Configure = configure;
+            this.createTables = createTables;
+            this.release = release;
+        }
+
+        /// <summary>Pass to <c>AddDbContext&lt;EscalatedDbContext&gt;</c>.</summary>
+        public Action<DbContextOptionsBuilder> Configure { get; }
+
+        /// <summary>Creates the model's tables through a context built from <see cref="Configure"/>.</summary>
+        public void CreateTables(EscalatedDbContext context) => createTables(context);
+
+        public void Dispose() => release();
+    }
+
     private static EscalatedDbContext CreateSqlite()
     {
         // The connection is kept open for the context's lifetime: an in-memory
@@ -85,7 +138,7 @@ public static class TestDatabase
 
     private static EscalatedDbContext CreatePostgres()
     {
-        var schema = $"esc_test_{Environment.ProcessId}_{Interlocked.Increment(ref schemaCounter)}";
+        var schema = NextSchema();
 
         CreateSchema(schema);
 
@@ -105,6 +158,9 @@ public static class TestDatabase
 
         return new SchemaContext(builder.Options, schema);
     }
+
+    private static string NextSchema() =>
+        $"esc_test_{Environment.ProcessId}_{Interlocked.Increment(ref schemaCounter)}";
 
     private static void CreateSchema(string schema)
     {

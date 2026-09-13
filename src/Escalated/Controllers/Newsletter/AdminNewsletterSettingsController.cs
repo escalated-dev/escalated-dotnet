@@ -12,6 +12,7 @@ namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
+[Route("admin/newsletters/settings")]
 public class AdminNewsletterSettingsController : ControllerBase
 {
     private static readonly Dictionary<string, string> SettingTypes = new()

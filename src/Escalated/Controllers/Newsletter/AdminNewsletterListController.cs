@@ -12,6 +12,7 @@ namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
+[Route("admin/newsletters/lists")]
 public class AdminNewsletterListController : ControllerBase
 {
     private static readonly Regex EmailRegex = new(
@@ -43,7 +44,7 @@ public class AdminNewsletterListController : ControllerBase
         return NewsletterHttp.Inertia(this, "Escalated/Admin/Newsletters/Lists/Index", new { lists = enriched });
     }
 
-    [HttpGet]
+    [HttpGet("new")]
     public async Task<IActionResult> Create(CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -67,7 +68,7 @@ public class AdminNewsletterListController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/lists/{list.Id}");
     }
 
-    [HttpGet]
+    [HttpGet("{list:int}")]
     public async Task<IActionResult> Show(int list, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -91,7 +92,7 @@ public class AdminNewsletterListController : ControllerBase
         });
     }
 
-    [HttpPut]
+    [HttpPut("{list:int}")]
     public async Task<IActionResult> Update(int list, [FromBody] JsonElement body, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -109,7 +110,7 @@ public class AdminNewsletterListController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/lists/{entity.Id}");
     }
 
-    [HttpDelete]
+    [HttpDelete("{list:int}")]
     public async Task<IActionResult> Destroy(int list, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -119,7 +120,7 @@ public class AdminNewsletterListController : ControllerBase
         return NewsletterHttp.Redirect(this, "/admin/newsletters/lists");
     }
 
-    [HttpPost]
+    [HttpPost("{list:int}/members")]
     public async Task<IActionResult> AddMember(int list, [FromBody] JsonElement body, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -144,7 +145,7 @@ public class AdminNewsletterListController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/lists/{entity.Id}");
     }
 
-    [HttpDelete]
+    [HttpDelete("{list:int}/members/{contactId:int}")]
     public async Task<IActionResult> RemoveMember(int list, int contactId, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);
@@ -162,7 +163,7 @@ public class AdminNewsletterListController : ControllerBase
         return NewsletterHttp.Redirect(this, $"/admin/newsletters/lists/{entity.Id}");
     }
 
-    [HttpPost]
+    [HttpPost("{list:int}/import")]
     public async Task<IActionResult> ImportCsv(int list, IFormFile? file, CancellationToken ct)
     {
         await _permissions.RequireAsync(HttpContext, "newsletters.manage", ct);

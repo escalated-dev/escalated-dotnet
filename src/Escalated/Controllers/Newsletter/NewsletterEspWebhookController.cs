@@ -10,6 +10,7 @@ namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
+[Route("escalated/webhooks/newsletter")]
 public class NewsletterEspWebhookController : ControllerBase
 {
     private static readonly Regex MessageIdTokenRegex = new(
@@ -36,7 +37,7 @@ public class NewsletterEspWebhookController : ControllerBase
         _db = db;
     }
 
-    [HttpPost]
+    [HttpPost("postmark")]
     public async Task<IActionResult> Postmark([FromBody] JsonElement body, CancellationToken ct)
     {
         var token = await ResolveTokenAsync(
@@ -67,7 +68,7 @@ public class NewsletterEspWebhookController : ControllerBase
         return Ok(new { ok = true });
     }
 
-    [HttpPost]
+    [HttpPost("mailgun")]
     public async Task<IActionResult> Mailgun([FromBody] JsonElement body, CancellationToken ct)
     {
         if (!body.TryGetProperty("event-data", out var eventData))
@@ -114,7 +115,7 @@ public class NewsletterEspWebhookController : ControllerBase
         return Ok(new { ok = true });
     }
 
-    [HttpPost]
+    [HttpPost("ses")]
     public async Task<IActionResult> Ses([FromBody] JsonElement body, CancellationToken ct)
     {
         JsonElement message;
@@ -181,7 +182,7 @@ public class NewsletterEspWebhookController : ControllerBase
         return Ok(new { ok = true });
     }
 
-    [HttpPost]
+    [HttpPost("sendgrid")]
     public async Task<IActionResult> Sendgrid([FromBody] JsonElement body, CancellationToken ct)
     {
         if (body.ValueKind != JsonValueKind.Array)

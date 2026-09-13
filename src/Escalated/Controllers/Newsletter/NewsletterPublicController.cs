@@ -11,6 +11,7 @@ namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
+[Route("escalated/n")]
 public class NewsletterPublicController : ControllerBase
 {
     private static readonly byte[] TransparentGif =
@@ -39,7 +40,7 @@ public class NewsletterPublicController : ControllerBase
         _db = db;
     }
 
-    [HttpGet]
+    [HttpGet("o/{token}")]
     public async Task<IActionResult> Open(string token, CancellationToken ct)
     {
         token = StripTokenExtension(token);
@@ -47,7 +48,7 @@ public class NewsletterPublicController : ControllerBase
         return File(TransparentGif, "image/gif");
     }
 
-    [HttpGet]
+    [HttpGet("c/{token}")]
     public async Task<IActionResult> Click(string token, [FromQuery] string? u, CancellationToken ct)
     {
         string destination;
@@ -64,7 +65,7 @@ public class NewsletterPublicController : ControllerBase
         return Redirect(destination);
     }
 
-    [HttpGet]
+    [HttpGet("u/{token}")]
     public async Task<IActionResult> UnsubscribeShow(string token, CancellationToken ct)
     {
         var delivery = await FindDeliveryAsync(token, ct);
@@ -73,7 +74,7 @@ public class NewsletterPublicController : ControllerBase
             "text/html");
     }
 
-    [HttpPost]
+    [HttpPost("u/{token}")]
     public async Task<IActionResult> UnsubscribeStore(string token, CancellationToken ct)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -97,7 +98,7 @@ public class NewsletterPublicController : ControllerBase
             "text/html");
     }
 
-    [HttpGet]
+    [HttpGet("v/{token}")]
     public async Task<IActionResult> View(string token, CancellationToken ct)
     {
         var delivery = await _db.NewsletterDeliveries
