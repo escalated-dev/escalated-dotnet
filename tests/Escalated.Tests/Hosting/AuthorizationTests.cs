@@ -220,15 +220,75 @@ public class AuthorizationTests
     }
 
     [Fact]
-    public async Task AdminWithoutNewsletterPermission_IsForbidden_NotAServerError()
+    public async Task EscalatedAdmin_ManagesNewsletters()
     {
         await using var host = await EscalatedTestHost.StartAsync(o => o.EnableNewsletters = true);
         await host.GrantRoleAsync("admin-1", AdminRole);
 
         var response = await host.ClientFor("admin-1").GetAsync("/admin/newsletters");
 
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
+    /// With the admin policy replaced, a user the host lets into the admin panel still
+    /// needs a newsletter permission. Denied, that is a 403, not an unhandled exception.
+    /// </summary>
+    [Fact]
+    public async Task HostAdminWithoutNewsletterPermission_IsForbidden_NotAServerError()
+    {
+        await using var host = await StartWithHostAdminPolicyAsync();
+
+        var response = await host.ClientFor("lead-1", (SupportLeadClaim, "true")).GetAsync("/admin/newsletters");
+
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
+
+    [Fact]
+    public async Task HostAdminWithTheNewsletterPermission_ManagesNewsletters()
+    {
+        await using var host = await StartWithHostAdminPolicyAsync();
+        await GrantRoleWithPermissionAsync(host, "lead-1", "newsletter-editor", "newsletters.manage");
+
+        var response = await host.ClientFor("lead-1", (SupportLeadClaim, "true")).GetAsync("/admin/newsletters");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The admin role is <c>escalated-admin</c>. A role that merely has the slug
+    /// <c>admin</c> (creating a role named "Admin" on the settings page makes one)
+    /// holds the permissions attached to it and nothing more.
+    /// </summary>
+    [Fact]
+    public async Task RoleWithTheSlugAdmin_HoldsNoNewsletterPermissionItWasNotGiven()
+    {
+        await using var host = await StartWithHostAdminPolicyAsync();
+        await host.GrantRoleAsync("lead-1", "admin");
+
+        var response = await host.ClientFor("lead-1", (SupportLeadClaim, "true")).GetAsync("/admin/newsletters");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    private const string SupportLeadClaim = "support-lead";
+
+    /// <summary>Newsletters on, and the admin policy replaced the way the README shows.</summary>
+    private static Task<EscalatedTestHost> StartWithHostAdminPolicyAsync() =>
+        EscalatedTestHost.StartAsync(
+            o => o.EnableNewsletters = true,
+            services => services.AddAuthorization(options =>
+                options.AddPolicy(Escalated.Authorization.EscalatedPolicies.Admin, p => p.RequireClaim(SupportLeadClaim))));
+
+    private static Task GrantRoleWithPermissionAsync(EscalatedTestHost host, string userId, string roleSlug, string permissionSlug) =>
+        host.SeedAsync(async db =>
+        {
+            var role = new Role { Name = roleSlug, Slug = roleSlug };
+            role.Permissions.Add(new Permission { Name = permissionSlug, Slug = permissionSlug });
+            role.Users.Add(new RoleUser { UserId = userId });
+            db.Roles.Add(role);
+            await db.SaveChangesAsync();
+        });
 
     [Fact]
     public async Task PublicSurfaces_StayPublic()
