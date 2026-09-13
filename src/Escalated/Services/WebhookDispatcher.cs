@@ -13,14 +13,16 @@ public class WebhookDispatcher
 {
     private readonly EscalatedDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly TimeProvider _timeProvider;
     private readonly ILogger<WebhookDispatcher> _logger;
     private const int MaxAttempts = 3;
 
     public WebhookDispatcher(EscalatedDbContext db, IHttpClientFactory httpClientFactory,
-        ILogger<WebhookDispatcher> logger)
+        TimeProvider timeProvider, ILogger<WebhookDispatcher> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
+        _timeProvider = timeProvider;
         _logger = logger;
     }
 
@@ -154,7 +156,7 @@ public class WebhookDispatcher
     private async Task RetryLaterAsync(Webhook webhook, string eventName, object payload, int attempt)
     {
         var delaySeconds = (int)Math.Pow(2, attempt) * 30;
-        await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+        await Task.Delay(TimeSpan.FromSeconds(delaySeconds), _timeProvider);
         await SendAsync(webhook, eventName, payload, attempt);
     }
 

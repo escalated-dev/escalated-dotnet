@@ -59,8 +59,10 @@ public static class EscalatedServiceCollectionExtensions
 
         services.AddSingleton<EscalatedServicesMarker>();
 
-        // WebhookDispatcher sends through IHttpClientFactory.
+        // WebhookDispatcher sends through IHttpClientFactory, and waits out its retry
+        // backoff on TimeProvider.
         services.AddHttpClient();
+        services.TryAddSingleton(TimeProvider.System);
 
         // Domain events. Escalated's services dispatch through EscalatedEventDispatcher,
         // which delivers webhooks, runs Workflows, then hands the event to every
