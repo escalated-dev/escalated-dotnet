@@ -8,8 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace Escalated.Events;
 
 /// <summary>
-/// The default <see cref="IEscalatedEventDispatcher"/>. Bridges the domain
-/// event stream to the Workflow engine: each mapped event is translated to
+/// Bridges the domain event stream to the Workflow engine: each mapped event is translated to
 /// the frontend-facing trigger-event string and handed to
 /// <see cref="WorkflowRunnerService"/>, which evaluates and executes every
 /// active Workflow configured for that trigger.
@@ -30,9 +29,9 @@ namespace Escalated.Events;
 /// dispatches are skipped so a Workflow can never cascade into itself in an
 /// unbounded loop.
 ///
-/// Host apps can opt out of Workflow processing entirely by registering their
-/// own <see cref="IEscalatedEventDispatcher"/> (for example
-/// <see cref="NullEventDispatcher"/>) before/after calling <c>AddEscalated</c>.
+/// <see cref="EscalatedEventDispatcher"/> calls it for every event. A host
+/// registering its own <see cref="IEscalatedEventDispatcher"/> adds a listener
+/// and leaves Workflows running.
 /// </summary>
 public class WorkflowEventDispatcher : IEscalatedEventDispatcher
 {

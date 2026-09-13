@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `Ticket.SubjectsPayload` both became `subjects` under MVC's camelCase
   naming, which System.Text.Json rejects for the whole type. The raw links are no
   longer serialized; `subjects` carries the resolved payload the README documents.
+- **Outbound webhooks never fired.** Nothing called `WebhookDispatcher`, so a
+  webhook an admin configured received no deliveries. Domain events are now
+  delivered to every active webhook subscribed to the event's name (or `*`), with
+  a `WebhookDelivery` recorded per attempt. The README lists the event names.
+- **Registering your own `IEscalatedEventDispatcher` switched Workflows off.**
+  The Workflow bridge was the one registered dispatcher, added with `TryAdd`, so a
+  host that followed the README to listen for events replaced it without any
+  error. Escalated's services now dispatch through `EscalatedEventDispatcher`,
+  which runs webhooks, then Workflows, then every dispatcher the host registered,
+  in whichever order it was registered relative to `AddEscalated`.
+
+### Changed
+- `NullEventDispatcher` no longer disables Workflows when registered; host
+  dispatchers only add listeners. `AgentTicketController` takes
+  `EscalatedEventDispatcher` instead of `IEscalatedEventDispatcher`.
 
 ## [0.1.1] - 2026-09-13
 
