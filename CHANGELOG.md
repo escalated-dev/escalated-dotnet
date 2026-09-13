@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-13
+
+### Security
+- **Any admin could change or delete another admin's saved view.**
+  `AdminSavedViewController` listed only the signed-in admin's own and shared
+  views, but `PUT` and `DELETE /support/admin/saved-views/{id}` acted on whatever
+  id they were given. Both now answer 403 unless the view has no owner or belongs
+  to the caller, as the Laravel reference does. A shared view can be used by
+  everyone but changed only by its owner.
+
 ### Fixed
 - **Replies, notes and ticket details answered 500 after saving.** Controllers
   return EF entities, and both ends of most relationships were serialized, so
@@ -24,6 +34,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `activities`, `attachments`, `department`, `tags`, `deliveries`, `holidays`,
     `category`, `children`, `members`) are unchanged.
 
+- **Failed webhook deliveries were never retried.** A failed delivery scheduled
+  its retry fire-and-forget on the dispatcher that sent it, whose
+  `EscalatedDbContext` belonged to the request's scope (or the per-event scope
+  `WebhookEventDispatcher` opens). When the two-minute backoff ended that context
+  was disposed, the retry threw `ObjectDisposedException`, and nothing observed
+  the task, so no second or third attempt was sent, recorded or logged.
+  - Each retry now opens its own scope, reads the webhook again and skips one
+    deactivated or deleted during the backoff, and logs a failure instead of
+    losing it. Retries still don't hold up the request, and a retry still
+    waiting when the host stops is not sent.
+- **An Escalated admin was refused every newsletter action.**
+  `NewsletterPermissionService` gave every newsletter permission to a role with
+  the slug `admin`, but the admin role the admin users page grants, and the
+  default admin policy requires, is `escalated-admin`. Nothing in the package
+  creates an `admin` role, so behind the default policies nobody could open
+  `/admin/newsletters` without a `newsletters.manage` permission attached by
+  hand. The `escalated-admin` role now holds `newsletters.manage` and
+  `newsletters.send`, and `NewsletterPermissionSeeder` attaches both to it.
+
 ### Changed
 - These navigation properties are `[JsonIgnore]`: `Reply.Ticket`,
   `TicketActivity.Ticket`, `SideConversation.Ticket`,
@@ -36,41 +65,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ImportSourceMap.ImportJob`, `NewsletterListMember.List` and
   `WebhookDelivery.Webhook`. A response could only ever have carried them as
   `null` or empty; loaded, they threw.
-- **Failed webhook deliveries were never retried.** A failed delivery scheduled
-  its retry fire-and-forget on the dispatcher that sent it, whose
-  `EscalatedDbContext` belonged to the request's scope (or the per-event scope
-  `WebhookEventDispatcher` opens). When the two-minute backoff ended that context
-  was disposed, the retry threw `ObjectDisposedException`, and nothing observed
-  the task, so no second or third attempt was sent, recorded or logged.
-  - Each retry now opens its own scope, reads the webhook again and skips one
-    deactivated or deleted during the backoff, and logs a failure instead of
-    losing it. Retries still don't hold up the request, and a retry still
-    waiting when the host stops is not sent.
-
-### Changed
 - `WebhookDispatcher` takes an `IServiceScopeFactory` and a `TimeProvider`, and
   optionally an `IHostApplicationLifetime`. `AddEscalated` registers
   `TimeProvider.System` unless the host has registered one.
-- **An Escalated admin was refused every newsletter action.**
-  `NewsletterPermissionService` gave every newsletter permission to a role with
-  the slug `admin`, but the admin role the admin users page grants, and the
-  default admin policy requires, is `escalated-admin`. Nothing in the package
-  creates an `admin` role, so behind the default policies nobody could open
-  `/admin/newsletters` without a `newsletters.manage` permission attached by
-  hand. The `escalated-admin` role now holds `newsletters.manage` and
-  `newsletters.send`, and `NewsletterPermissionSeeder` attaches both to it.
-
-### Changed
 - A role with the slug `admin` no longer passes the newsletter permission check
   by its slug. Like any other role, it holds the permissions attached to it.
-
-### Security
-- **Any admin could change or delete another admin's saved view.**
-  `AdminSavedViewController` listed only the signed-in admin's own and shared
-  views, but `PUT` and `DELETE /support/admin/saved-views/{id}` acted on whatever
-  id they were given. Both now answer 403 unless the view has no owner or belongs
-  to the caller, as the Laravel reference does. A shared view can be used by
-  everyone but changed only by its owner.
 
 ## [0.1.2] - 2026-09-13
 
