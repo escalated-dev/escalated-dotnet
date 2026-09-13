@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using Escalated.Authorization;
 
 namespace Escalated.Configuration;
 
@@ -87,6 +88,10 @@ public static class EscalatedServiceCollectionExtensions
         services.TryAddSingleton<IEscalatedNotificationSender, NullNotificationSender>();
 
         services.AddEscalatedLocalization();
+
+        // The admin, agent and customer authorization policies the controllers
+        // require. A host policy of the same name takes precedence.
+        services.AddEscalatedAuthorization();
 
         // Register services
         services.AddScopedWithEventBus<TicketService>();

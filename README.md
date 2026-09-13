@@ -87,9 +87,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEscalated(builder.Configuration, options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Escalated")));
 
+// Your authentication: ASP.NET Core Identity, OpenID Connect, JWT bearer, cookies.
+// Escalated authorizes whoever it signs in (see Authorization below).
+builder.Services.AddAuthentication(/* ... */);
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.MapEscalated();
@@ -215,6 +222,72 @@ public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = def
 > `UserDirectoryEntry(int Id, ...)`); admin user APIs also now return user ids
 > as JSON strings. Update your `IUserDirectory` implementation to the `string`
 > signatures shown above. Integer ids keep working — pass them as strings.
+
+## Authorization
+
+Escalated owns no authentication. It authorizes whoever your application signed
+in, reading them from `HttpContext.User`. Register your authentication and call
+`UseAuthentication()` and `UseAuthorization()` before `MapControllers()`.
+
+Every controller requires one of three policies:
+
+| Policy | Surface | Default rule |
+|--------|---------|--------------|
+| `EscalatedPolicies.Admin` (`escalated-admin`) | `/support/admin/*`, `/admin/newsletters*` | Signed in and holds the `escalated-admin` role |
+| `EscalatedPolicies.Agent` (`escalated-agent`) | `/support/agent/*` | Signed in and holds `escalated-agent` or `escalated-admin` |
+| `EscalatedPolicies.Customer` (`escalated-customer`) | `/support/tickets*`, `/support/attachments/*` | Signed in |
+
+The widget, guest, inbound email, newsletter tracking and newsletter ESP webhook
+endpoints are public, as is `/support/api/v1/auth/*`. They authenticate with guest
+tokens, shared secrets or your `ApiAuth` callbacks instead.
+
+Nothing is allowed by default. An anonymous request gets 401, and a signed-in user
+without the role gets 403. An application with no authentication configured gets
+an ASP.NET Core configuration error, not an open endpoint.
+
+### Granting access
+
+The roles are rows in Escalated's `RoleUsers` table: the same ones the admin users
+page grants and revokes (`PATCH /support/admin/users/{id}/role`). Grant the first
+admin directly:
+
+```csharp
+var admin = new Role { Name = "Escalated Admin", Slug = AdminUsersController.AdminRoleSlug, IsSystem = true };
+db.Roles.Add(admin);
+await db.SaveChangesAsync();
+
+db.RoleUsers.Add(new RoleUser { RoleId = admin.Id, UserId = "your-user-id" });
+await db.SaveChangesAsync();
+```
+
+Or replace a policy with your own rule. A policy registered under the same name,
+before or after `AddEscalated`, takes precedence:
+
+```csharp
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(EscalatedPolicies.Admin, p => p.RequireRole("SupportLead"));
+    options.AddPolicy(EscalatedPolicies.Agent, p => p.RequireRole("SupportLead", "SupportAgent"));
+});
+```
+
+### Who a request acts as
+
+The acting user is always the signed-in user: the requester of a ticket a customer
+creates, the author of a reply, the causer recorded on ticket activity, the owner
+of a mention inbox. Escalated reads the id from the `NameIdentifier` claim, then
+`sub`, then `id`. If your user id lives in another claim, set a resolver:
+
+```csharp
+builder.Services.Configure<EscalatedOptions>(o =>
+    o.UserIdResolver = user => user.FindFirst("employee_id")?.Value);
+```
+
+Ids in the query string or the request body (`requesterId`, `agentId`, `userId`,
+`currentUserId`, `authorId`, `causerId`, `createdBy`) are not read. A customer
+sees and acts on only the tickets they requested. Staff can download any
+attachment; a customer can download only attachments on their own tickets, and
+never one on an internal note.
 
 ## Ticket subjects
 

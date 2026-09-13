@@ -5,11 +5,14 @@ using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
 [ApiController]
 [Route("support/admin/skills")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminSkillsController : ControllerBase
 {
     private readonly EscalatedDbContext _db;

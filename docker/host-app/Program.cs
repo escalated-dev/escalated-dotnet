@@ -1,6 +1,10 @@
+using System.Security.Claims;
+using Escalated.Controllers.Admin;
 using Escalated.Data;
 using Escalated.Extensions;
 using Escalated.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +14,16 @@ builder.Services.AddDbContext<EscalatedDbContext>(opt =>
         ?? "Host=db;Port=5432;Database=escalated;Username=escalated;Password=escalated"));
 
 builder.Services.AddEscalated();
+
+// Escalated owns no authentication: it authorizes whoever the host signed in.
+// This demo signs you in with a cookie when you pick a seeded user below. A real
+// host uses ASP.NET Core Identity, OpenID Connect, JWT bearer tokens, and so on.
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/demo";
+        options.AccessDeniedPath = "/demo";
+    });
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(EscalatedDbContext).Assembly);
@@ -21,10 +35,10 @@ using (var scope = app.Services.CreateScope())
 {
     var ctx = scope.ServiceProvider.GetRequiredService<EscalatedDbContext>();
     ctx.Database.EnsureCreated();
+    var now = DateTime.UtcNow;
 
     if (!ctx.AgentProfiles.Any())
     {
-        var now = DateTime.UtcNow;
         ctx.Departments.AddRange(
             new Department { Name = "Support", Slug = "support", IsActive = true, CreatedAt = now, UpdatedAt = now },
             new Department { Name = "Billing", Slug = "billing", IsActive = true, CreatedAt = now, UpdatedAt = now }
@@ -36,7 +50,29 @@ using (var scope = app.Services.CreateScope())
         );
         ctx.SaveChanges();
     }
+
+    // The escalated-admin and escalated-agent roles are what the default
+    // authorization policies check. Seeded separately so an existing demo
+    // database gets them too.
+    if (!ctx.Roles.Any(r => r.Slug == AdminUsersController.AdminRoleSlug))
+    {
+        var adminRole = new Role { Name = "Escalated Admin", Slug = AdminUsersController.AdminRoleSlug, IsSystem = true, CreatedAt = now, UpdatedAt = now };
+        var agentRole = new Role { Name = "Escalated Agent", Slug = AdminUsersController.AgentRoleSlug, IsSystem = true, CreatedAt = now, UpdatedAt = now };
+        ctx.Roles.AddRange(adminRole, agentRole);
+        ctx.SaveChanges();
+
+        ctx.RoleUsers.AddRange(
+            new RoleUser { RoleId = adminRole.Id, UserId = "1" },
+            new RoleUser { RoleId = agentRole.Id, UserId = "1" },
+            new RoleUser { RoleId = agentRole.Id, UserId = "2" },
+            new RoleUser { RoleId = agentRole.Id, UserId = "3" }
+        );
+        ctx.SaveChanges();
+    }
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/", () => Results.Redirect("/demo"));
 
@@ -63,13 +99,34 @@ app.MapGet("/demo", (EscalatedDbContext db) =>
             .meta{{color:#94a3b8;font-size:.8rem}}
         </style></head><body><div class='wrap'>
         <h1>Escalated .NET Demo</h1>
-        <p class='lede'>Click an agent to load their dashboard. Database seeds on first boot.</p>
+        <p class='lede'>Click an agent to sign in and load their dashboard. Database seeds on first boot.</p>
         {rows}
         </div></body></html>";
     return Results.Content(html, "text/html");
 });
 
-app.MapPost("/demo/login/{id:int}", (int id) => Results.Redirect($"/support/agent/tickets/dashboard?agentId={id}"));
+// Sign in as the seeded agent. Escalated reads the user id from the NameIdentifier
+// claim; nothing in the URL says who you are.
+app.MapPost("/demo/login/{id:int}", async (int id, HttpContext http, EscalatedDbContext db) =>
+{
+    var agent = await db.AgentProfiles.FirstOrDefaultAsync(a => a.Id == id);
+    if (agent is null)
+    {
+        return Results.NotFound();
+    }
+
+    var identity = new ClaimsIdentity(
+        new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, agent.UserId),
+            new Claim(ClaimTypes.Name, agent.Signature ?? agent.UserId),
+        },
+        CookieAuthenticationDefaults.AuthenticationScheme);
+
+    await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+    return Results.Redirect("/support/agent/tickets/dashboard");
+});
 
 app.MapControllers();
 

@@ -5,6 +5,8 @@ using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
@@ -23,6 +25,7 @@ namespace Escalated.Controllers.Admin;
 /// </summary>
 [ApiController]
 [Route("support/admin/reports")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminReportController : ControllerBase
 {
     private readonly EscalatedDbContext _db;

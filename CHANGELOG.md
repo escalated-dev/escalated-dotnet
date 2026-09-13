@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **No endpoint was authorized, and the acting user came from the request.**
+  Every admin, agent and customer endpoint answered anonymous requests. Endpoints
+  that needed the caller took their id from a `requesterId`, `agentId`, `userId`
+  or `currentUserId` query parameter, or a `RequesterId`, `AuthorId`, `CauserId`,
+  `CreatedBy` or `MergedByUserId` body field, so changing one read another
+  customer's ticket, replied or acted as someone else, or read another agent's
+  mentions. Attachments downloaded for anyone who guessed an id.
+  - Controllers now require the `escalated-admin`, `escalated-agent` or
+    `escalated-customer` authorization policy, or are explicitly public (widget,
+    guest, inbound email, newsletter tracking and ESP webhooks, API auth).
+  - By default the staff policies check the `escalated-admin` and
+    `escalated-agent` roles the admin users page manages; hosts can replace any
+    policy by name. See "Authorization" in the README.
+  - The acting user is the signed-in user, resolved from `NameIdentifier`, `sub`
+    or `id`, or through the new `EscalatedOptions.UserIdResolver`.
+  - A customer can download only attachments on their own tickets.
+- An admin missing a newsletter permission now gets 403 instead of a 500.
+
+### Changed
+- **Hosts must configure authentication** (`AddAuthentication`,
+  `UseAuthentication`, `UseAuthorization`) and grant roles or replace the
+  policies. Without that, Escalated's endpoints are closed.
+- Request records no longer carry the acting user: `ReplyRequest.AuthorId`,
+  `CauserId` on the ticket action requests, `MergeRequest.MergedByUserId`,
+  `CustomerReplyRequest.RequesterId`, `CreateTicketRequest.RequesterId`,
+  `CreateSavedViewRequest.UserId`, `CustomActionRequest.UserId`, the chat
+  requests' `AgentId`, `CreateSideConversationRequest.CreatedBy`,
+  `SideConversationReplyRequest.AuthorId` and `CreateArticleRequest.AuthorId`
+  are gone, as are the identity query parameters. JSON clients that still send
+  them are unaffected; the values are ignored.
+- `AttachmentController` takes an `IAuthorizationService`.
+
 ### Fixed
 - **A host that added the package's controllers served no requests at all.**
   The six newsletter controllers are `[ApiController]`s with no routes, and MVC

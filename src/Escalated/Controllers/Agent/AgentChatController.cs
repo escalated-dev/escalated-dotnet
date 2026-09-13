@@ -1,5 +1,7 @@
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Agent;
 
@@ -8,6 +10,7 @@ namespace Escalated.Controllers.Agent;
 /// </summary>
 [ApiController]
 [Route("support/agent/chat")]
+[Authorize(Policy = EscalatedPolicies.Agent)]
 public class AgentChatController : ControllerBase
 {
     private readonly ChatSessionService _chatService;
@@ -33,8 +36,10 @@ public class AgentChatController : ControllerBase
     /// List active chat sessions for the requesting agent.
     /// </summary>
     [HttpGet("active")]
-    public async Task<IActionResult> ActiveSessions([FromQuery] string agentId)
+    public async Task<IActionResult> ActiveSessions()
     {
+        if (this.CurrentUserId() is not { } agentId) return Unauthorized();
+
         var sessions = await _chatService.GetActiveSessionsForAgentAsync(agentId);
         return Ok(sessions);
     }
@@ -43,11 +48,13 @@ public class AgentChatController : ControllerBase
     /// Accept a waiting chat session.
     /// </summary>
     [HttpPost("{sessionId:int}/accept")]
-    public async Task<IActionResult> Accept(int sessionId, [FromBody] AcceptChatRequest request)
+    public async Task<IActionResult> Accept(int sessionId)
     {
+        if (this.CurrentUserId() is not { } agentId) return Unauthorized();
+
         try
         {
-            var session = await _chatService.AcceptAsync(sessionId, request.AgentId);
+            var session = await _chatService.AcceptAsync(sessionId, agentId);
             return Ok(session);
         }
         catch (InvalidOperationException ex)
@@ -62,9 +69,11 @@ public class AgentChatController : ControllerBase
     [HttpPost("{sessionId:int}/messages")]
     public async Task<IActionResult> SendMessage(int sessionId, [FromBody] ChatMessageRequest request)
     {
+        if (this.CurrentUserId() is not { } agentId) return Unauthorized();
+
         try
         {
-            var reply = await _chatService.SendMessageAsync(sessionId, request.Body, request.AgentId, "agent");
+            var reply = await _chatService.SendMessageAsync(sessionId, request.Body, agentId, "agent");
             return Ok(reply);
         }
         catch (InvalidOperationException ex)
@@ -77,11 +86,13 @@ public class AgentChatController : ControllerBase
     /// End a chat session.
     /// </summary>
     [HttpPost("{sessionId:int}/end")]
-    public async Task<IActionResult> End(int sessionId, [FromBody] EndChatRequest request)
+    public async Task<IActionResult> End(int sessionId)
     {
+        if (this.CurrentUserId() is not { } agentId) return Unauthorized();
+
         try
         {
-            var session = await _chatService.EndAsync(sessionId, request.AgentId);
+            var session = await _chatService.EndAsync(sessionId, agentId);
             return Ok(session);
         }
         catch (InvalidOperationException ex)
@@ -102,6 +113,4 @@ public class AgentChatController : ControllerBase
     }
 }
 
-public record AcceptChatRequest(string AgentId);
-public record ChatMessageRequest(string Body, string AgentId);
-public record EndChatRequest(string AgentId);
+public record ChatMessageRequest(string Body);

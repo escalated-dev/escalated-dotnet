@@ -6,12 +6,14 @@ using Escalated.Services.Newsletter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NewsletterDelivery = Escalated.Models.Newsletter.NewsletterDelivery;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
 [Route("escalated/n")]
+[AllowAnonymous]
 public class NewsletterPublicController : ControllerBase
 {
     private static readonly byte[] TransparentGif =

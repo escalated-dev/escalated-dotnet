@@ -3,11 +3,14 @@ using Escalated.Models;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
 [ApiController]
 [Route("support/admin/import")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminImportController : ControllerBase
 {
     private readonly ImportService _importService;

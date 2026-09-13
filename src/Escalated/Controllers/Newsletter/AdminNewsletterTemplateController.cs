@@ -6,12 +6,15 @@ using Escalated.Services.Newsletter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
 [Route("admin/newsletters/templates")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminNewsletterTemplateController : ControllerBase
 {
     private readonly EscalatedDbContext _db;
@@ -115,5 +118,5 @@ public class AdminNewsletterTemplateController : ControllerBase
         return ["default", "branded"];
     }
 
-    private string? UserId() => User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value ?? User.Identity?.Name;
+    private string? UserId() => this.CurrentUserId();
 }

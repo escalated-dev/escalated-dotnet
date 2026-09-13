@@ -5,11 +5,14 @@ using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Escalated.Data;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Admin;
 
 [ApiController]
 [Route("support/admin/tickets")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminTicketController : ControllerBase
 {
     private readonly TicketService _ticketService;
@@ -107,7 +110,7 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, request.AuthorId, null, false);
+        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, this.CurrentUserId(), null, false);
         return Ok(reply);
     }
 
@@ -117,7 +120,7 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, request.AuthorId, null, true);
+        var reply = await _ticketService.AddReplyAsync(ticket, request.Body, this.CurrentUserId(), null, true);
         return Ok(reply);
     }
 
@@ -127,7 +130,7 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _assignmentService.AssignAsync(ticket, request.AgentId, request.CauserId);
+        ticket = await _assignmentService.AssignAsync(ticket, request.AgentId, this.CurrentUserId());
         return Ok(ticket);
     }
 
@@ -137,7 +140,7 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _ticketService.ChangeStatusAsync(ticket, TicketStatusExtensions.Parse(request.Status), request.CauserId);
+        ticket = await _ticketService.ChangeStatusAsync(ticket, TicketStatusExtensions.Parse(request.Status), this.CurrentUserId());
         return Ok(ticket);
     }
 
@@ -147,7 +150,7 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(request.Priority), request.CauserId);
+        ticket = await _ticketService.ChangePriorityAsync(ticket, TicketPriorityExtensions.Parse(request.Priority), this.CurrentUserId());
         return Ok(ticket);
     }
 
@@ -158,9 +161,9 @@ public class AdminTicketController : ControllerBase
         if (ticket == null) return NotFound();
 
         if (request.Add?.Any() == true)
-            await _ticketService.AddTagsAsync(ticket, request.Add, request.CauserId);
+            await _ticketService.AddTagsAsync(ticket, request.Add, this.CurrentUserId());
         if (request.Remove?.Any() == true)
-            await _ticketService.RemoveTagsAsync(ticket, request.Remove, request.CauserId);
+            await _ticketService.RemoveTagsAsync(ticket, request.Remove, this.CurrentUserId());
 
         return Ok(ticket);
     }
@@ -171,20 +174,22 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _ticketService.ChangeDepartmentAsync(ticket, request.DepartmentId, request.CauserId);
+        ticket = await _ticketService.ChangeDepartmentAsync(ticket, request.DepartmentId, this.CurrentUserId());
         return Ok(ticket);
     }
 
     [HttpPost("{id:int}/macro")]
     public async Task<IActionResult> ApplyMacro(int id, [FromBody] MacroRequest request)
     {
+        if (this.CurrentUserId() is not { } causerId) return Unauthorized();
+
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
         var macro = await _db.Macros.FindAsync(request.MacroId);
         if (macro == null) return NotFound("Macro not found.");
 
-        ticket = await _macroService.ApplyAsync(macro, ticket, request.CauserId);
+        ticket = await _macroService.ApplyAsync(macro, ticket, causerId);
         return Ok(ticket);
     }
 
@@ -210,7 +215,7 @@ public class AdminTicketController : ControllerBase
         var target = await _ticketService.FindByIdAsync(request.TargetTicketId);
         if (target == null) return NotFound("Target ticket not found.");
 
-        await _mergeService.MergeAsync(source, target, request.MergedByUserId);
+        await _mergeService.MergeAsync(source, target, this.CurrentUserId());
         return Ok(new { message = "Tickets merged successfully." });
     }
 
@@ -220,17 +225,17 @@ public class AdminTicketController : ControllerBase
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _snoozeService.SnoozeAsync(ticket, request.SnoozeUntil, request.CauserId);
+        ticket = await _snoozeService.SnoozeAsync(ticket, request.SnoozeUntil, this.CurrentUserId());
         return Ok(ticket);
     }
 
     [HttpPost("{id:int}/unsnooze")]
-    public async Task<IActionResult> Unsnooze(int id, [FromQuery] string? causerId = null)
+    public async Task<IActionResult> Unsnooze(int id)
     {
         var ticket = await _ticketService.FindByIdAsync(id);
         if (ticket == null) return NotFound();
 
-        ticket = await _snoozeService.UnsnoozeAsync(ticket, causerId);
+        ticket = await _snoozeService.UnsnoozeAsync(ticket, this.CurrentUserId());
         return Ok(ticket);
     }
 
@@ -256,15 +261,15 @@ public class AdminTicketController : ControllerBase
     }
 }
 
-// Request DTOs
-public record ReplyRequest(string Body, string? AuthorId = null);
-public record AssignRequest(string AgentId, string? CauserId = null);
-public record StatusRequest(string Status, string? CauserId = null);
-public record PriorityRequest(string Priority, string? CauserId = null);
-public record TagsRequest(int[]? Add = null, int[]? Remove = null, string? CauserId = null);
-public record DepartmentRequest(int DepartmentId, string? CauserId = null);
-public record MacroRequest(int MacroId, string CauserId);
+// Request DTOs. None of them names the acting user: that is whoever the host signed in.
+public record ReplyRequest(string Body);
+public record AssignRequest(string AgentId);
+public record StatusRequest(string Status);
+public record PriorityRequest(string Priority);
+public record TagsRequest(int[]? Add = null, int[]? Remove = null);
+public record DepartmentRequest(int DepartmentId);
+public record MacroRequest(int MacroId);
 public record SplitRequest(int ReplyId, string? Subject = null);
-public record MergeRequest(int TargetTicketId, string? MergedByUserId = null);
-public record SnoozeRequest(DateTime SnoozeUntil, string? CauserId = null);
+public record MergeRequest(int TargetTicketId);
+public record SnoozeRequest(DateTime SnoozeUntil);
 public record LinkRequest(int LinkedTicketId, string? LinkType = null);

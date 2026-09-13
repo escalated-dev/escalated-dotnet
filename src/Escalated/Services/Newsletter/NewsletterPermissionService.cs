@@ -2,6 +2,10 @@ using Escalated.Data;
 using Escalated.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Escalated.Authorization;
+using Escalated.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Escalated.Services.Newsletter;
 
@@ -20,9 +24,9 @@ public class NewsletterPermissionService
         if (apiToken is not null && !apiToken.HasAbility(permission))
             return false;
 
-        var userId = httpContext.User?.FindFirst("sub")?.Value
-            ?? httpContext.User?.FindFirst("id")?.Value
-            ?? httpContext.User?.Identity?.Name;
+        var userId = EscalatedUser.ResolveId(
+            httpContext.User,
+            httpContext.RequestServices?.GetService<IOptions<EscalatedOptions>>()?.Value);
 
         if (string.IsNullOrWhiteSpace(userId))
             return false;

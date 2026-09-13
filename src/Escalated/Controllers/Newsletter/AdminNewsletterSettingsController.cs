@@ -7,12 +7,15 @@ using Escalated.Services.Newsletter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Escalated.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Escalated.Controllers.Newsletter;
 
 [ApiController]
 [NewsletterEnabled]
 [Route("admin/newsletters/settings")]
+[Authorize(Policy = EscalatedPolicies.Admin)]
 public class AdminNewsletterSettingsController : ControllerBase
 {
     private static readonly Dictionary<string, string> SettingTypes = new()
