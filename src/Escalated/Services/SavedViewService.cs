@@ -41,6 +41,11 @@ public class SavedViewService
             .ToListAsync(ct);
     }
 
+    public async Task<SavedView?> FindAsync(int id, CancellationToken ct = default)
+    {
+        return await _db.SavedViews.FindAsync(new object[] { id }, ct);
+    }
+
     public async Task<SavedView?> UpdateAsync(int id, string? name = null, string? filters = null,
         bool? isShared = null, CancellationToken ct = default)
     {

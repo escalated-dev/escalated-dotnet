@@ -37,18 +37,32 @@ public class AdminSavedViewController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateSavedViewRequest request)
     {
+        var existing = await _service.FindAsync(id);
+        if (existing == null) return NotFound();
+        if (!MayChange(existing)) return Forbid();
+
         var view = await _service.UpdateAsync(id, request.Name, request.Filters, request.IsShared);
-        if (view == null) return NotFound();
         return Ok(view);
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _service.DeleteAsync(id);
-        if (!deleted) return NotFound();
+        var existing = await _service.FindAsync(id);
+        if (existing == null) return NotFound();
+        if (!MayChange(existing)) return Forbid();
+
+        await _service.DeleteAsync(id);
         return NoContent();
     }
+
+    /// <summary>
+    /// A view with no owner may be changed by any admin; otherwise only by its owner.
+    /// Sharing lets other admins use a view, not change it. Mirrors the Laravel
+    /// reference's <c>SavedViewController</c>.
+    /// </summary>
+    private bool MayChange(Escalated.Models.SavedView view) =>
+        view.UserId is null || view.UserId == this.CurrentUserId();
 }
 
 public record CreateSavedViewRequest(string Name, string Filters,
