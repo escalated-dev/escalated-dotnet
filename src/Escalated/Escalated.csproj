@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Escalated</RootNamespace>
     <PackageId>Escalated</PackageId>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>escalated-dev</Authors>
     <Description>A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app to get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

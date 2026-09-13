@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-13
+
 ### Security
 - **No endpoint was authorized, and the acting user came from the request.**
   Every admin, agent and customer endpoint answered anonymous requests. Endpoints
@@ -39,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are gone, as are the identity query parameters. JSON clients that still send
   them are unaffected; the values are ignored.
 - `AttachmentController` takes an `IAuthorizationService`.
+- `NullEventDispatcher` no longer disables Workflows when registered; host
+  dispatchers only add listeners. `AgentTicketController` takes
+  `EscalatedEventDispatcher` instead of `IEscalatedEventDispatcher`.
 
 ### Fixed
 - **A host that added the package's controllers served no requests at all.**
@@ -66,11 +71,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   error. Escalated's services now dispatch through `EscalatedEventDispatcher`,
   which runs webhooks, then Workflows, then every dispatcher the host registered,
   in whichever order it was registered relative to `AddEscalated`.
-
-### Changed
-- `NullEventDispatcher` no longer disables Workflows when registered; host
-  dispatchers only add listeners. `AgentTicketController` takes
-  `EscalatedEventDispatcher` instead of `IEscalatedEventDispatcher`.
 
 ## [0.1.1] - 2026-09-13
 
