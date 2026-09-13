@@ -36,6 +36,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ImportSourceMap.ImportJob`, `NewsletterListMember.List` and
   `WebhookDelivery.Webhook`. A response could only ever have carried them as
   `null` or empty; loaded, they threw.
+- **Failed webhook deliveries were never retried.** A failed delivery scheduled
+  its retry fire-and-forget on the dispatcher that sent it, whose
+  `EscalatedDbContext` belonged to the request's scope (or the per-event scope
+  `WebhookEventDispatcher` opens). When the two-minute backoff ended that context
+  was disposed, the retry threw `ObjectDisposedException`, and nothing observed
+  the task, so no second or third attempt was sent, recorded or logged.
+  - Each retry now opens its own scope, reads the webhook again and skips one
+    deactivated or deleted during the backoff, and logs a failure instead of
+    losing it. Retries still don't hold up the request, and a retry still
+    waiting when the host stops is not sent.
+
+### Changed
+- `WebhookDispatcher` takes an `IServiceScopeFactory` and a `TimeProvider`, and
+  optionally an `IHostApplicationLifetime`. `AddEscalated` registers
+  `TimeProvider.System` unless the host has registered one.
 
 ## [0.1.2] - 2026-09-13
 

@@ -94,7 +94,8 @@ public class WebhookDispatcherTests
             .Setup(x => x.CreateClient("EscalatedWebhook"))
             .Returns(new HttpClient(handler));
 
-        var dispatcher = new WebhookDispatcher(db, httpFactory.Object, TimeProvider.System, logger.Object);
+        var dispatcher = new WebhookDispatcher(db, httpFactory.Object,
+            Mock.Of<Microsoft.Extensions.DependencyInjection.IServiceScopeFactory>(), TimeProvider.System, logger.Object);
         var webhook = await SaveWebhookAsync(db, url);
 
         await dispatcher.SendAsync(webhook, "ticket.created", new { id = 123 });
@@ -116,7 +117,8 @@ public class WebhookDispatcherTests
             .Setup(x => x.CreateClient("EscalatedWebhook"))
             .Returns(new HttpClient(handler));
 
-        var dispatcher = new WebhookDispatcher(db, httpFactory.Object, TimeProvider.System, logger.Object);
+        var dispatcher = new WebhookDispatcher(db, httpFactory.Object,
+            Mock.Of<Microsoft.Extensions.DependencyInjection.IServiceScopeFactory>(), TimeProvider.System, logger.Object);
         var webhook = await SaveWebhookAsync(db, "https://example.com/hook");
 
         await dispatcher.SendAsync(webhook, "ticket.created", new { id = 123 });
