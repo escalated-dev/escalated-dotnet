@@ -5,6 +5,8 @@ using System.Text.Json;
 using Escalated.Data;
 using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Escalated.Services;
@@ -13,15 +15,26 @@ public class WebhookDispatcher
 {
     private readonly EscalatedDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TimeProvider _timeProvider;
     private readonly ILogger<WebhookDispatcher> _logger;
+    private readonly IHostApplicationLifetime? _lifetime;
     private const int MaxAttempts = 3;
 
+    /// <param name="lifetime">
+    /// When the host provides one, retries still waiting out their backoff are dropped
+    /// as it stops, instead of waking against a disposed service provider.
+    /// </param>
     public WebhookDispatcher(EscalatedDbContext db, IHttpClientFactory httpClientFactory,
-        ILogger<WebhookDispatcher> logger)
+        IServiceScopeFactory scopeFactory, TimeProvider timeProvider, ILogger<WebhookDispatcher> logger,
+        IHostApplicationLifetime? lifetime = null)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
+        _scopeFactory = scopeFactory;
+        _timeProvider = timeProvider;
         _logger = logger;
+        _lifetime = lifetime;
     }
 
     /// <summary>
@@ -114,7 +127,7 @@ public class WebhookDispatcher
             // Retry on failure
             if (!response.IsSuccessStatusCode && attempt < MaxAttempts)
             {
-                _ = RetryLaterAsync(webhook, eventName, payload, attempt + 1);
+                ScheduleRetry(webhook.Id, eventName, payload, attempt + 1);
             }
         }
         catch (Exception ex)
@@ -131,7 +144,7 @@ public class WebhookDispatcher
 
             if (attempt < MaxAttempts)
             {
-                _ = RetryLaterAsync(webhook, eventName, payload, attempt + 1);
+                ScheduleRetry(webhook.Id, eventName, payload, attempt + 1);
             }
         }
     }
@@ -151,12 +164,56 @@ public class WebhookDispatcher
         }
     }
 
-    private async Task RetryLaterAsync(Webhook webhook, string eventName, object payload, int attempt)
+    /// <summary>
+    /// Sends <paramref name="attempt"/> once its backoff has passed, without holding up the caller.
+    ///
+    /// <para>The caller is usually a request, and this dispatcher's context belongs to the
+    /// request's scope, or to the scope <c>WebhookEventDispatcher</c> opens for each event.
+    /// Either is disposed long before a two-minute backoff ends, so the retry opens a scope
+    /// of its own. It reads the webhook again, too: it may have been deactivated or
+    /// deleted in the meantime.</para>
+    /// </summary>
+    private void ScheduleRetry(int webhookId, string eventName, object payload, int attempt)
     {
-        var delaySeconds = (int)Math.Pow(2, attempt) * 30;
-        await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
-        await SendAsync(webhook, eventName, payload, attempt);
+        var stopping = _lifetime?.ApplicationStopping ?? CancellationToken.None;
+        _ = RetryLaterAsync(webhookId, eventName, payload, attempt, stopping);
     }
+
+    private async Task RetryLaterAsync(int webhookId, string eventName, object payload, int attempt,
+        CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(RetryDelay(attempt), _timeProvider, ct);
+
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<EscalatedDbContext>();
+            var webhook = await db.Webhooks.FirstOrDefaultAsync(w => w.Id == webhookId, ct);
+
+            if (webhook is not { Active: true })
+            {
+                _logger.LogInformation("Webhook {WebhookId} is no longer active; dropping attempt {Attempt} of {Event}",
+                    webhookId, attempt, eventName);
+                return;
+            }
+
+            await scope.ServiceProvider.GetRequiredService<WebhookDispatcher>()
+                .SendAsync(webhook, eventName, payload, attempt, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // The host is stopping. A retry still waiting out its backoff is not sent.
+        }
+        catch (Exception ex)
+        {
+            // Nothing awaits this task, so an exception left here would vanish.
+            _logger.LogError(ex, "Webhook retry failed for webhook {WebhookId}, event {Event}, attempt {Attempt}",
+                webhookId, eventName, attempt);
+        }
+    }
+
+    /// <summary>2 minutes before the second attempt, 4 before the third.</summary>
+    private static TimeSpan RetryDelay(int attempt) => TimeSpan.FromSeconds(Math.Pow(2, attempt) * 30);
 
     private static string ComputeHmacSha256(string data, string secret)
     {
