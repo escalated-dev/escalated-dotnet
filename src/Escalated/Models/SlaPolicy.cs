@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Escalated.Enums;
 
 namespace Escalated.Models;
@@ -33,6 +34,7 @@ public class SlaPolicy
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 
     public double? GetFirstResponseHoursFor(Enums.TicketPriority priority)

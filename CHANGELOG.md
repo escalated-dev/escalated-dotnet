@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Replies, notes and ticket details answered 500 after saving.** Controllers
+  return EF entities, and both ends of most relationships were serialized, so
+  every loaded graph was a cycle: a reply's `Ticket` holds the reply in its
+  `Replies`, a ticket's `Department` holds the ticket in its `Tickets`.
+  System.Text.Json threw `JsonException: A possible object cycle was detected`,
+  so the customer, agent and admin reply and note endpoints, the three ticket
+  show endpoints, and ticket actions that record an activity (changing priority,
+  for one) failed once the change was already saved. Roles with permissions,
+  business hours with holidays, skills with agents, side conversations with
+  replies, knowledge base articles and categories, and newsletter list members
+  load graphs of the same shape.
+  - The back-reference of each two-way relationship is no longer serialized.
+    The collections and references the shared frontend reads (`replies`,
+    `activities`, `attachments`, `department`, `tags`, `deliveries`, `holidays`,
+    `category`, `children`, `members`) are unchanged.
+
+### Changed
+- These navigation properties are `[JsonIgnore]`: `Reply.Ticket`,
+  `TicketActivity.Ticket`, `SideConversation.Ticket`,
+  `SideConversationReply.SideConversation`, `SatisfactionRating.Ticket`,
+  `ChatSession.Ticket`, `TicketLink.ParentTicket` and `ChildTicket`,
+  `Department.Tickets`, `SlaPolicy.Tickets`, `Tag.Tickets`, `Permission.Roles`,
+  `RoleUser.Role`, `AgentSkill.Skill`, `SkillRoutingTag.Skill`,
+  `SkillRoutingDepartment.Skill`, `Holiday.Schedule`, `ArticleCategory.Parent`
+  and `Articles`, `CustomField.Values`, `CustomObjectRecord.Object`,
+  `ImportSourceMap.ImportJob`, `NewsletterListMember.List` and
+  `WebhookDelivery.Webhook`. A response could only ever have carried them as
+  `null` or empty; loaded, they threw.
+
 ## [0.1.2] - 2026-09-13
 
 ### Security

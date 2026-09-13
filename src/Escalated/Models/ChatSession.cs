@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Escalated.Enums;
 
 namespace Escalated.Models;
@@ -57,6 +58,7 @@ public class ChatSession
     public string? Metadata { get; set; }
 
     // Navigation
+    [JsonIgnore]
     [ForeignKey(nameof(TicketId))]
     public Ticket? Ticket { get; set; }
 

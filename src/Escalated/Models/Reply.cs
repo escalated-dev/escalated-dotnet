@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -39,6 +40,7 @@ public class Reply
     public DateTime? DeletedAt { get; set; }
 
     // Navigation
+    [JsonIgnore]
     [ForeignKey(nameof(TicketId))]
     public Ticket? Ticket { get; set; }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -22,6 +23,7 @@ public class Tag
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 
     public static string GenerateSlug(string name)

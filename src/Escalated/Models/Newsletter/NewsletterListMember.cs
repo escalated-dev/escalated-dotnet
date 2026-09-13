@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,7 @@ public class NewsletterListMember
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
     public string? AddedBy { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(ListId))]
     public NewsletterList? List { get; set; }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -53,6 +54,7 @@ public class AgentSkill
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     public Skill? Skill { get; set; }
 }
 
@@ -62,6 +64,7 @@ public class SkillRoutingTag
     public int Id { get; set; }
 
     public int SkillId { get; set; }
+    [JsonIgnore]
     public Skill? Skill { get; set; }
 
     public int TagId { get; set; }
@@ -74,6 +77,7 @@ public class SkillRoutingDepartment
     public int Id { get; set; }
 
     public int SkillId { get; set; }
+    [JsonIgnore]
     public Skill? Skill { get; set; }
 
     public int DepartmentId { get; set; }
