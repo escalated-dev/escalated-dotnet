@@ -170,15 +170,24 @@ public class SchedulerBackgroundServicesTests
     public void AddEscalated_RegistersDispatcherRunnerAndSchedulers()
     {
         var services = new ServiceCollection();
+        services.AddLogging();
         var configuration = new ConfigurationBuilder().Build();
 
         EscalatedServiceCollectionExtensions.AddEscalated(
             services, configuration,
             configureDb: o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
 
-        // The real dispatcher is the default (not the no-op).
-        var dispatcher = services.Single(d => d.ServiceType == typeof(IEscalatedEventDispatcher));
-        Assert.Equal(typeof(WorkflowEventDispatcher), dispatcher.ImplementationType);
+        // The interface resolves to the event bus (not the no-op), which runs the
+        // webhook and Workflow bridges before any host listener.
+        using (var provider = services.BuildServiceProvider())
+        using (var scope = provider.CreateScope())
+        {
+            Assert.IsType<EscalatedEventDispatcher>(
+                scope.ServiceProvider.GetRequiredService<IEscalatedEventDispatcher>());
+        }
+
+        Assert.Contains(services, d => d.ServiceType == typeof(WorkflowEventDispatcher));
+        Assert.Contains(services, d => d.ServiceType == typeof(WebhookEventDispatcher));
 
         // The workflow runner + executor are resolvable.
         Assert.Contains(services, d => d.ServiceType == typeof(WorkflowRunnerService));

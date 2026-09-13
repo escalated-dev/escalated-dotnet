@@ -61,11 +61,15 @@ public static class EscalatedServiceCollectionExtensions
         // WebhookDispatcher sends through IHttpClientFactory.
         services.AddHttpClient();
 
-        // Register the default event dispatcher. It bridges domain events to
-        // the Workflow engine so configured Workflows fire on ticket/reply
-        // events. Host apps can opt out (e.g. NullEventDispatcher) or supply
-        // their own by registering an IEscalatedEventDispatcher first.
-        services.TryAddSingleton<IEscalatedEventDispatcher, WorkflowEventDispatcher>();
+        // Domain events. Escalated's services dispatch through EscalatedEventDispatcher,
+        // which delivers webhooks, runs Workflows, then hands the event to every
+        // IEscalatedEventDispatcher the host registered. A host dispatcher is a
+        // listener: registering one, before or after this call, adds to the
+        // pipeline instead of replacing the Workflow bridge.
+        services.AddSingleton<WorkflowEventDispatcher>();
+        services.AddSingleton<WebhookEventDispatcher>();
+        services.AddScoped<EscalatedEventDispatcher>();
+        services.AddScoped<IEscalatedEventDispatcher>(sp => sp.GetRequiredService<EscalatedEventDispatcher>());
 
         // Custom ticket action registry (host apps can override for dynamic
         // per-ticket/user visibility).
@@ -85,14 +89,14 @@ public static class EscalatedServiceCollectionExtensions
         services.AddEscalatedLocalization();
 
         // Register services
-        services.AddScoped<TicketService>();
+        services.AddScopedWithEventBus<TicketService>();
         services.AddScoped<MentionService>();
-        services.AddScoped<SlaService>();
-        services.AddScoped<AssignmentService>();
-        services.AddScoped<EscalationService>();
+        services.AddScopedWithEventBus<SlaService>();
+        services.AddScopedWithEventBus<AssignmentService>();
+        services.AddScopedWithEventBus<EscalationService>();
         services.AddScoped<MacroService>();
         services.AddScoped<TicketMergeService>();
-        services.AddScoped<TicketSplitService>();
+        services.AddScopedWithEventBus<TicketSplitService>();
         services.AddScoped<TicketSnoozeService>();
         services.AddScoped<TicketSubjectService>();
         services.AddScoped<WebhookDispatcher>();
@@ -113,7 +117,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<KnowledgeBaseService>();
         services.AddScoped<SavedViewService>();
         services.AddScoped<SideConversationService>();
-        services.AddScoped<ChatSessionService>();
+        services.AddScopedWithEventBus<ChatSessionService>();
         services.AddScoped<ChatRoutingService>();
         services.AddScoped<ChatAvailabilityService>();
 
@@ -199,6 +203,20 @@ public static class EscalatedServiceCollectionExtensions
             var inner = ActivatorUtilities.CreateInstance<ResourceManagerStringLocalizerFactory>(sp);
             return new EscalatedLocalizerFactory(inner);
         }));
+    }
+
+    /// <summary>
+    /// Registers a service that takes an <see cref="IEscalatedEventDispatcher"/>, and
+    /// builds it with <see cref="EscalatedEventDispatcher"/> rather than whatever the
+    /// interface resolves to. A host registering its own dispatcher after
+    /// <c>AddEscalated</c> makes that registration the one the interface resolves to,
+    /// and the service would otherwise dispatch to the host alone.
+    /// </summary>
+    private static void AddScopedWithEventBus<TService>(this IServiceCollection services)
+        where TService : class
+    {
+        services.AddScoped(sp =>
+            ActivatorUtilities.CreateInstance<TService>(sp, sp.GetRequiredService<EscalatedEventDispatcher>()));
     }
 
     private sealed class EscalatedServicesMarker

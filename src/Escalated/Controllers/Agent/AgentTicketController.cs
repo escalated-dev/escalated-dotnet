@@ -19,12 +19,12 @@ public class AgentTicketController : ControllerBase
     private readonly MacroService _macroService;
     private readonly EscalatedDbContext _db;
     private readonly ITicketActionRegistry _actions;
-    private readonly IEscalatedEventDispatcher _events;
+    private readonly EscalatedEventDispatcher _events;
     private readonly TicketSubjectService _subjectService;
 
     public AgentTicketController(TicketService ticketService, AssignmentService assignmentService,
         MacroService macroService, EscalatedDbContext db, ITicketActionRegistry actions,
-        IEscalatedEventDispatcher events, TicketSubjectService subjectService)
+        EscalatedEventDispatcher events, TicketSubjectService subjectService)
     {
         _ticketService = ticketService;
         _assignmentService = assignmentService;

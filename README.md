@@ -388,7 +388,9 @@ Every ticket action dispatches a domain event:
 | `TagRemovedEvent` | Tag removed |
 | `TicketCustomActionTriggeredEvent` | Agent triggered a custom ticket action |
 
-Implement `IEscalatedEventDispatcher` to receive these events in your host application:
+Every event is delivered, in order, to subscribed outbound webhooks, to matching
+Workflows, and then to each `IEscalatedEventDispatcher` your host application
+registers. Implement one to receive these events:
 
 ```csharp
 public class MyEventHandler : IEscalatedEventDispatcher
@@ -402,9 +404,43 @@ public class MyEventHandler : IEscalatedEventDispatcher
     }
 }
 
-// Register in DI
+// Register in DI, before or after AddEscalated
 services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
 ```
+
+Registering a dispatcher adds a listener. It does not replace Escalated's own
+handling, so webhooks and Workflows keep running, and you can register several.
+
+### Webhook events
+
+Webhooks subscribe to event names (or `*` for all of them):
+
+| Webhook event | Domain event |
+|---------------|--------------|
+| `ticket.created` | `TicketCreatedEvent` |
+| `ticket.updated` | `TicketUpdatedEvent` |
+| `ticket.status_changed` | `TicketStatusChangedEvent` |
+| `ticket.resolved` | `TicketResolvedEvent` |
+| `ticket.closed` | `TicketClosedEvent` |
+| `ticket.reopened` | `TicketReopenedEvent` |
+| `ticket.assigned` | `TicketAssignedEvent` |
+| `ticket.unassigned` | `TicketUnassignedEvent` |
+| `ticket.escalated` | `TicketEscalatedEvent` |
+| `ticket.priority_changed` | `TicketPriorityChangedEvent` |
+| `ticket.department_changed` | `DepartmentChangedEvent` |
+| `ticket.tagged` | `TagAddedEvent` |
+| `ticket.untagged` | `TagRemovedEvent` |
+| `reply.created` | `ReplyCreatedEvent` |
+| `internal_note.added` | `InternalNoteAddedEvent` |
+| `sla.breached` | `SlaBreachedEvent` |
+| `sla.warning` | `SlaWarningEvent` |
+
+Each delivery is a signed `POST` (`X-Escalated-Event`, and `X-Escalated-Signature`
+when the webhook has a secret) with the body
+`{ "event", "payload", "timestamp" }`. `payload.ticket` carries `id`,
+`reference`, `subject`, `status` and `priority`; reply events add `payload.reply`,
+tag events `payload.tag`, and `ticket.assigned` adds `payload.agent_id`. Every
+attempt is recorded as a `WebhookDelivery`.
 
 ## Custom Ticket Actions
 
