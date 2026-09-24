@@ -20,6 +20,7 @@
 [![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
 [![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Views](https://hits.sh/github.com/escalated-dev/escalated-dotnet.svg?style=flat&label=views&color=007ec6)](https://hits.sh/github.com/escalated-dev/escalated-dotnet/)
 
 A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app -- get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
 
