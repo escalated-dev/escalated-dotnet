@@ -740,4 +740,4 @@ Follow-up PR: EF Core migration in-package, planner/dispatcher/tracker services 
 
 ## License
 
-MIT
+MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).
