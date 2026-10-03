@@ -108,23 +108,26 @@ public class InboundEmailControllerTests
     {
         var (controller, db) = CreateController();
 
-        // Seed a ticket with id 55 that the canonical In-Reply-To will hit.
+        // Seed a ticket requested by alice; with an inbound secret set,
+        // only the signed Reply-To address routes mail to it.
         var ticket = new Escalated.Models.Ticket
         {
             Reference = "ESC-00055",
             Subject = "Existing",
             Status = Escalated.Enums.TicketStatus.Open,
             Priority = Escalated.Enums.TicketPriority.Medium,
+            GuestEmail = "alice@example.com",
         };
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync();
         var ticketId = ticket.Id;
+        var replyTo = Escalated.Services.Email.MessageIdUtil.BuildReplyTo(ticketId, Secret, "support.example.com");
 
         SetSecret(controller, Secret);
         SetBody(controller, $$"""
             {
                 "From": "alice@example.com",
-                "To": "support@example.com",
+                "To": "{{replyTo}}",
                 "Subject": "Re: Existing",
                 "TextBody": "Here's more detail.",
                 "Headers": [

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Inbound email accepted replies from any sender.** A message that matched a
+  ticket by subject reference, `In-Reply-To` / `References`, or reply address was
+  posted on that ticket whoever sent it. With `InboundSecret` set, only the signed
+  `Reply-To` address now links mail to a ticket, and a matched message becomes a
+  reply only when `From` is the ticket's requester (guest, contact, or requester
+  user email, case-insensitive), posted as that requester. Other senders get a
+  new ticket, and only an accepted reply reopens a resolved or closed ticket.
+
 ## [0.1.3] - 2026-09-13
 
 ### Security
