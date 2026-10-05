@@ -665,6 +665,27 @@ Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
 ```
 
+### Guest endpoint rate limits
+
+The public guest endpoints are rate-limited per client IP out of the box, with
+no middleware to add: `POST /support/widget/tickets` allows 5 tickets per IP per
+minute and `POST /support/widget/tickets/{token}/reply` 10 replies, each with its
+own counter. A request over the limit gets `429` with `Retry-After`. Replies are
+counted before the guest token is checked, so wrong-token guesses count too.
+
+```json
+"Escalated": {
+  "GuestRateLimit": { "Enabled": true, "TicketsPerMinute": 5, "RepliesPerMinute": 10 }
+}
+```
+
+The client IP is `HttpContext.Connection.RemoteIpAddress`. **Behind a reverse
+proxy or load balancer, configure `ForwardedHeadersOptions` with your trusted
+proxies and call `app.UseForwardedHeaders()`**, or every guest shares the proxy's
+address. Counters are kept in memory per process; a multi-instance deployment
+should register its own shared `IGuestRateLimiter` (e.g. Redis-backed). Set
+`Enabled` to `false` only when you already throttle these routes upstream.
+
 ## Localization
 
 Escalated for ASP.NET Core consumes its translation catalog from the

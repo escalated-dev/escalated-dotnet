@@ -77,6 +77,12 @@ public class EscalatedOptions
     public NewsletterOptions Newsletters { get; set; } = new();
 
     /// <summary>
+    /// Per-client-IP rate limits on the public guest endpoints
+    /// (see <see cref="GuestRateLimitOptions"/>).
+    /// </summary>
+    public GuestRateLimitOptions GuestRateLimit { get; set; } = new();
+
+    /// <summary>
     /// CSAT configuration.
     /// </summary>
     public CsatOptions Csat { get; set; } = new();
@@ -221,6 +227,36 @@ public class CsatOptions
 {
     public bool Enabled { get; set; } = true;
     public bool SendOnResolved { get; set; } = true;
+}
+
+/// <summary>
+/// Per-client-IP rate limits on the unauthenticated guest endpoints
+/// (<c>POST {prefix}/widget/tickets</c> and <c>POST {prefix}/widget/tickets/{token}/reply</c>).
+/// Every accepted guest ticket or reply writes rows and sends mail, so an
+/// uncapped endpoint lets anyone flood the helpdesk and the mail provider.
+/// A request over the limit gets <c>429</c> with <c>Retry-After</c>.
+///
+/// <para>The client IP is <c>HttpContext.Connection.RemoteIpAddress</c>. Behind a
+/// reverse proxy or load balancer, configure <c>ForwardedHeadersOptions</c> with
+/// your trusted proxies and call <c>app.UseForwardedHeaders()</c> before
+/// <c>MapControllers()</c>, or every guest shares the proxy's address and one
+/// busy guest locks out all of them.</para>
+///
+/// <para>Counters live in the registered <see cref="Services.IGuestRateLimiter"/>.
+/// The default keeps them in memory, per process; a multi-instance deployment
+/// should register a shared implementation (e.g. Redis-backed) before
+/// <c>AddEscalated()</c>.</para>
+/// </summary>
+public class GuestRateLimitOptions
+{
+    /// <summary>Default true. Set false only when the host already throttles upstream.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>Guest ticket submissions per IP per minute. Default 5.</summary>
+    public int TicketsPerMinute { get; set; } = 5;
+
+    /// <summary>Guest replies per IP per minute. Default 10.</summary>
+    public int RepliesPerMinute { get; set; } = 10;
 }
 
 public class NewsletterOptions
