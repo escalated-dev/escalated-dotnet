@@ -51,7 +51,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Ticket splitting** -- Split a reply into a new ticket
 - **Ticket snooze** -- Snooze until a future date with auto-wake background service
 - **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Inbound email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To verification, and Message-ID-based ticket resolution
+- **Inbound email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To verification, and replies accepted only from the ticket's requester
 - **Saved views** -- Personal and shared filter presets
 - **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
 - **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
@@ -369,7 +369,9 @@ POST /support/webhook/email/inbound?adapter=ses
 
 The adapter can be selected via the query parameter or the `X-Escalated-Adapter` header. Your provider must attach the shared secret as an `X-Escalated-Inbound-Secret` header.
 
-The service resolves inbound messages to existing tickets via, in order: canonical `Message-ID` headers, signed `Reply-To` verification, and subject-reference tags. Unmatched messages with real content create a new ticket; SNS subscription confirmations and empty body+subject messages are skipped.
+The service resolves inbound messages to existing tickets. With `InboundSecret` set (the endpoint requires it), only the signed `Reply-To` address (`reply+{id}.{hmac8}@domain`) that outbound notifications carry identifies a ticket. Without a secret, the canonical `Message-ID` headers and subject-reference tags are used instead.
+
+A matched message becomes a reply only when its `From` address (case-insensitive) is the ticket's requester: the guest email, the contact's email, or the requester user's email as returned by your `IUserDirectory`. The reply is posted as that requester, and only such a reply reopens a resolved or closed ticket. Staff identity is never taken from the `From` header, so agents reply in the app, not by email. Anything else with real content (no match, or a sender who is not the requester) creates a new ticket; SNS subscription confirmations and empty body+subject messages are skipped.
 
 See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provider setup, the response shape, and a ready-to-paste curl test recipe.
 
@@ -663,6 +665,27 @@ Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
 app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
 ```
 
+### Guest endpoint rate limits
+
+The public guest endpoints are rate-limited per client IP out of the box, with
+no middleware to add: `POST /support/widget/tickets` allows 5 tickets per IP per
+minute and `POST /support/widget/tickets/{token}/reply` 10 replies, each with its
+own counter. A request over the limit gets `429` with `Retry-After`. Replies are
+counted before the guest token is checked, so wrong-token guesses count too.
+
+```json
+"Escalated": {
+  "GuestRateLimit": { "Enabled": true, "TicketsPerMinute": 5, "RepliesPerMinute": 10 }
+}
+```
+
+The client IP is `HttpContext.Connection.RemoteIpAddress`. **Behind a reverse
+proxy or load balancer, configure `ForwardedHeadersOptions` with your trusted
+proxies and call `app.UseForwardedHeaders()`**, or every guest shares the proxy's
+address. Counters are kept in memory per process; a multi-instance deployment
+should register its own shared `IGuestRateLimiter` (e.g. Redis-backed). Set
+`Enabled` to `false` only when you already throttle these routes upstream.
+
 ## Localization
 
 Escalated for ASP.NET Core consumes its translation catalog from the
@@ -740,4 +763,4 @@ Follow-up PR: EF Core migration in-package, planner/dispatcher/tracker services 
 
 ## License
 
-MIT
+MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).

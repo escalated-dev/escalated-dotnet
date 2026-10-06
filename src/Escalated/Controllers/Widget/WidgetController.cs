@@ -10,6 +10,8 @@ namespace Escalated.Controllers.Widget;
 /// <summary>
 /// Public API endpoints for the embeddable widget.
 /// Supports KB search, anonymous ticket creation, and ticket status lookup by guest token.
+/// Guest ticket creation and guest replies are rate-limited per client IP
+/// (see <see cref="Configuration.GuestRateLimitOptions"/>).
 /// </summary>
 [ApiController]
 [Route("support/widget")]
@@ -51,6 +53,7 @@ public class WidgetController : ControllerBase
     /// Create a guest (anonymous) ticket.
     /// </summary>
     [HttpPost("tickets")]
+    [GuestThrottle(GuestThrottleScope.Ticket)]
     public async Task<IActionResult> CreateGuestTicket([FromBody] GuestTicketRequest request)
     {
         var ticket = await _ticketService.CreateAsync(
@@ -107,6 +110,8 @@ public class WidgetController : ControllerBase
     /// Submit a reply on a guest ticket using the magic token.
     /// </summary>
     [HttpPost("tickets/{token}/reply")]
+    // Throttled before the token lookup, so wrong-token guesses are counted too.
+    [GuestThrottle(GuestThrottleScope.Reply)]
     public async Task<IActionResult> GuestReply(string token, [FromBody] GuestReplyRequest request)
     {
         var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.GuestToken == token);

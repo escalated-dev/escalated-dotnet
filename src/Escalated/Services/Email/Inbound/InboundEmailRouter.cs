@@ -36,6 +36,13 @@ namespace Escalated.Services.Email.Inbound;
 ///   </item>
 /// </list>
 ///
+/// <para>Message-IDs and ticket references are guessable, so once an
+/// inbound secret is configured (and outbound mail therefore carries
+/// the signed Reply-To) only path 3 is consulted. Without a secret the
+/// full chain is used as a compatibility mode. Either way a match is
+/// only a lookup: <see cref="InboundEmailService"/> still requires the
+/// sender to be the ticket's requester before posting a reply.</para>
+///
 /// <para>Mirrors the NestJS <c>InboundRouterService</c> resolution
 /// order and the Laravel/Rails/Django/Adonis/WordPress ports.</para>
 /// </summary>
@@ -56,6 +63,17 @@ public class InboundEmailRouter
     /// </summary>
     public async Task<Ticket?> ResolveTicketAsync(InboundMessage message, CancellationToken ct = default)
     {
+        // With a secret configured, only the signed Reply-To identifies a
+        // ticket; the unsigned paths below are guessable.
+        var secret = _options.Email.InboundSecret;
+        if (!string.IsNullOrEmpty(secret))
+        {
+            if (string.IsNullOrEmpty(message.ToEmail)) return null;
+            var verified = MessageIdUtil.VerifyReplyTo(message.ToEmail, secret);
+            if (verified is null) return null;
+            return await _db.Tickets.FirstOrDefaultAsync(t => t.Id == (int)verified.Value, ct);
+        }
+
         var headerIds = CandidateHeaderMessageIds(message).ToList();
 
         // 1 + 2. Parse canonical Message-IDs out of our own headers.
@@ -67,17 +85,7 @@ public class InboundEmailRouter
             if (ticket is not null) return ticket;
         }
 
-        // 3. Signed Reply-To on the recipient address.
-        var secret = _options.Email.InboundSecret;
-        if (!string.IsNullOrEmpty(secret) && !string.IsNullOrEmpty(message.ToEmail))
-        {
-            var verified = MessageIdUtil.VerifyReplyTo(message.ToEmail, secret);
-            if (verified is not null)
-            {
-                var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.Id == (int)verified.Value, ct);
-                if (ticket is not null) return ticket;
-            }
-        }
+        // 3. The signed Reply-To path is handled above.
 
         // 4. Subject line reference tag — match the configured prefix.
         var prefix = _options.TicketReferencePrefix;

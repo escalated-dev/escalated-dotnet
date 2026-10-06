@@ -2,6 +2,7 @@ using Escalated.Configuration;
 using Escalated.Enums;
 using Escalated.Models;
 using Escalated.Services;
+using Escalated.Services.Email;
 using Escalated.Services.Email.Inbound;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -17,7 +18,7 @@ namespace Escalated.Tests.Services.Email.Inbound;
 public class InboundEmailServiceTests
 {
     private static (InboundEmailService svc, Data.EscalatedDbContext db, EscalatedOptions options)
-        Create(string? secret = null)
+        Create(string? secret = null, IUserDirectory? users = null)
     {
         var db = TestHelpers.CreateInMemoryDb();
         var options = new EscalatedOptions
@@ -35,18 +36,27 @@ public class InboundEmailServiceTests
         var router = new InboundEmailRouter(db, options);
         var svc = new InboundEmailService(
             db, tickets, router,
-            NullLogger<InboundEmailService>.Instance);
+            NullLogger<InboundEmailService>.Instance,
+            users);
         return (svc, db, options);
     }
 
-    private static async Task<Ticket> SeedTicket(Data.EscalatedDbContext db, int id = 42)
+    private static async Task<Ticket> SeedTicket(
+        Data.EscalatedDbContext db,
+        int id = 42,
+        string? guestEmail = "customer@example.com",
+        TicketStatus status = TicketStatus.Open,
+        string? requesterId = null)
     {
         var ticket = new Ticket
         {
             Reference = $"ESC-{id:00000}",
             Subject = "Existing",
-            Status = TicketStatus.Open,
+            Status = status,
             Priority = TicketPriority.Medium,
+            GuestEmail = guestEmail,
+            RequesterId = requesterId,
+            RequesterType = requesterId is null ? null : "User",
         };
         db.Tickets.Add(ticket);
         await db.SaveChangesAsync();
@@ -63,6 +73,20 @@ public class InboundEmailServiceTests
         db.InboundEmails.Add(row);
         db.SaveChanges();
         return row;
+    }
+
+    private sealed class FakeUserDirectory : IUserDirectory
+    {
+        private readonly Dictionary<string, UserDirectoryEntry> _users;
+
+        public FakeUserDirectory(params UserDirectoryEntry[] users)
+            => _users = users.ToDictionary(u => u.Id);
+
+        public Task<UserDirectoryPage> ListAsync(string? search, int page, int pageSize, CancellationToken ct = default)
+            => Task.FromResult(new UserDirectoryPage(_users.Values.ToList(), _users.Count, page, pageSize));
+
+        public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default)
+            => Task.FromResult(_users.TryGetValue(id, out var u) ? u : null);
     }
 
     private static InboundMessage MakeMessage(
@@ -200,6 +224,133 @@ public class InboundEmailServiceTests
         var pending = result.PendingAttachmentDownloads[0];
         Assert.Equal("large.pdf", pending.Name);
         Assert.Equal("https://mailgun.example/att/large", pending.DownloadUrl);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_StrangerQuotingSubjectReference_OpensNewTicket()
+    {
+        var (svc, db, _) = Create();
+        var ticket = await SeedTicket(db, id: 7001, guestEmail: "owner@example.com");
+        var audit = SeedInboundAudit(db);
+        var message = MakeMessage(
+            subject: $"RE: [{ticket.Reference}] Your order",
+            body: "Injected reply.",
+            fromEmail: "stranger@example.net");
+
+        var result = await svc.ProcessAsync(message, audit);
+
+        Assert.Equal(ProcessOutcome.CreatedNew, result.Outcome);
+        Assert.NotEqual(ticket.Id, result.TicketId);
+        Assert.Null(result.ReplyId);
+        Assert.Empty(db.Replies.Where(r => r.TicketId == ticket.Id));
+        Assert.Equal("stranger@example.net", db.Tickets.Single(t => t.Id == result.TicketId).GuestEmail);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_StrangerThreadingOntoClosedTicket_DoesNotReopenIt()
+    {
+        var (svc, db, _) = Create();
+        var ticket = await SeedTicket(db, guestEmail: "owner@example.com", status: TicketStatus.Closed);
+        var audit = SeedInboundAudit(db);
+        var message = MakeMessage(
+            inReplyTo: $"<ticket-{ticket.Id}@support.example.com>",
+            subject: $"RE: [{ticket.Reference}] Closed",
+            body: "Reopen this.",
+            fromEmail: "stranger@example.net");
+
+        var result = await svc.ProcessAsync(message, audit);
+
+        Assert.Equal(ProcessOutcome.CreatedNew, result.Outcome);
+        Assert.NotEqual(ticket.Id, result.TicketId);
+        Assert.Equal(TicketStatus.Closed, db.Tickets.Single(t => t.Id == ticket.Id).Status);
+        Assert.Empty(db.Replies.Where(r => r.TicketId == ticket.Id));
+    }
+
+    [Fact]
+    public async Task ProcessAsync_FromHeaderNamingAnAgent_IsNeverPostedAsThatAgent()
+    {
+        var users = new FakeUserDirectory(new UserDirectoryEntry("agent-1", "Agent", "agent@example.com"));
+        var (svc, db, options) = Create("test-secret", users);
+        var ticket = await SeedTicket(db, guestEmail: "owner@example.com");
+        var audit = SeedInboundAudit(db);
+        var message = MakeMessage(
+            inReplyTo: $"<ticket-{ticket.Id}@support.example.com>",
+            toEmail: MessageIdUtil.BuildReplyTo(ticket.Id, "test-secret", options.Email.Domain),
+            subject: $"RE: [{ticket.Reference}] Update",
+            body: "Refund approved.",
+            fromEmail: "agent@example.com");
+
+        var result = await svc.ProcessAsync(message, audit);
+
+        Assert.Equal(ProcessOutcome.CreatedNew, result.Outcome);
+        Assert.NotEqual(ticket.Id, result.TicketId);
+        Assert.Empty(db.Replies.Where(r => r.TicketId == ticket.Id));
+        Assert.Empty(db.Replies.Where(r => r.AuthorId == "agent-1"));
+    }
+
+    [Fact]
+    public async Task ProcessAsync_SecretConfigured_RequiresSignedReplyTo()
+    {
+        var (svc, db, _) = Create("test-secret");
+        var ticket = await SeedTicket(db, guestEmail: "owner@example.com");
+        var audit = SeedInboundAudit(db);
+        var message = MakeMessage(
+            inReplyTo: $"<ticket-{ticket.Id}@support.example.com>",
+            toEmail: "support@support.example.com",
+            subject: $"RE: [{ticket.Reference}] Question",
+            body: "Unsigned follow-up.",
+            fromEmail: "owner@example.com");
+
+        var result = await svc.ProcessAsync(message, audit);
+
+        Assert.Equal(ProcessOutcome.CreatedNew, result.Outcome);
+        Assert.NotEqual(ticket.Id, result.TicketId);
+        Assert.Empty(db.Replies.Where(r => r.TicketId == ticket.Id));
+    }
+
+    [Fact]
+    public async Task ProcessAsync_SignedReplyFromRequester_PostsAsRequesterAndReopens()
+    {
+        var users = new FakeUserDirectory(new UserDirectoryEntry("user-7", "Owner", "owner@example.com"));
+        var (svc, db, options) = Create("test-secret", users);
+        var ticket = await SeedTicket(db, guestEmail: null, status: TicketStatus.Resolved, requesterId: "user-7");
+        var audit = SeedInboundAudit(db);
+        var message = MakeMessage(
+            inReplyTo: $"<ticket-{ticket.Id}@support.example.com>",
+            toEmail: MessageIdUtil.BuildReplyTo(ticket.Id, "test-secret", options.Email.Domain),
+            subject: "RE: Question",
+            body: "Still broken.",
+            fromEmail: "Owner@Example.com");
+
+        var result = await svc.ProcessAsync(message, audit);
+
+        Assert.Equal(ProcessOutcome.RepliedToExisting, result.Outcome);
+        Assert.Equal(ticket.Id, result.TicketId);
+        var reply = db.Replies.Single(r => r.Id == result.ReplyId);
+        Assert.Equal("user-7", reply.AuthorId);
+        Assert.Equal(TicketStatus.Reopened, db.Tickets.Single(t => t.Id == ticket.Id).Status);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ReplyFromContactEmail_IsAcceptedAsGuestReply()
+    {
+        var (svc, db, _) = Create();
+        var contact = new Contact { Email = "guest@example.com" };
+        db.Contacts.Add(contact);
+        await db.SaveChangesAsync();
+        var ticket = await SeedTicket(db, guestEmail: null);
+        ticket.ContactId = contact.Id;
+        await db.SaveChangesAsync();
+        var audit = SeedInboundAudit(db);
+        var message = MakeMessage(
+            inReplyTo: $"<ticket-{ticket.Id}@support.example.com>",
+            fromEmail: "GUEST@example.com");
+
+        var result = await svc.ProcessAsync(message, audit);
+
+        Assert.Equal(ProcessOutcome.RepliedToExisting, result.Outcome);
+        Assert.Equal(ticket.Id, result.TicketId);
+        Assert.Null(db.Replies.Single(r => r.Id == result.ReplyId).AuthorId);
     }
 
     [Fact]

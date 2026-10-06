@@ -84,6 +84,10 @@ public static class EscalatedServiceCollectionExtensions
 
         services.TryAddSingleton<ITicketSubjectResolver, NullTicketSubjectResolver>();
 
+        // Per-IP counters for the guest widget endpoints. In memory by default;
+        // a multi-instance host registers a shared IGuestRateLimiter.
+        services.TryAddSingleton<IGuestRateLimiter, MemoryGuestRateLimiter>();
+
         // No-op default so @-mention (and other) notifications resolve even
         // before the host wires up its own delivery. Hosts register their
         // own IEscalatedNotificationSender before/after AddEscalated.

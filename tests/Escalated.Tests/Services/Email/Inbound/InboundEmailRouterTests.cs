@@ -116,6 +116,23 @@ public class InboundEmailRouterTests
     }
 
     [Fact]
+    public async Task ResolveTicketAsync_SecretConfigured_IgnoresUnsignedHeadersAndSubject()
+    {
+        var (router, db, _) = Create("test-secret");
+        var ticket = await SeedTicket(db);
+        // Message-IDs and references are guessable; once a secret is set
+        // only the signed Reply-To address identifies a ticket.
+        var message = MakeMessage(
+            inReplyTo: $"<ticket-{ticket.Id}@support.example.com>",
+            references: $"<ticket-{ticket.Id}@support.example.com>",
+            subject: $"RE: [{ticket.Reference}] hello");
+
+        var found = await router.ResolveTicketAsync(message);
+
+        Assert.Null(found);
+    }
+
+    [Fact]
     public async Task ResolveTicketAsync_IgnoresSignedReplyToWhenSecretBlank()
     {
         var (router, db, _) = Create();
