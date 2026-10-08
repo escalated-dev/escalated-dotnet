@@ -130,7 +130,7 @@ app.Run();
       }
     },
     "EnableRealTime": false,
-    "Mail": {
+    "Email": {
       "Domain": "support.yourapp.com",
       "InboundSecret": "a-long-random-value"
     }
@@ -138,7 +138,7 @@ app.Run();
 }
 ```
 
-The `Mail.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
+The `Email.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
 
 ### 4. Run Migrations
 

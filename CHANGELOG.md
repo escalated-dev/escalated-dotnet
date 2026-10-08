@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-08
+
+### Upgrading
+
+- **Register an `IUserDirectory` that returns user emails if registered users
+  reply by email.** An inbound message becomes a reply only when `From` is the
+  ticket's requester: the guest email, the contact's email, or the requester
+  user's email from your `IUserDirectory.FindAsync`. Without that, replies to
+  tickets raised by registered users open a new ticket.
+- **Agents reply in the app.** Mail from anyone other than the requester, an
+  agent's address included, opens a new ticket for the sender and leaves the
+  matched ticket alone.
+- **Set `Escalated:Email:InboundSecret`.** With it set, only the signed
+  `Reply-To` address links mail to a ticket; `In-Reply-To` / `References` and
+  subject references no longer do.
+- **Accepted email replies reopen resolved and closed tickets.**
+- **Guest endpoints are rate-limited per client IP** (5 tickets and 10 replies
+  a minute). Behind a proxy, configure trusted proxies and call
+  `app.UseForwardedHeaders()`, or every guest shares one limit. A multi-instance
+  host registers a shared `IGuestRateLimiter`. Configure under
+  `Escalated:GuestRateLimit` (`Enabled`, `TicketsPerMinute`, `RepliesPerMinute`).
+
+### Added
+- **Per-IP rate limit on guest ticket creation and replies.**
+  `POST /support/widget/tickets` allows 5 tickets and
+  `POST /support/widget/tickets/{token}/reply` 10 replies per client IP per
+  minute, counted separately; beyond that the response is `429` with
+  `Retry-After`. The reply limit runs before the guest token is looked up, so
+  wrong-token requests count. The counter store is `IGuestRateLimiter`,
+  registered with `TryAddSingleton` so a host can replace it (#169).
+
 ### Security
 - **Inbound email accepted replies from any sender.** A message that matched a
   ticket by subject reference, `In-Reply-To` / `References`, or reply address was
@@ -15,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reply only when `From` is the ticket's requester (guest, contact, or requester
   user email, case-insensitive), posted as that requester. Other senders get a
   new ticket, and only an accepted reply reopens a resolved or closed ticket.
+
+### Fixed
+- The README's configuration example put the inbound secret under
+  `Escalated:Mail`, which nothing reads. It is `Escalated:Email:InboundSecret`
+  (with `Escalated:Email:Domain`).
 
 ## [0.1.3] - 2026-09-13
 
