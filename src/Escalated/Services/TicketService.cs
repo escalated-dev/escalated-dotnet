@@ -276,7 +276,7 @@ public class TicketService
         if (filters.AccountType is not null || filters.AccountId is not null)
         {
             query = string.IsNullOrEmpty(filters.AccountType) || string.IsNullOrEmpty(filters.AccountId)
-                ? query.Where(_ => false) : query.Where(t => t.AccountType == filters.AccountType && t.AccountId == filters.AccountId);
+                ? query.Where(_ => false) : TicketRoutingConditions.WhereIdentity(query, filters.AccountType, filters.AccountId);
         }
         if (!string.IsNullOrEmpty(filters.Search))
         {

@@ -161,7 +161,8 @@ public class EscalatedDbContext : DbContext
         modelBuilder.Entity<Ticket>().HasIndex(t => new { t.AccountType, t.AccountId });
         modelBuilder.Entity<Ticket>().HasQueryFilter(t => t.DeletedAt == null
             && (!RestrictDepartments || DepartmentAgents.Any(a => a.DepartmentId == t.DepartmentId && a.AgentId == AccessUserId))
-            && (!RestrictAccounts || (AccessAccountType != null && AccessAccountId != null && t.AccountType == AccessAccountType && t.AccountId == AccessAccountId)));
+            && (!RestrictAccounts || (AccessAccountType != null && AccessAccountId != null && t.AccountType == AccessAccountType && t.AccountId == AccessAccountId
+                && t.AccountType + "|" == AccessAccountType + "|" && t.AccountId + "|" == AccessAccountId + "|")));
         modelBuilder.Entity<Reply>().HasQueryFilter(r => r.DeletedAt == null && (!RestrictTickets || Tickets.Any(t => t.Id == r.TicketId)));
         modelBuilder.Entity<TicketActivity>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
         modelBuilder.Entity<TicketSubjectLink>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
