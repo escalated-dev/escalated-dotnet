@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Preserve trailing spaces in account visibility, filters, and routing under SQL Server padded string comparisons.
+
 ### Added
 
 - Opt-in department/account ticket visibility across MVC, bearer APIs, reports, bulk actions, widget, related records and live delivery, with admin bypass and host resolver hooks.

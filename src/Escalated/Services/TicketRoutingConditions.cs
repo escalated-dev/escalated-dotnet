@@ -34,9 +34,17 @@ public static class TicketRoutingConditions
         if (account is null) return query.Where(_ => false);
         return op switch
         {
-            "equals" or "=" => query.Where(t => t.AccountType == account.Type && t.AccountId == account.Id),
-            "not_equals" or "!=" => query.Where(t => t.AccountType == null || t.AccountId == null || t.AccountType != account.Type || t.AccountId != account.Id),
+            "equals" or "=" => WhereIdentity(query, account.Type, account.Id),
+            "not_equals" or "!=" => query.Where(t => t.AccountType == null || t.AccountId == null || t.AccountType + "|" != account.Type + "|" || t.AccountId + "|" != account.Id + "|"),
             _ => query.Where(_ => false),
         };
+    }
+
+    public static IQueryable<Ticket> WhereIdentity(IQueryable<Ticket> query, string type, string id)
+    {
+        // Retain the indexed prefilter; the suffix makes trailing spaces significant
+        // even under SQL Server's ANSI padded string comparison.
+        return query.Where(t => t.AccountType == type && t.AccountId == id
+            && t.AccountType + "|" == type + "|" && t.AccountId + "|" == id + "|");
     }
 }
