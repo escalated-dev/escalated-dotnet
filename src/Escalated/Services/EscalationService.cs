@@ -52,8 +52,7 @@ public class EscalationService
         var query = _db.Tickets
             .Where(t => t.Status != TicketStatus.Resolved && t.Status != TicketStatus.Closed);
 
-        var conditions = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(rule.Conditions)
-            ?? new List<Dictionary<string, string>>();
+        var conditions = TicketRoutingConditions.Parse(rule.Conditions);
 
         foreach (var condition in conditions)
         {
@@ -62,6 +61,8 @@ public class EscalationService
 
             query = field switch
             {
+                "account" => TicketRoutingConditions.WhereAccount(query, value, condition.GetValueOrDefault("operator", "equals")),
+                "ticket_type" => query.Where(t => t.TicketType == value),
                 "status" => query.Where(t => t.Status == TicketStatusExtensions.Parse(value)),
                 "priority" => query.Where(t => t.Priority == TicketPriorityExtensions.Parse(value)),
                 "assigned" when value == "unassigned" => query.Where(t => t.AssignedTo == null),

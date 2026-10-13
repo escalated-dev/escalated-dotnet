@@ -1,3 +1,4 @@
+using Escalated.Authorization;
 using Escalated.Data;
 using Escalated.Enums;
 using Escalated.Events;
@@ -9,14 +10,16 @@ namespace Escalated.Services;
 public class AssignmentService
 {
     private readonly EscalatedDbContext _db;
+    private readonly TicketAccess? _access;
     private readonly IEscalatedEventDispatcher _events;
     private readonly TicketService _ticketService;
     private readonly SkillRoutingService? _skillRouting;
 
     public AssignmentService(EscalatedDbContext db, IEscalatedEventDispatcher events, TicketService ticketService,
-        SkillRoutingService? skillRouting = null)
+        SkillRoutingService? skillRouting = null, TicketAccess? access = null)
     {
         _db = db;
+        _access = access;
         _events = events;
         _ticketService = ticketService;
         _skillRouting = skillRouting;
@@ -25,6 +28,8 @@ public class AssignmentService
     public async Task<Ticket> AssignAsync(Ticket ticket, string agentId, string? causerId = null,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
+        if (_access is not null && !await _access.AgentCanViewAsync(agentId, ticket.Id, ct)) throw new TicketAccessDeniedException();
         ticket.AssignedTo = agentId;
         ticket.UpdatedAt = DateTime.UtcNow;
         _db.Tickets.Update(ticket);
@@ -65,7 +70,7 @@ public class AssignmentService
         if (_skillRouting is not null)
         {
             var skilledAgentId = await _skillRouting.FindBestAgentAsync(ticket, ct);
-            if (skilledAgentId is not null)
+            if (skilledAgentId is not null && (_access is null || await _access.AgentCanViewAsync(skilledAgentId, ticket.Id, ct)))
             {
                 return await AssignAsync(ticket, skilledAgentId, null, ct);
             }
@@ -78,6 +83,12 @@ public class AssignmentService
             .Select(a => a.UserId)
             .ToListAsync(ct);
 
+        if (_access is not null && _access.IsRestricted)
+        {
+            var eligible = new List<string>();
+            foreach (var id in agents) if (await _access.AgentCanViewAsync(id, ticket.Id, ct)) eligible.Add(id);
+            agents = eligible;
+        }
         if (!agents.Any()) return null;
 
         // Find the agent with the fewest open tickets

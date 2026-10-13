@@ -110,6 +110,7 @@ public class EntityGraphSerializationTests
     private static async Task SeedGraphAsync(EscalatedDbContext db)
     {
         var department = new Department { Name = "Billing", Slug = "billing" };
+        db.DepartmentAgents.Add(new DepartmentAgent { Department = department, AgentId = "agent-2" });
         var tag = new Tag { Name = "Invoices", Slug = "invoices" };
         var contact = new Contact { Email = "alice@example.com", Name = "Alice" };
 

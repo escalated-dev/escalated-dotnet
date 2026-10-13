@@ -66,6 +66,18 @@ public class WorkflowEngine
         var field = condition.GetValueOrDefault("field", "");
         var op = condition.GetValueOrDefault("operator", "equals");
         var expected = condition.GetValueOrDefault("value", "");
+        if (field == "account")
+        {
+            var type = ticket.GetValueOrDefault("account_type", "");
+            var id = ticket.GetValueOrDefault("account_id", "");
+            var empty = string.IsNullOrEmpty(type) || string.IsNullOrEmpty(id);
+            if (op == "is_empty") return empty;
+            if (op == "is_not_empty") return !empty;
+            var account = TicketRoutingConditions.Account(expected);
+            if (account is null) return false;
+            var equal = !empty && type == account.Type && id == account.Id;
+            return op == "equals" ? equal : op == "not_equals" && !equal;
+        }
         var actual = ticket.GetValueOrDefault(field, "");
         return ApplyOperator(op, actual, expected);
     }

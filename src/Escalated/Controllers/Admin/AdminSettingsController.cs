@@ -131,6 +131,8 @@ public class AdminSettingsController : ControllerBase
         policy.BusinessHoursOnly = update.BusinessHoursOnly;
         policy.IsDefault = update.IsDefault;
         policy.IsActive = update.IsActive;
+        policy.DepartmentId = update.DepartmentId;
+        policy.TicketType = update.TicketType;
         policy.UpdatedAt = DateTime.UtcNow;
         _db.SlaPolicies.Update(policy);
         await _db.SaveChangesAsync();

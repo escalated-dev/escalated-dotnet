@@ -136,6 +136,8 @@ public class WorkflowRunnerService
         Put(map, "department_id", ticket.DepartmentId);
         Put(map, "assigned_to", ticket.AssignedTo);
         Put(map, "ticket_type", ticket.TicketType);
+        Put(map, "account_type", ticket.AccountType);
+        Put(map, "account_id", ticket.AccountId);
         Put(map, "guest_name", ticket.GuestName);
         Put(map, "guest_email", ticket.GuestEmail);
         map["priority"] = ticket.Priority.ToValue();

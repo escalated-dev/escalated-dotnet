@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in department/account ticket visibility across MVC, bearer APIs, reports, bulk actions, widget, related records and live delivery, with admin bypass and host resolver hooks.
+- Nullable indexed ticket account identity, account/type routing conditions, and optional department/type SLA selection. Department changes preserve the existing SLA clock.
+- Additive schema migration and SQLite/PostgreSQL access-path and migration regressions. See [configuration and upgrade notes](docs/ticket-access-and-routing.md).
+
 ## [0.2.0] - 2026-10-08
 
 ### Upgrading

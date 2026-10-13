@@ -53,8 +53,7 @@ public class AutomationRunner
         var query = _db.Tickets
             .Where(t => t.Status != TicketStatus.Resolved && t.Status != TicketStatus.Closed);
 
-        var conditions = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(automation.Conditions)
-            ?? new List<Dictionary<string, string>>();
+        var conditions = TicketRoutingConditions.Parse(automation.Conditions);
 
         foreach (var condition in conditions)
         {
@@ -71,6 +70,12 @@ public class AutomationRunner
                 case "hours_since_updated":
                     var updatedThreshold = DateTime.UtcNow.AddHours(-int.Parse(value));
                     query = ApplyDateOperator(query, t => t.UpdatedAt, op, updatedThreshold);
+                    break;
+                case "account":
+                    query = TicketRoutingConditions.WhereAccount(query, value, condition.GetValueOrDefault("operator", "equals"));
+                    break;
+                case "department_id":
+                    query = int.TryParse(value, out var departmentId) ? query.Where(t => t.DepartmentId == departmentId) : query.Where(_ => false);
                     break;
                 case "status":
                     query = query.Where(t => t.Status == TicketStatusExtensions.Parse(value));
