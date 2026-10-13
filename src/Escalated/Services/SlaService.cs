@@ -26,9 +26,15 @@ public class SlaService
     /// </summary>
     public async Task AttachDefaultPolicyAsync(Ticket ticket, CancellationToken ct = default)
     {
-        var policy = await _db.SlaPolicies
-            .Where(p => p.IsActive && p.IsDefault)
-            .FirstOrDefaultAsync(ct);
+        var policies = await _db.SlaPolicies.Where(p => p.IsActive).ToListAsync(ct);
+        int Rank(SlaPolicy policy)
+        {
+            if (!_options.TargetedSlas) return policy.DepartmentId is null && policy.TicketType is null && policy.IsDefault ? 0 : -1;
+            if (policy.DepartmentId is not null && policy.DepartmentId != ticket.DepartmentId) return -1;
+            if (policy.TicketType is not null && policy.TicketType != ticket.TicketType) return -1;
+            return policy.DepartmentId is not null ? (policy.TicketType is not null ? 3 : 2) : policy.TicketType is not null ? 1 : policy.IsDefault ? 0 : -1;
+        }
+        var policy = policies.Where(p => Rank(p) >= 0).OrderByDescending(Rank).ThenBy(p => p.Id).FirstOrDefault();
 
         if (policy == null) return;
         await AttachPolicyAsync(ticket, policy, ct);
@@ -40,6 +46,8 @@ public class SlaService
     public async Task AttachPolicyAsync(Ticket ticket, SlaPolicy policy, CancellationToken ct = default)
     {
         ticket.SlaPolicyId = policy.Id;
+        ticket.FirstResponseDueAt = null;
+        ticket.ResolutionDueAt = null;
 
         var firstResponseHours = policy.GetFirstResponseHoursFor(ticket.Priority);
         var resolutionHours = policy.GetResolutionHoursFor(ticket.Priority);

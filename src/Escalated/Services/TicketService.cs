@@ -1,3 +1,4 @@
+using Escalated.Authorization;
 using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
@@ -64,6 +65,15 @@ public class TicketService
             }
         }
 
+        if (_options.Accounts.Enabled && _options.Accounts.Resolver is not null && requesterType is not null && requesterId is not null)
+        {
+            var account = await _options.Accounts.Resolver(new TicketAccountReference("requester", requesterType, requesterId), ct);
+            if (account is { Type.Length: > 0 and <= 191, Id.Length: > 0 and <= 191 })
+            {
+                ticket.AccountType = account.Type;
+                ticket.AccountId = account.Id;
+            }
+        }
         _db.Tickets.Add(ticket);
         await _db.SaveChangesAsync(ct);
 
@@ -72,6 +82,7 @@ public class TicketService
         _db.Tickets.Update(ticket);
         await _db.SaveChangesAsync(ct);
 
+        if (_options.TargetedSlas && _options.Sla.Enabled) await new SlaService(_db, _events, Options.Create(_options)).AttachDefaultPolicyAsync(ticket, ct);
         await _events.DispatchAsync(new TicketCreatedEvent(ticket), ct);
 
         return ticket;
@@ -80,6 +91,7 @@ public class TicketService
     public async Task<Ticket> UpdateAsync(Ticket ticket, string? subject = null, string? description = null,
         string? ticketType = null, CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         if (subject != null) ticket.Subject = subject;
         if (description != null) ticket.Description = description;
         if (ticketType != null) ticket.TicketType = ticketType;
@@ -95,6 +107,7 @@ public class TicketService
     public async Task<Ticket> ChangeStatusAsync(Ticket ticket, TicketStatus newStatus, string? causerId = null,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         return newStatus switch
         {
             TicketStatus.Resolved => await MarkResolvedAsync(ticket, causerId, ct),
@@ -108,6 +121,7 @@ public class TicketService
     public async Task<Ticket> ChangePriorityAsync(Ticket ticket, TicketPriority newPriority, string? causerId = null,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         var oldPriority = ticket.Priority;
         ticket.Priority = newPriority;
         ticket.UpdatedAt = DateTime.UtcNow;
@@ -127,6 +141,7 @@ public class TicketService
     public async Task<Ticket> ChangeDepartmentAsync(Ticket ticket, int departmentId, string? causerId = null,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         var oldDeptId = ticket.DepartmentId;
         ticket.DepartmentId = departmentId;
         ticket.UpdatedAt = DateTime.UtcNow;
@@ -146,6 +161,7 @@ public class TicketService
     public async Task<Reply> AddReplyAsync(Ticket ticket, string body, string? authorId = null,
         string? authorType = null, bool isNote = false, CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         var reply = new Reply
         {
             TicketId = ticket.Id,
@@ -184,6 +200,7 @@ public class TicketService
     public async Task<Ticket> AddTagsAsync(Ticket ticket, int[] tagIds, string? causerId = null,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         foreach (var tagId in tagIds)
         {
             var exists = await _db.TicketTags.AnyAsync(tt => tt.TicketId == ticket.Id && tt.TagId == tagId, ct);
@@ -204,6 +221,7 @@ public class TicketService
     public async Task<Ticket> RemoveTagsAsync(Ticket ticket, int[] tagIds, string? causerId = null,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         var tagsToRemove = await _db.TicketTags
             .Where(tt => tt.TicketId == ticket.Id && tagIds.Contains(tt.TagId))
             .ToListAsync(ct);
@@ -223,7 +241,7 @@ public class TicketService
 
     public async Task<Ticket?> FindByIdAsync(int id, CancellationToken ct = default)
     {
-        return await _db.Tickets.FindAsync(new object[] { id }, ct);
+        return await _db.Tickets.FirstOrDefaultAsync(ticket => ticket.Id == id, ct);
     }
 
     public async Task<Ticket?> FindByReferenceAsync(string reference, CancellationToken ct = default)
@@ -255,6 +273,11 @@ public class TicketService
         if (filters.DepartmentId.HasValue)
             query = query.Where(t => t.DepartmentId == filters.DepartmentId.Value);
 
+        if (filters.AccountType is not null || filters.AccountId is not null)
+        {
+            query = string.IsNullOrEmpty(filters.AccountType) || string.IsNullOrEmpty(filters.AccountId)
+                ? query.Where(_ => false) : query.Where(t => t.AccountType == filters.AccountType && t.AccountId == filters.AccountId);
+        }
         if (!string.IsNullOrEmpty(filters.Search))
         {
             var term = filters.Search;
@@ -470,6 +493,8 @@ public class TicketService
 
 public class TicketListFilters
 {
+    public string? AccountType { get; set; }
+    public string? AccountId { get; set; }
     public TicketStatus? Status { get; set; }
     public TicketPriority? Priority { get; set; }
     public string? AssignedTo { get; set; }

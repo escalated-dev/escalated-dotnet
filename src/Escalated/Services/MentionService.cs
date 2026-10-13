@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Escalated.Authorization;
 using Escalated.Data;
 using Escalated.Models;
 using Escalated.Notifications;
@@ -33,6 +34,7 @@ public class MentionService
     private const int ResolveLimit = 25;
 
     private readonly EscalatedDbContext? _db;
+    private readonly TicketAccess? _access;
     private readonly IUserDirectory? _users;
     private readonly IEscalatedNotificationSender? _notifications;
 
@@ -42,9 +44,10 @@ public class MentionService
     }
 
     /// <summary>Full pipeline constructor resolved by the DI container.</summary>
-    public MentionService(EscalatedDbContext db, IUserDirectory users, IEscalatedNotificationSender notifications)
+    public MentionService(EscalatedDbContext db, IUserDirectory users, IEscalatedNotificationSender notifications, TicketAccess? access = null)
     {
         _db = db;
+        _access = access;
         _users = users;
         _notifications = notifications;
     }
@@ -110,6 +113,7 @@ public class MentionService
 
         foreach (var userId in userIds)
         {
+            if (_access is not null && !await _access.AgentCanViewAsync(userId, ticket.Id, ct)) continue;
             // Never notify the author about their own mention.
             if (reply.AuthorId != null && userId == reply.AuthorId) continue;
 
@@ -126,7 +130,7 @@ public class MentionService
             });
             await _db.SaveChangesAsync(ct);
 
-            if (_notifications is not null)
+            if (_notifications is not null && (_access is null || await _access.AgentCanViewAsync(userId, ticket.Id, ct)))
             {
                 await _notifications.SendMentionNotificationAsync(reply, ticket, userId, ct);
             }

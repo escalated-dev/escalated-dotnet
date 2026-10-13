@@ -13,6 +13,10 @@ public class SlaPolicy
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
+    public int? DepartmentId { get; set; }
+    [MaxLength(50)]
+    public string? TicketType { get; set; }
+
     public string? Description { get; set; }
 
     /// <summary>

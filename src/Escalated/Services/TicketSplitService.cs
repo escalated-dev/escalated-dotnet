@@ -41,6 +41,8 @@ public class TicketSplitService
                 RequesterType = source.RequesterType,
                 RequesterId = source.RequesterId,
                 DepartmentId = source.DepartmentId,
+                AccountType = source.AccountType,
+                AccountId = source.AccountId,
                 GuestName = source.GuestName,
                 GuestEmail = source.GuestEmail,
                 Reference = $"TEMP-{Guid.NewGuid()}",

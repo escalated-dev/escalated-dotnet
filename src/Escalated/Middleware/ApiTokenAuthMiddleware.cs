@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Escalated.Data;
+using Escalated.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,6 +54,20 @@ public class ApiTokenAuthMiddleware
         context.Items["EscalatedApiTokenId"] = apiToken.Id;
         context.Items["EscalatedApiTokenableId"] = apiToken.TokenableId;
 
+        var access = context.RequestServices.GetService<TicketAccess>();
+        if (access?.IsRestricted == true)
+        {
+            var owner = apiToken.TokenableId?.ToString();
+            var user = owner is null ? new System.Security.Claims.ClaimsPrincipal() : await access.PrincipalAsync(owner);
+            if (!await access.IsAdminAsync(user) && !await access.IsAgentAsync(user))
+            {
+                context.Response.StatusCode = 403;
+                return;
+            }
+            context.User = user;
+            await access.ForUserAsync(user, async () => { await _next(context); return true; }, context.RequestAborted);
+            return;
+        }
         await _next(context);
     }
 

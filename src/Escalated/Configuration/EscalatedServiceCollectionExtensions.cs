@@ -98,6 +98,15 @@ public static class EscalatedServiceCollectionExtensions
         // The admin, agent and customer authorization policies the controllers
         // require. A host policy of the same name takes precedence.
         services.AddEscalatedAuthorization();
+        services.AddScoped<TicketAccess>();
+        services.TryAddSingleton<Escalated.Hubs.TicketRealtimeAudience>();
+        services.AddScoped<Escalated.Hubs.TicketBroadcastService>();
+        services.AddScoped<TicketAccessFilter>();
+        services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options => options.Filters.AddService<TicketAccessFilter>());
+        services.AddOptions<EscalatedOptions>()
+            .Validate(options => options.Visibility is "all" or "department", "Visibility must be all or department.")
+            .Validate(options => !options.Accounts.ScopeAgents || (options.Accounts.Enabled && options.Accounts.Resolver is not null), "Account visibility requires Accounts.Enabled and Accounts.Resolver.")
+            .ValidateOnStart();
 
         // Register services
         services.AddScopedWithEventBus<TicketService>();

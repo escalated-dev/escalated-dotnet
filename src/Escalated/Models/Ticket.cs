@@ -30,6 +30,11 @@ public class Ticket
     [MaxLength(50)]
     public string? TicketType { get; set; }
 
+    [MaxLength(191)]
+    public string? AccountType { get; set; }
+    [MaxLength(191)]
+    public string? AccountId { get; set; }
+
     // Polymorphic requester
     [MaxLength(255)]
     public string? RequesterType { get; set; }

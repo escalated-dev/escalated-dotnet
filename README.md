@@ -764,3 +764,7 @@ Follow-up PR: EF Core migration in-package, planner/dispatcher/tracker services 
 ## License
 
 MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).
+
+## Configurable ticket access and routing
+
+Opt-in department visibility, host-resolved account identity, account/type rule conditions and targeted SLA policies are described in [Ticket access and routing](docs/ticket-access-and-routing.md). All restrictions are disabled by default.

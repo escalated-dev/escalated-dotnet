@@ -1,3 +1,4 @@
+using Escalated.Authorization;
 using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
@@ -15,6 +16,7 @@ namespace Escalated.Services;
 public class ChatSessionService
 {
     private readonly EscalatedDbContext _db;
+    private readonly TicketAccess? _access;
     private readonly TicketService _ticketService;
     private readonly ChatRoutingService _routing;
     private readonly IEscalatedEventDispatcher _events;
@@ -25,9 +27,10 @@ public class ChatSessionService
         TicketService ticketService,
         ChatRoutingService routing,
         IEscalatedEventDispatcher events,
-        IOptions<EscalatedOptions> options)
+        IOptions<EscalatedOptions> options, TicketAccess? access = null)
     {
         _db = db;
+        _access = access;
         _ticketService = ticketService;
         _routing = routing;
         _events = events;
@@ -80,7 +83,8 @@ public class ChatSessionService
             ticket.DepartmentId = route.DepartmentId;
             _db.Tickets.Update(ticket);
         }
-        if (!string.IsNullOrEmpty(route.AgentId))
+        await _db.SaveChangesAsync(ct);
+        if (!string.IsNullOrEmpty(route.AgentId) && (_access is null || await _access.AgentCanViewAsync(route.AgentId, ticket.Id, ct)))
         {
             session.AgentId = route.AgentId;
             session.Status = "active";
@@ -114,6 +118,7 @@ public class ChatSessionService
         if (session.Status != "waiting")
             throw new InvalidOperationException("Chat session is not in a waiting state.");
 
+        if (_access is not null && !await _access.AgentCanViewAsync(agentId, session.TicketId, ct)) throw new TicketAccessDeniedException();
         session.AgentId = agentId;
         session.Status = "active";
         session.AcceptedAt = DateTime.UtcNow;
@@ -121,7 +126,7 @@ public class ChatSessionService
         _db.ChatSessions.Update(session);
 
         // Assign the ticket to the agent
-        var ticket = await _db.Tickets.FindAsync(new object[] { session.TicketId }, ct);
+        var ticket = await _db.Tickets.FirstOrDefaultAsync(ticket => ticket.Id == session.TicketId, ct);
         if (ticket != null)
         {
             ticket.AssignedTo = agentId;
@@ -153,7 +158,7 @@ public class ChatSessionService
         if (session.Status == "ended")
             throw new InvalidOperationException("Chat session has ended.");
 
-        var ticket = await _db.Tickets.FindAsync(new object[] { session.TicketId }, ct)
+        var ticket = await _db.Tickets.FirstOrDefaultAsync(ticket => ticket.Id == session.TicketId, ct)
             ?? throw new InvalidOperationException("Underlying ticket not found.");
 
         var reply = await _ticketService.AddReplyAsync(ticket, body, authorId, authorType, ct: ct);
@@ -183,7 +188,7 @@ public class ChatSessionService
         _db.ChatSessions.Update(session);
 
         // Resolve the underlying ticket
-        var ticket = await _db.Tickets.FindAsync(new object[] { session.TicketId }, ct);
+        var ticket = await _db.Tickets.FirstOrDefaultAsync(ticket => ticket.Id == session.TicketId, ct);
         if (ticket != null)
         {
             await _ticketService.ChangeStatusAsync(ticket, TicketStatus.Resolved, causerId, ct);
@@ -198,7 +203,7 @@ public class ChatSessionService
 
     public async Task<ChatSession?> FindByIdAsync(int id, CancellationToken ct = default)
     {
-        return await _db.ChatSessions.FindAsync(new object[] { id }, ct);
+        return await _db.ChatSessions.FirstOrDefaultAsync(session => session.Id == id, ct);
     }
 
     public async Task<ChatSession?> FindByTicketIdAsync(int ticketId, CancellationToken ct = default)

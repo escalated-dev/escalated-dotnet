@@ -80,13 +80,14 @@ public static class TestDatabase
     {
         if (Provider == "sqlite")
         {
-            // One open connection for the lease's lifetime, for the same reason
-            // CreateSqlite keeps one: closing it discards the in-memory schema.
-            var connection = new SqliteConnection("DataSource=:memory:");
+            // Keep the shared in-memory database alive, while each request owns
+            // its connection. SqliteConnection itself cannot serve concurrent requests.
+            var sqliteConnectionString = $"Data Source=esc_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+            var connection = new SqliteConnection(sqliteConnectionString);
             connection.Open();
 
             return new Lease(
-                options => options.UseSqlite(connection),
+                options => options.UseSqlite(sqliteConnectionString),
                 context => context.Database.EnsureCreated(),
                 connection.Dispose);
         }

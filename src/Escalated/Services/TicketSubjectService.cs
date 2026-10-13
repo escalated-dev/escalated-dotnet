@@ -1,3 +1,4 @@
+using Escalated.Authorization;
 using Escalated.Configuration;
 using Escalated.Contracts;
 using Escalated.Data;
@@ -47,6 +48,7 @@ public class TicketSubjectService
         bool viaApi = false,
         CancellationToken ct = default)
     {
+        await _db.AssertTicketAccessAsync(ticket.Id, ct);
         EnsureTypeAllowed(subjectType, viaApi);
 
         subjectId = subjectId.Trim();
@@ -60,6 +62,16 @@ public class TicketSubjectService
                   && l.SubjectId == subjectId,
                 ct);
 
+        if (ticket.AccountType is null && ticket.AccountId is null && _options.Accounts.Enabled && _options.Accounts.Resolver is not null)
+        {
+            var account = await _options.Accounts.Resolver(new TicketAccountReference("subject", subjectType, subjectId), ct);
+            if (account is { Type.Length: > 0 and <= 191, Id.Length: > 0 and <= 191 })
+            {
+                ticket.AccountType = account.Type;
+                ticket.AccountId = account.Id;
+                _db.Tickets.Update(ticket);
+            }
+        }
         var now = DateTime.UtcNow;
         if (existing != null)
         {

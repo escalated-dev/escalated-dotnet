@@ -12,6 +12,18 @@ public static class EscalatedModelConfiguration
         // Table names with prefix
         const string prefix = "escalated_";
 
+        modelBuilder.Entity<Ticket>().HasIndex(t => new { t.AccountType, t.AccountId });
+        modelBuilder.Entity<SlaPolicy>().HasIndex(p => new { p.DepartmentId, p.TicketType });
+        modelBuilder.Entity<SlaPolicy>().HasOne<Department>().WithMany().HasForeignKey(p => p.DepartmentId).OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DepartmentAgent>(e =>
+        {
+            e.ToTable($"{prefix}department_agent");
+            e.HasKey(x => new { x.DepartmentId, x.AgentId });
+            e.Property(x => x.AgentId).HasMaxLength(255);
+            e.HasOne(x => x.Department).WithMany().HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<Ticket>(e =>
         {
             e.ToTable($"{prefix}tickets");

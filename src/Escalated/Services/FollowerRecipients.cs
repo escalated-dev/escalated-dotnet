@@ -9,6 +9,14 @@ namespace Escalated.Services;
 /// </summary>
 public static class FollowerRecipients
 {
+    public static async Task<IReadOnlyList<string>> ResolveAsync(IEnumerable<string> userIds, string? excludeUserId, int ticketId, Escalated.Authorization.TicketAccess access, CancellationToken ct = default)
+    {
+        var result = new List<string>();
+        foreach (var id in Resolve(userIds, excludeUserId))
+            if (await access.CanViewAsync(await access.PrincipalAsync(id), ticketId, ct)) result.Add(id);
+        return result;
+    }
+
     /// <summary>
     /// Excludes the actor (a user is never notified of their own action) and
     /// de-duplicates the given user ids, preserving order.

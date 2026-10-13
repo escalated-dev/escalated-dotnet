@@ -43,7 +43,7 @@ public class SideConversationService
         };
         _db.SideConversationReplies.Add(reply);
 
-        var conversation = await _db.SideConversations.FindAsync(new object[] { conversationId }, ct);
+        var conversation = await _db.SideConversations.FirstOrDefaultAsync(conversation => conversation.Id == conversationId, ct);
         if (conversation != null)
         {
             conversation.UpdatedAt = DateTime.UtcNow;
@@ -56,7 +56,7 @@ public class SideConversationService
 
     public async Task<SideConversation?> CloseAsync(int conversationId, CancellationToken ct = default)
     {
-        var conversation = await _db.SideConversations.FindAsync(new object[] { conversationId }, ct);
+        var conversation = await _db.SideConversations.FirstOrDefaultAsync(conversation => conversation.Id == conversationId, ct);
         if (conversation == null) return null;
 
         conversation.Status = "closed";

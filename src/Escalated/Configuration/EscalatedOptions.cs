@@ -4,6 +4,12 @@ namespace Escalated.Configuration;
 
 public class EscalatedOptions
 {
+    public string Visibility { get; set; } = "all";
+    public TicketAccountOptions Accounts { get; set; } = new();
+    public bool TargetedSlas { get; set; }
+    /// <summary>Rehydrates current host claims for token owners, assignment and notification recipients.</summary>
+    public Func<string, Task<ClaimsPrincipal?>>? TicketAccessUserResolver { get; set; }
+
     public const string SectionName = "Escalated";
     private string _ticketReferencePrefix = "ESC";
 
@@ -275,4 +281,11 @@ public class NewsletterOptions
     public string? BrandPhysicalAddress { get; set; }
     public string BaseUrl { get; set; } = "http://localhost";
     public string? ThemesDir { get; set; }
+}
+
+public sealed class TicketAccountOptions
+{
+    public bool Enabled { get; set; }
+    public bool ScopeAgents { get; set; }
+    public Func<Escalated.Authorization.TicketAccountReference, CancellationToken, Task<Escalated.Authorization.TicketAccount?>>? Resolver { get; set; }
 }
