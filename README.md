@@ -695,15 +695,31 @@ NuGet package. `AddEscalated()` registers a chained
 
 1. **Plugin-local overrides** -- `.resx` files under
    `src/Escalated/Resources/Overrides/`. Empty by default.
-2. **Central catalog** -- embedded JSON resources from
-   `Escalated.Locale`, accessed through
-   `Escalated.Locale.LocaleProvider`.
+2. **Optional shared provider** -- a host that installs `Escalated.Locale`
+   can supply its `LocaleProvider` localizer.
+3. **Embedded catalog** -- the JSON files under `Resources/locales/` are
+   shipped inside the Escalated assembly and work without the optional package.
 
-Adding a locale upstream lights it up across every host plugin without
-a code change here. Drop a resx into `Resources/Overrides/` only when
-you need a .NET-specific string that should not be back-ported to the
-shared catalog. See `src/Escalated/Resources/Overrides/README.md` for
-naming conventions.
+Lookup uses `CurrentUICulture`, its parent cultures, and then English. For
+example, `fr-CA` reads the French catalog. Missing keys return the key with
+`ResourceNotFound` set. `GetAllStrings(true)` merges this fallback chain;
+`GetAllStrings(false)` reads only the selected culture's own catalog, with
+English used for invariant culture.
+
+Catalog keys use dotted paths, such as `nav.admin`. Shared messages use named
+placeholders; pass a dictionary to name their values explicitly:
+
+```csharp
+localizer["bulk.updated", new Dictionary<string, object?> { ["count"] = 3 }];
+```
+
+Positional arguments use the placeholder order in the English message. `.resx`
+overrides retain standard .NET composite formatting. Formatting follows
+`CurrentCulture`; unformatted lookups retain the catalog's placeholders.
+
+Changes to the vendored catalogs ship with a new plugin build. Drop a resx into
+`Resources/Overrides/` for wording specific to your plugin or host resource
+type. See `src/Escalated/Resources/Overrides/README.md` for naming conventions.
 
 ## Testing
 

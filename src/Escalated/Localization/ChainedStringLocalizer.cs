@@ -1,4 +1,4 @@
-using System.Globalization;
+using System.Resources;
 using Microsoft.Extensions.Localization;
 
 namespace Escalated.Localization;
@@ -7,14 +7,13 @@ namespace Escalated.Localization;
 /// An <see cref="IStringLocalizer"/> that consults a chain of inner
 /// localizers in order and returns the first non-resource-not-found
 /// match. Used to layer plugin-local override resources on top of the
-/// central <c>Escalated.Locale</c> catalog.
+/// shared provider and embedded JSON catalogs.
 /// </summary>
 /// <remarks>
 /// Order matters: the first localizer passed to the constructor is
 /// consulted first. The standard wiring puts the plugin-local override
-/// localizer first and the central <c>Escalated.Locale</c> localizer
-/// second, so an override under <c>Resources/Overrides/</c> wins over
-/// the centrally shipped string.
+/// localizer first, followed by the optional shared provider and the embedded
+/// catalog, so an override under <c>Resources/Overrides/</c> wins.
 /// </remarks>
 public sealed class ChainedStringLocalizer : IStringLocalizer
 {
@@ -70,7 +69,19 @@ public sealed class ChainedStringLocalizer : IStringLocalizer
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var localizer in _chain)
         {
-            foreach (var entry in localizer.GetAllStrings(includeParentCultures))
+            LocalizedString[] entries;
+            try
+            {
+                entries = localizer.GetAllStrings(includeParentCultures).ToArray();
+            }
+            catch (MissingManifestResourceException)
+            {
+                // Override resources are optional. A missing resx manifest
+                // must not prevent enumeration of the catalogs below it.
+                continue;
+            }
+
+            foreach (var entry in entries)
             {
                 if (seen.Add(entry.Name))
                 {
