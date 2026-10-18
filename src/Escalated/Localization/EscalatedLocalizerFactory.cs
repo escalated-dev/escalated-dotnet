@@ -8,18 +8,15 @@ namespace Escalated.Localization;
 /// <see cref="ChainedStringLocalizer"/> wrapping:
 ///   1. A plugin-local override localizer rooted at
 ///      <c>Resources/Overrides/</c>.
-///   2. The central <c>Escalated.Locale.LocaleProvider</c> localizer
-///      (consumed via reflection so the plugin compiles even when the
-///      central package is being upgraded).
+///   2. The optional <c>Escalated.Locale.LocaleProvider</c> localizer.
+///   3. The canonical JSON catalogs embedded in this package.
 /// </summary>
 /// <remarks>
-/// API assumption: the central NuGet package
-/// <c>Escalated.Locale</c> exposes a static
+/// Hosts that install <c>Escalated.Locale</c> can supply its static
 /// <c>Escalated.Locale.LocaleProvider.CreateLocalizer(string baseName, string location)</c>
 /// method returning an <see cref="IStringLocalizer"/> backed by the
-/// embedded JSON catalog. This contract is owned by the
-/// <c>escalated-locale</c> repo (Codex). If the published API differs,
-/// only this factory needs to change.
+/// embedded JSON catalog. The vendored catalogs remain available when that
+/// optional package is absent or a key is missing from its localizer.
 /// </remarks>
 public sealed class EscalatedLocalizerFactory : IStringLocalizerFactory
 {
@@ -37,8 +34,8 @@ public sealed class EscalatedLocalizerFactory : IStringLocalizerFactory
             resourceSource.Name,
             resourceSource.Namespace ?? string.Empty);
         return central is null
-            ? local
-            : new ChainedStringLocalizer(local, central);
+            ? new ChainedStringLocalizer(local, EmbeddedCatalogStringLocalizer.Instance)
+            : new ChainedStringLocalizer(local, central, EmbeddedCatalogStringLocalizer.Instance);
     }
 
     public IStringLocalizer Create(string baseName, string location)
@@ -46,16 +43,15 @@ public sealed class EscalatedLocalizerFactory : IStringLocalizerFactory
         var local = _localFactory.Create(baseName, location);
         var central = TryCreateCentralLocalizer(baseName, location);
         return central is null
-            ? local
-            : new ChainedStringLocalizer(local, central);
+            ? new ChainedStringLocalizer(local, EmbeddedCatalogStringLocalizer.Instance)
+            : new ChainedStringLocalizer(local, central, EmbeddedCatalogStringLocalizer.Instance);
     }
 
     /// <summary>
     /// Reflectively invoke
     /// <c>Escalated.Locale.LocaleProvider.CreateLocalizer</c>. Returns
     /// <c>null</c> if the package is not yet published or the method
-    /// is not present, which lets the plugin keep functioning against
-    /// only its local resources during bootstrap.
+    /// is not present; the embedded catalog then supplies the fallback.
     /// </summary>
     private static IStringLocalizer? TryCreateCentralLocalizer(string baseName, string location)
     {
@@ -83,7 +79,7 @@ public sealed class EscalatedLocalizerFactory : IStringLocalizerFactory
         catch
         {
             // Defensive: if the central package is mid-publish or its
-            // surface changes, fall back to local-only resolution.
+            // surface changes, use the embedded catalog after local overrides.
             return null;
         }
     }

@@ -1,8 +1,7 @@
 # Plugin-local translation overrides
 
-Strings dropped here win over the centrally shipped catalog from the
-[`Escalated.Locale`](https://www.nuget.org/packages/Escalated.Locale)
-NuGet package. Use this directory only for .NET-specific overrides
+Strings embedded here win over the shared JSON catalog shipped inside the
+Escalated assembly. Use this directory for .NET-specific overrides
 that should not be back-ported to the shared catalog.
 
 ## How it works
@@ -10,17 +9,19 @@ that should not be back-ported to the shared catalog.
 `AddEscalated()` registers a chained `IStringLocalizer` stack:
 
 1. **Plugin-local** — `.resx` files placed in this directory.
-2. **Central** — embedded JSON catalog from `Escalated.Locale`.
+2. **Optional shared provider** — the `Escalated.Locale` localizer, when installed.
+3. **Embedded catalog** — the vendored `Resources/locales/*.json` files.
 
-The first non-empty match wins. An override resx that defines a key
+The first found match wins, including an intentionally empty string. An override resx that defines a key
 shadows the central translation for that key only; every other key
 still resolves from the central catalog.
 
 ## File layout
 
-Use the standard ASP.NET Core resx layout, mirroring the type or base
-name you want to override. For example, to override the `Status_Open`
-string for Italian:
+Use the standard ASP.NET Core resx layout in the assembly containing the type
+or base name you pass to the localizer factory. For a `Messages` resource type
+directly under that assembly's root namespace, an Italian override for the
+catalog key `status.open` belongs at:
 
 ```
 Resources/Overrides/Messages.it.resx
@@ -28,6 +29,16 @@ Resources/Overrides/Messages.it.resx
 
 The ResourcesPath for the default `IStringLocalizerFactory` is set to
 `Resources/Overrides` in `EscalatedServiceCollectionExtensions`.
+
+Nested resource-type namespaces add matching directories. For example, a
+`MyApp.Localization.Messages` type in `MyApp` uses
+`Resources/Overrides/Localization/Messages.it.resx`. These files must be
+embedded when that assembly is built.
+
+An absent override manifest is treated as an empty layer when enumerating
+strings. Lookup and enumeration continue to the embedded catalogs, following
+the current UI culture, its parents, and English. Use `GetAllStrings(true)`
+to include those fallback cultures.
 
 ## When to add an override
 

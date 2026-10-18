@@ -207,17 +207,17 @@ public static class EscalatedServiceCollectionExtensions
     /// resolves strings from plugin-local overrides under
     /// <c>Resources/Overrides/</c> first, falling through to the
     /// vendored central catalog at <c>Resources/locales/*.json</c>
-    /// (sourced from escalated-dev/escalated-locale; will swap back
-    /// to a runtime dep on the <c>Escalated.Locale</c> NuGet package
-    /// once that publish pipeline is online).
+    /// (sourced from escalated-dev/escalated-locale). An optional
+    /// <c>Escalated.Locale</c> runtime provider is consulted before
+    /// the embedded fallback when a host supplies that package.
     /// </summary>
     private static void AddEscalatedLocalization(this IServiceCollection services)
     {
-        // Standard ASP.NET Core localization (resx + JSON readers).
+        // Standard ASP.NET Core factory for optional resx overrides.
         services.AddLocalization(opts => opts.ResourcesPath = "Resources/Overrides");
 
         // Decorate the default factory: chain plugin-local first,
-        // central (vendored) catalog second.
+        // optional shared provider next, embedded JSON catalog last.
         services.Replace(ServiceDescriptor.Singleton<IStringLocalizerFactory>(sp =>
         {
             var inner = ActivatorUtilities.CreateInstance<ResourceManagerStringLocalizerFactory>(sp);
