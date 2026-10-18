@@ -1,0 +1,3 @@
+# Keep the C# formatter consistent with .gitattributes on every platform.
+[*.cs]
+end_of_line = lf
