@@ -65,7 +65,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 ## Requirements
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite, or PostgreSQL
 - Node.js 18+ (for frontend assets)
 
@@ -711,7 +711,33 @@ naming conventions.
 dotnet test
 ```
 
-Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
+Integration tests use SQLite by default. CI runs the suite against PostgreSQL 17
+as well; isolated unit tests also use Moq and EF Core InMemory.
+
+To run the PostgreSQL profile against a disposable local test database:
+
+```bash
+ESCALATED_TEST_DATABASE=postgres \
+ESCALATED_TEST_CONNECTION="Host=127.0.0.1;Port=5432;Database=escalated_test;Username=postgres;Password=postgres" \
+dotnet test
+```
+
+The demo host has a separate project, so validate it explicitly:
+
+```bash
+dotnet build docker/host-app/EscalatedDemoHost.csproj
+```
+
+CI audits direct and transitive packages for both the solution and demo host.
+Known advisories and failures to obtain vulnerability data fail that job. Run
+the same checks locally with:
+
+```bash
+dotnet restore Escalated.sln -p:NuGetAuditMode=all -warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905
+dotnet restore docker/host-app/EscalatedDemoHost.csproj -p:NuGetAuditMode=all -warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905
+```
+
+Coverage includes:
 - Ticket CRUD and status transitions
 - SLA breach detection and warnings
 - Ticket split, merge, and snooze
@@ -726,7 +752,7 @@ Tests use xUnit with Moq and EF Core InMemory provider. Coverage includes:
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 package
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7 package
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core package (you are here)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI components
 

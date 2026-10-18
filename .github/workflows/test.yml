@@ -10,6 +10,40 @@ permissions:
   contents: read
 
 jobs:
+  security:
+    name: NuGet audit - all dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Audit the library and tests
+        run: dotnet restore Escalated.sln -p:NuGetAuditMode=all -warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905
+
+      - name: Audit the demo host
+        run: dotnet restore docker/host-app/EscalatedDemoHost.csproj -p:NuGetAuditMode=all -warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905
+
+  demo:
+    name: dotnet build - demo host
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore docker/host-app/EscalatedDemoHost.csproj
+
+      - name: Build
+        run: dotnet build docker/host-app/EscalatedDemoHost.csproj --no-restore
+
   test:
     name: dotnet test - sqlite
     runs-on: ubuntu-latest

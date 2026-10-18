@@ -62,7 +62,7 @@ ASP.NET Core를 위한 완전한 기능의 임베드 가능한 지원 티켓 시
 ## 요구 사항
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite 또는 PostgreSQL
 - Node.js 18+ (프론트엔드 에셋용)
 
@@ -370,7 +370,7 @@ dotnet test
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer 패키지
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails 엔진
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django 재사용 가능 앱
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 패키지
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7 패키지
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core 패키지 (현재 페이지)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI 컴포넌트
 

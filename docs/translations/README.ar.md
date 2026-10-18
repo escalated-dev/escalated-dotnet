@@ -62,7 +62,7 @@
 ## المتطلبات
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server أو SQLite أو PostgreSQL
 - Node.js 18+ (لموارد الواجهة الأمامية)
 
@@ -370,7 +370,7 @@ dotnet test
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- حزمة Composer لـ Laravel
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- محرك Ruby on Rails
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- تطبيق Django قابل لإعادة الاستخدام
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- حزمة AdonisJS v6
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- حزمة AdonisJS v7
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- حزمة ASP.NET Core (أنت هنا)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- مكونات واجهة Vue 3 + Inertia.js
 

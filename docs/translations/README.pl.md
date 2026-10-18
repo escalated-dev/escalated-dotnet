@@ -62,7 +62,7 @@ W pełni funkcjonalny, osadzalny system zgłoszeń wsparcia dla ASP.NET Core. Do
 ## Wymagania
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite lub PostgreSQL
 - Node.js 18+ (dla zasobów frontend)
 
@@ -370,7 +370,7 @@ Testy używają xUnit z Moq i dostawcą InMemory EF Core. Pokrycie obejmuje:
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Pakiet Composer dla Laravel
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Silnik Ruby on Rails
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Aplikacja Django wielokrotnego użytku
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Pakiet AdonisJS v6
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Pakiet AdonisJS v7
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- Pakiet ASP.NET Core (jesteś tutaj)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Komponenty UI Vue 3 + Inertia.js
 

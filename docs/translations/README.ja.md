@@ -62,7 +62,7 @@ ASP.NET Core向けのフル機能を備えた埋め込み可能なサポート�
 ## 要件
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server、SQLite、またはPostgreSQL
 - Node.js 18+（フロントエンドアセット用）
 
@@ -370,7 +370,7 @@ dotnet test
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composerパッケージ
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Railsエンジン
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django再利用可能アプリ
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6パッケージ
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7パッケージ
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Coreパッケージ（現在のページ）
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UIコンポーネント
 

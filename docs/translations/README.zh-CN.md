@@ -62,7 +62,7 @@
 ## 环境要求
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server、SQLite 或 PostgreSQL
 - Node.js 18+（用于前端资源）
 
@@ -370,7 +370,7 @@ dotnet test
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer 包
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails 引擎
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django 可重用应用
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 包
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7 包
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core 包（当前页面）
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI 组件
 

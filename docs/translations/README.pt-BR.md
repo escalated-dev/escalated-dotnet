@@ -62,7 +62,7 @@ Um sistema completo de tickets de suporte integrável para ASP.NET Core. Adicion
 ## Requisitos
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite ou PostgreSQL
 - Node.js 18+ (para recursos do frontend)
 
@@ -370,7 +370,7 @@ Os testes usam xUnit com Moq e o provider InMemory do EF Core. A cobertura inclu
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Pacote Composer para Laravel
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Engine Ruby on Rails
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Aplicação reutilizável Django
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Pacote AdonisJS v6
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Pacote AdonisJS v7
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- Pacote ASP.NET Core (você está aqui)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Componentes UI Vue 3 + Inertia.js
 
