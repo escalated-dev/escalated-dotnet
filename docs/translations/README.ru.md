@@ -62,7 +62,7 @@
 ## Требования
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite или PostgreSQL
 - Node.js 18+ (для фронтенд-ресурсов)
 
@@ -370,7 +370,7 @@ dotnet test
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Composer-пакет для Laravel
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Engine Ruby on Rails
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Многоразовое приложение Django
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Пакет AdonisJS v6
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- Пакет AdonisJS v7
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- Пакет ASP.NET Core (вы здесь)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- UI-компоненты Vue 3 + Inertia.js
 

@@ -62,7 +62,7 @@ ASP.NET Core için tam özellikli, gömülebilir bir destek bilet sistemi. Herha
 ## Gereksinimler
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite veya PostgreSQL
 - Node.js 18+ (frontend kaynakları için)
 
@@ -370,7 +370,7 @@ Testler xUnit, Moq ve EF Core InMemory sağlayıcısı kullanır. Kapsam şunlar
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer paketi
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails motoru
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Yeniden kullanılabilir Django uygulaması
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 paketi
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7 paketi
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core paketi (buradasınız)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI bileşenleri
 

@@ -62,7 +62,7 @@ Ein vollständiges, einbettbares Support-Ticket-System für ASP.NET Core. Integr
 ## Voraussetzungen
 
 - .NET 8.0+
-- Entity Framework Core 8.0+
+- Entity Framework Core 9.0.x (9.0.21+)
 - SQL Server, SQLite oder PostgreSQL
 - Node.js 18+ (für Frontend-Assets)
 
@@ -370,7 +370,7 @@ Tests verwenden xUnit mit Moq und dem EF Core InMemory-Provider. Die Abdeckung u
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer-Paket
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails Engine
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Wiederverwendbare Django-App
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v6 Paket
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7 Paket
 - **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core Paket (Sie sind hier)
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI-Komponenten
 
