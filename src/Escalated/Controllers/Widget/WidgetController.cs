@@ -1,4 +1,7 @@
+using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
@@ -63,6 +66,10 @@ public class WidgetController : ControllerBase
             guest_tickets_enabled = true,
             // Tickets and chats keep host parameters sent as `metadata`.
             accepts_metadata = true,
+            // Looking a ticket up needs mailbox verification, which this
+            // backend does not offer, so widgets hide their Status tab. There
+            // is deliberately no lookup by a claimed email address.
+            status_lookup_enabled = false,
         });
     }
 
@@ -87,6 +94,65 @@ public class WidgetController : ControllerBase
     }
 
     /// <summary>
+    /// Knowledge base search in the shape the shared widget reads. Queries
+    /// shorter than two characters find nothing.
+    /// </summary>
+    [HttpGet("articles")]
+    public async Task<IActionResult> Articles(
+        [FromQuery] string? q,
+        [FromServices] IOptions<EscalatedOptions> options,
+        CancellationToken ct)
+    {
+        if (!options.Value.KnowledgeBase.Enabled) return NotFound();
+
+        var query = (q ?? string.Empty).Trim();
+        if (query.Length > 200) query = query[..200];
+        if (query.Length < 2) return Ok(new { articles = Array.Empty<object>() });
+
+        var articles = await _kbService.SearchAsync(query, ct);
+        return Ok(new
+        {
+            articles = articles.Select(a => new { title = a.Title, slug = a.Slug, excerpt = Excerpt(a.Body) }),
+        });
+    }
+
+    /// <summary>
+    /// One published article, in the shape the shared widget reads.
+    /// </summary>
+    [HttpGet("articles/{slug}")]
+    public async Task<IActionResult> Article(
+        string slug,
+        [FromServices] IOptions<EscalatedOptions> options,
+        CancellationToken ct)
+    {
+        if (!options.Value.KnowledgeBase.Enabled) return NotFound();
+
+        var article = await _db.Articles
+            .Include(a => a.Category)
+            .FirstOrDefaultAsync(a => a.Slug == slug && a.Status == "published", ct);
+        if (article == null) return NotFound(new { message = "Article not found." });
+
+        await _kbService.RecordViewAsync(article.Id, ct);
+
+        return Ok(new
+        {
+            title = article.Title,
+            slug = article.Slug,
+            body = article.Body ?? string.Empty,
+            category = article.Category?.Name,
+        });
+    }
+
+    /// <summary>Plain text from an article body, cut to 200 characters.</summary>
+    private static string Excerpt(string? body)
+    {
+        if (string.IsNullOrEmpty(body)) return string.Empty;
+        var text = WebUtility.HtmlDecode(Regex.Replace(body, "<[^>]*>", " "));
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length > 200 ? text[..200] + "..." : text;
+    }
+
+    /// <summary>
     /// Create a guest (anonymous) ticket.
     /// </summary>
     [HttpPost("tickets")]
@@ -100,12 +166,19 @@ public class WidgetController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
+        var departmentId = request.WidgetDepartmentId ?? request.DepartmentId;
+        if (!await WidgetDepartments.IsAllowedAsync(_db, departmentId, HttpContext.RequestAborted))
+        {
+            ModelState.AddModelError(WidgetDepartments.Field, WidgetDepartments.Invalid);
+            return ValidationProblem(ModelState);
+        }
+
         var ticket = await _ticketService.CreateAsync(
             request.Subject,
             request.Description,
             guestName: request.Name,
             guestEmail: request.Email,
-            departmentId: request.DepartmentId,
+            departmentId: departmentId,
             metadata: WidgetMetadata.Sanitize(request.Metadata, HttpContext.Items[WidgetOrigins.ItemKey] as string));
 
         return Ok(new
@@ -204,7 +277,12 @@ public class WidgetController : ControllerBase
 }
 
 /// <param name="Metadata">Optional host parameters; see <see cref="WidgetMetadata"/>.</param>
-public record GuestTicketRequest(string Subject, string? Description, string? Name, string? Email, int? DepartmentId = null, JsonElement? Metadata = null);
+public record GuestTicketRequest(string Subject, string? Description, string? Name, string? Email, int? DepartmentId = null, JsonElement? Metadata = null)
+{
+    /// <summary>The shared widget's <c>department_id</c>; wins over <c>departmentId</c>.</summary>
+    [JsonPropertyName("department_id")]
+    public int? WidgetDepartmentId { get; init; }
+}
 public record GuestReplyRequest(string Body);
 public record RateRequest(int Rating, string? Comment = null);
 public record FeedbackRequest(bool Helpful);

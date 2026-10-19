@@ -46,11 +46,13 @@ public class KnowledgeBaseService
         return article;
     }
 
+    /// <summary>Published articles whose title or body contains the query, ignoring case.</summary>
     public async Task<List<Article>> SearchAsync(string query, CancellationToken ct = default)
     {
+        var needle = query.ToLowerInvariant();
         return await _db.Articles
             .Where(a => a.Status == "published")
-            .Where(a => a.Title.Contains(query) || (a.Body != null && a.Body.Contains(query)))
+            .Where(a => a.Title.ToLower().Contains(needle) || (a.Body != null && a.Body.ToLower().Contains(needle)))
             .OrderByDescending(a => a.ViewCount)
             .Take(20)
             .ToListAsync(ct);

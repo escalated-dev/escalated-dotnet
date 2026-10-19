@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Escalated.Authorization;
 using Escalated.Configuration;
 using Escalated.Data;
@@ -203,6 +205,32 @@ public class ChatSessionService
 
         return session;
     }
+
+    /// <summary>
+    /// Give a chat a new random visitor token (256 bits, base64url) and store
+    /// only its SHA-256. The widget reaches the chat through this token alone.
+    /// </summary>
+    public async Task<string> IssueVisitorTokenAsync(ChatSession session, CancellationToken ct = default)
+    {
+        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        session.VisitorTokenHash = HashVisitorToken(token);
+        session.UpdatedAt = DateTime.UtcNow;
+        _db.ChatSessions.Update(session);
+        await _db.SaveChangesAsync(ct);
+        return token;
+    }
+
+    /// <summary>The chat a visitor token belongs to, or null.</summary>
+    public async Task<ChatSession?> FindByVisitorTokenAsync(string? token, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(token) || token.Length > 128) return null;
+        var hash = HashVisitorToken(token);
+        return await _db.ChatSessions.FirstOrDefaultAsync(session => session.VisitorTokenHash == hash, ct);
+    }
+
+    public static string HashVisitorToken(string token) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
 
     public async Task<ChatSession?> FindByIdAsync(int id, CancellationToken ct = default)
     {
