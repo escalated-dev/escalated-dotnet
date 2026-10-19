@@ -124,7 +124,8 @@ Returns what the widget needs before it renders:
   "departments": [{ "id": 1, "name": "Sales" }],
   "kb_enabled": true,
   "guest_tickets_enabled": true,
-  "accepts_metadata": true
+  "accepts_metadata": true,
+  "status_lookup_enabled": false
 }
 ```
 
@@ -132,6 +133,35 @@ The widget routes are always mapped, so `enabled` is always true. `color`,
 `position` and `greeting` come from the `widget_color`, `widget_position` and
 `widget_greeting` settings. `departments` lists active departments.
 `kb_enabled` follows `Escalated:KnowledgeBase:Enabled`.
+`status_lookup_enabled` is false: this backend has no mailbox verification, so
+the widget hides its Status tab, and no route looks a ticket up by a claimed
+email address.
+
+### What the shared widget calls
+
+| Method + path | Body | Answer |
+|---|---|---|
+| `GET /articles?q=` | | `{ "articles": [{ "title", "slug", "excerpt" }] }`; queries under 2 characters find nothing |
+| `GET /articles/{slug}` | | `{ "title", "slug", "body", "category" }`; 404 unless published |
+| `POST /tickets` | `name`, `email`, `subject`, `description`, `department_id?`, `metadata?` | `reference`, `message`, `guestToken` |
+| `GET /chat/availability` | `department_id?` | `{ "available": true }` |
+| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?` | `{ "id": "<token>", "status", "agent" }` |
+| `GET /chat/{id}/messages` | | `{ "messages": [{ "id", "body", "is_agent", "author": { "name" }, "created_at" }], "typing": null, "agent", "ended" }` |
+| `POST /chat/{id}/messages` | `{ "body" }` | the stored message |
+| `POST /chat/{id}/typing` | | sent to agents watching the chat over SignalR |
+| `POST /chat/{id}/end` | | the ended chat |
+| `POST /chat/{id}/rate` | `{ "rating": 1-5, "comment"? }` | once per chat, after it ends |
+
+Paths are under `/support/widget`, so the CORS above covers them. Both
+`/articles` routes answer 404 when the knowledge base is off. `department_id`
+(or the older `departmentId`) must name an active department; anything else is a
+400 with `errors.department_id`.
+
+The chat `id` is a random 256-bit token; only its SHA-256 is stored (the
+`ChatSessionVisitorToken` migration adds `escalated_chat_sessions.VisitorTokenHash`).
+Every chat route resolves the chat by that token and answers 404 for anything
+else, numeric session ids included. Agent names come from your `IUserDirectory`
+and fall back to "Agent".
 
 ### Host parameters
 

@@ -57,6 +57,15 @@ public class ChatSession
     /// </summary>
     public string? Metadata { get; set; }
 
+    /// <summary>
+    /// SHA-256 (lowercase hex) of the visitor's chat token. The widget reaches
+    /// its chat only through that token, returned as <c>id</c> when the chat
+    /// starts; the token itself is never stored.
+    /// </summary>
+    [JsonIgnore]
+    [MaxLength(64)]
+    public string? VisitorTokenHash { get; set; }
+
     // Navigation
     [JsonIgnore]
     [ForeignKey(nameof(TicketId))]
