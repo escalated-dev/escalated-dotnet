@@ -11,6 +11,9 @@
     <Description>A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app to get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/escalated-dev/escalated-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://escalated.dev</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>helpdesk;ticketing;support;sla;asp.net-core</PackageTags>
   </PropertyGroup>
 
@@ -37,6 +40,10 @@
         <PackageReference Include="Escalated.Locale" Version="0.1.0" />
       and the embedded files removed.
     -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

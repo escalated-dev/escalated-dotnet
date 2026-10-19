@@ -1,0 +1,84 @@
+name: Publish
+
+# Publishes the `Escalated` package to nuget.org when a GitHub release is
+# published. Re-run for an existing tag with "Run workflow" (workflow_dispatch)
+# and the tag name. See RELEASE.md.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v0.2.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  nuget:
+    name: Publish to nuget.org
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      PROJECT: src/Escalated/Escalated.csproj
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.TAG }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Verify project version matches tag
+        run: |
+          version="$(dotnet msbuild "$PROJECT" -getProperty:Version)"
+          expected="${TAG#v}"
+          echo "Tag: $TAG  Project version: $version"
+          if [ "$version" != "$expected" ]; then
+            echo "::error::$PROJECT has <Version>$version</Version> but the tag is $TAG (expected $expected). Bump the version and re-tag."
+            exit 1
+          fi
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        run: dotnet test --no-build -c Release --verbosity normal
+
+      - name: Pack
+        run: dotnet pack "$PROJECT" --no-build -c Release -o artifacts
+
+      - name: List package contents
+        run: |
+          ls -l artifacts
+          unzip -l artifacts/*.nupkg
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nupkg-${{ env.TAG }}
+          path: artifacts/*.nupkg
+
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "${NUGET_API_KEY}" ]; then
+            echo "skipping: NUGET_API_KEY not configured"
+            exit 0
+          fi
+          dotnet nuget push "artifacts/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
