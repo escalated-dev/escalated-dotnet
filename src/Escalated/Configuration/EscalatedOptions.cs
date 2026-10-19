@@ -89,6 +89,11 @@ public class EscalatedOptions
     public GuestRateLimitOptions GuestRateLimit { get; set; } = new();
 
     /// <summary>
+    /// Embedding the widget on other sites (see <see cref="WidgetOptions"/>).
+    /// </summary>
+    public WidgetOptions Widget { get; set; } = new();
+
+    /// <summary>
     /// CSAT configuration.
     /// </summary>
     public CsatOptions Csat { get; set; } = new();
@@ -263,6 +268,25 @@ public class GuestRateLimitOptions
 
     /// <summary>Guest replies per IP per minute. Default 10.</summary>
     public int RepliesPerMinute { get; set; } = 10;
+}
+
+/// <summary>
+/// Embedding the widget on other sites. Nothing changes until an origin is
+/// listed. See <c>docs/embedding-the-widget.md</c>.
+/// </summary>
+public class WidgetOptions
+{
+    /// <summary>
+    /// Origins (<c>scheme://host[:port]</c>, or <c>https://*.example.com</c> for
+    /// every subdomain) whose pages may call the widget endpoints. Combined with
+    /// the comma-separated <c>ESCALATED_WIDGET_ALLOWED_ORIGINS</c> configuration
+    /// value and the <c>widget_allowed_origins</c> admin setting. Invalid entries
+    /// are ignored; a bare <c>*</c> is never accepted. Default empty.
+    /// </summary>
+    public List<string> AllowedOrigins { get; set; } = new();
+
+    /// <summary>Seconds a browser may cache a preflight answer. Default 600.</summary>
+    public int PreflightMaxAge { get; set; } = 600;
 }
 
 public class NewsletterOptions

@@ -47,7 +47,8 @@ public class ChatSessionService
         string? visitorEmail = null,
         string? initialMessage = null,
         int? departmentId = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? metadata = null)
     {
         // Create the backing ticket
         var ticket = await _ticketService.CreateAsync(
@@ -57,7 +58,8 @@ public class ChatSessionService
             guestEmail: visitorEmail,
             departmentId: departmentId,
             ticketType: "chat",
-            ct: ct);
+            ct: ct,
+            metadata: metadata);
 
         // Override channel on the ticket for chat
         ticket.TicketType = "chat";
@@ -70,6 +72,7 @@ public class ChatSessionService
             VisitorEmail = visitorEmail,
             DepartmentId = departmentId,
             Status = "waiting",
+            Metadata = metadata,
             LastActivityAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

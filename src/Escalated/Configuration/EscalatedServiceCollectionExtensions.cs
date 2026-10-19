@@ -13,6 +13,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Escalated.Authorization;
+using Escalated.Widget;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Escalated.Configuration;
 
@@ -87,6 +89,14 @@ public static class EscalatedServiceCollectionExtensions
         // Per-IP counters for the guest widget endpoints. In memory by default;
         // a multi-instance host registers a shared IGuestRateLimiter.
         services.TryAddSingleton<IGuestRateLimiter, MemoryGuestRateLimiter>();
+
+        // Embedding the widget on other sites: CORS at the front of the pipeline
+        // for the widget routes, guest forcing after host authentication, and
+        // ESCALATED_WIDGET_ALLOWED_ORIGINS. Inert until an origin is listed.
+        services.AddScoped<WidgetOriginPolicy>();
+        services.AddSingleton<IPostConfigureOptions<EscalatedOptions>, WidgetOriginsFromConfiguration>();
+        services.AddTransient<IStartupFilter, WidgetCorsStartupFilter>();
+        services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options => options.Filters.Add(new WidgetGuestFilter()));
 
         // No-op default so @-mention (and other) notifications resolve even
         // before the host wires up its own delivery. Hosts register their

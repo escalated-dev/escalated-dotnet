@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Escalated.Services;
+using Escalated.Widget;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
@@ -38,13 +40,21 @@ public class WidgetChatController : ControllerBase
     [HttpPost("start")]
     public async Task<IActionResult> Start([FromBody] StartChatRequest request)
     {
+        var invalid = WidgetMetadata.Validate(request.Metadata);
+        if (invalid is not null)
+        {
+            ModelState.AddModelError("metadata", invalid);
+            return ValidationProblem(ModelState);
+        }
+
         try
         {
             var session = await _chatService.StartAsync(
                 request.Name ?? "Visitor",
                 request.Email,
                 request.Message,
-                request.DepartmentId);
+                request.DepartmentId,
+                metadata: WidgetMetadata.Sanitize(request.Metadata, HttpContext.Items[WidgetOrigins.ItemKey] as string));
 
             return Ok(new
             {
@@ -96,5 +106,6 @@ public class WidgetChatController : ControllerBase
     }
 }
 
-public record StartChatRequest(string? Name, string? Email, string? Message, int? DepartmentId);
+/// <param name="Metadata">Optional host parameters; see <see cref="WidgetMetadata"/>.</param>
+public record StartChatRequest(string? Name, string? Email, string? Message, int? DepartmentId, JsonElement? Metadata = null);
 public record VisitorMessageRequest(string Body);
