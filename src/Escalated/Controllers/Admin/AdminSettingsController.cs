@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Escalated.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Escalated.Widget;
 
 namespace Escalated.Controllers.Admin;
 
@@ -342,6 +343,25 @@ public class AdminSettingsController : ControllerBase
     [HttpPost("settings")]
     public async Task<IActionResult> SaveSettings([FromBody] Dictionary<string, string?> settings)
     {
+        // The sites allowed to embed the widget: every entry must be a bare
+        // http(s) origin or a *. subdomain pattern. Saved normalised, one per line.
+        if (settings.TryGetValue(WidgetOriginPolicy.SettingKey, out var origins))
+        {
+            var entries = WidgetOrigins.Split(origins).ToList();
+            foreach (var entry in entries.Where(e => WidgetOrigins.NormalizePattern(e) is null))
+            {
+                ModelState.AddModelError(WidgetOriginPolicy.SettingKey,
+                    $"\"{entry}\" is not a valid origin. Use scheme://host[:port] or https://*.example.com.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            settings[WidgetOriginPolicy.SettingKey] = string.Join('\n', WidgetOrigins.Patterns(entries));
+        }
+
         foreach (var (key, value) in settings)
         {
             await _settingsService.SetAsync(key, value);

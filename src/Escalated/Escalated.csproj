@@ -41,6 +41,12 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\locales\*.json" />
+    <!--
+      The standalone widget bundle from @escalated-dev/escalated, served at
+      /support/widget/embed.js. Vendored and generated: replace it with
+      dist/widget/escalated-widget.js from the published npm package.
+    -->
+    <EmbeddedResource Include="Resources\widget\escalated-widget.js" LogicalName="Escalated.Widget.escalated-widget.js" />
   </ItemGroup>
 
 </Project>

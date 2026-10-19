@@ -1,6 +1,10 @@
+using System.Text.Json;
+using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
 using Escalated.Services;
+using Escalated.Widget;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +34,39 @@ public class WidgetController : ControllerBase
     }
 
     /// <summary>
+    /// What the widget needs before it renders. The widget routes are always
+    /// mounted, so the widget is always enabled; colour, position and greeting
+    /// come from the <c>widget_color</c>, <c>widget_position</c> and
+    /// <c>widget_greeting</c> settings, and <c>kb_enabled</c> from
+    /// <see cref="KnowledgeBaseOptions.Enabled"/>.
+    /// </summary>
+    [HttpGet("config")]
+    public async Task<IActionResult> Config(
+        [FromServices] SettingsService settings,
+        [FromServices] IOptions<EscalatedOptions> options,
+        CancellationToken ct)
+    {
+        var departments = await _db.Departments
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.Name)
+            .Select(d => new { id = d.Id, name = d.Name })
+            .ToListAsync(ct);
+
+        return Ok(new
+        {
+            enabled = true,
+            color = await settings.GetAsync("widget_color", "#4F46E5", ct),
+            position = await settings.GetAsync("widget_position", "bottom-right", ct),
+            greeting = await settings.GetAsync("widget_greeting", "Hi there! How can we help?", ct),
+            departments,
+            kb_enabled = options.Value.KnowledgeBase.Enabled,
+            guest_tickets_enabled = true,
+            // Tickets and chats keep host parameters sent as `metadata`.
+            accepts_metadata = true,
+        });
+    }
+
+    /// <summary>
     /// Search published knowledge base articles.
     /// </summary>
     [HttpGet("kb/search")]
@@ -56,12 +93,20 @@ public class WidgetController : ControllerBase
     [GuestThrottle(GuestThrottleScope.Ticket)]
     public async Task<IActionResult> CreateGuestTicket([FromBody] GuestTicketRequest request)
     {
+        var invalid = WidgetMetadata.Validate(request.Metadata);
+        if (invalid is not null)
+        {
+            ModelState.AddModelError("metadata", invalid);
+            return ValidationProblem(ModelState);
+        }
+
         var ticket = await _ticketService.CreateAsync(
             request.Subject,
             request.Description,
             guestName: request.Name,
             guestEmail: request.Email,
-            departmentId: request.DepartmentId);
+            departmentId: request.DepartmentId,
+            metadata: WidgetMetadata.Sanitize(request.Metadata, HttpContext.Items[WidgetOrigins.ItemKey] as string));
 
         return Ok(new
         {
@@ -158,7 +203,8 @@ public class WidgetController : ControllerBase
     }
 }
 
-public record GuestTicketRequest(string Subject, string? Description, string? Name, string? Email, int? DepartmentId = null);
+/// <param name="Metadata">Optional host parameters; see <see cref="WidgetMetadata"/>.</param>
+public record GuestTicketRequest(string Subject, string? Description, string? Name, string? Email, int? DepartmentId = null, JsonElement? Metadata = null);
 public record GuestReplyRequest(string Body);
 public record RateRequest(int Rating, string? Comment = null);
 public record FeedbackRequest(bool Helpful);

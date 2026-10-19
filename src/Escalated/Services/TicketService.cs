@@ -28,7 +28,7 @@ public class TicketService
     public async Task<Ticket> CreateAsync(string subject, string? description, string? requesterId = null,
         string? requesterType = null, TicketPriority? priority = null, int? departmentId = null,
         string? guestName = null, string? guestEmail = null, string? ticketType = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default, string? metadata = null)
     {
         var ticket = new Ticket
         {
@@ -42,6 +42,7 @@ public class TicketService
             GuestName = guestName,
             GuestEmail = guestEmail,
             TicketType = ticketType,
+            Metadata = metadata,
             Reference = $"TEMP-{Guid.NewGuid()}",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
