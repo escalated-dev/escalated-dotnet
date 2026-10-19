@@ -616,12 +616,17 @@ For dynamic per-ticket visibility, register your own `ITicketActionRegistry`.
 
 | Method | Route | Description |
 |--------|-------|-------------|
+| GET | `/support/widget/config` | Widget settings and departments |
+| GET | `/support/widget/embed.js` | Standalone widget script |
 | GET | `/support/widget/kb/search` | Search knowledge base |
 | POST | `/support/widget/tickets` | Create guest ticket |
 | GET | `/support/widget/tickets/{token}` | Lookup by guest token |
 | POST | `/support/widget/tickets/{token}/reply` | Guest reply |
 | POST | `/support/widget/tickets/{token}/rate` | Submit CSAT rating |
 | POST | `/support/widget/kb/articles/{id}/feedback` | Article feedback |
+
+To put the widget on another site, list that site's origin and add the script
+tag there; see [embedding the widget](docs/embedding-the-widget.md).
 
 ## Real-time Updates
 

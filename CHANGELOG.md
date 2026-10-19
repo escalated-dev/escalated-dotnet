@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Embed the widget on other sites. List them in `Escalated:Widget:AllowedOrigins`, `ESCALATED_WIDGET_ALLOWED_ORIGINS` or the `widget_allowed_origins` admin setting (validated on save); listed origins get CORS (preflight included, and on 4xx/429 answers) on every `/support/widget/*` route and always act as guests. Nothing changes until an origin is listed. Adds `GET /support/widget/config` (with `accepts_metadata`), sanitised `metadata` on widget tickets and chats, and `GET /support/widget/embed.js` serving the `@escalated-dev/escalated` 0.12.1 bundle. See [embedding the widget](docs/embedding-the-widget.md).
 - Opt-in department/account ticket visibility across MVC, bearer APIs, reports, bulk actions, widget, related records and live delivery, with admin bypass and host resolver hooks.
 - Nullable indexed ticket account identity, account/type routing conditions, and optional department/type SLA selection. Department changes preserve the existing SLA clock.
 - Additive schema migration and SQLite/PostgreSQL access-path and migration regressions. See [configuration and upgrade notes](docs/ticket-access-and-routing.md).
