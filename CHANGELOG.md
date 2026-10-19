@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The bundled widget is now `@escalated-dev/escalated` 0.12.2. It hides its Check Status tab when `/config` returns `status_lookup_enabled: false`.
+
 ### Security
 - Widget chat routes are keyed by an unguessable visitor token instead of the numeric chat session id. Before, anyone could post into or end another visitor's chat by counting ids. `POST /support/widget/chat/start` now returns a random 256-bit token as `id` (only its SHA-256 is stored), and `/chat/{id}/messages` and `/chat/{id}/end` answer 404 for numeric ids. Apply the `ChatSessionVisitorToken` migration; chats started before it cannot be reached from the widget.
 
