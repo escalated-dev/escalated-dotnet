@@ -127,6 +127,16 @@ public static class EscalatedServiceCollectionExtensions
 
         services.AddEscalatedLocalization();
 
+        // The Inertia UI (Escalated:Ui:Enabled, off by default). Its routes match
+        // nothing until it is on; these services only render pages. The root view
+        // and the shared props are host-replaceable (see docs/inertia-ui.md). Flash
+        // messages travel in a data-protected cookie, so no session is needed.
+        services.AddDataProtection();
+        services.AddOptions<Escalated.Ui.UiRouteOptions>();
+        services.TryAddScoped<Escalated.Ui.IEscalatedUiRootView, Escalated.Ui.DefaultEscalatedUiRootView>();
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Ui.EscalatedUiSharedProps>());
+        services.AddScoped<Escalated.Ui.UiPresenter>();
+
         // The admin, agent and customer authorization policies the controllers
         // require. A host policy of the same name takes precedence.
         services.AddEscalatedAuthorization();

@@ -393,6 +393,8 @@ Escalated ships a Vue component library and default pages via the [`@escalated-d
 npm install @escalated-dev/escalated
 ```
 
+This package serves those pages over Inertia once `Escalated:Ui:Enabled` is `true`. It is **off by default** (escalated-laravel defaults it on), so an API-only host is unchanged. See [docs/inertia-ui.md](docs/inertia-ui.md) for the settings, the root view, the shared props and the pages served.
+
 ## Architecture
 
 ```

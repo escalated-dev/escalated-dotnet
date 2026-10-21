@@ -1,17 +1,39 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Escalated.Configuration;
+using Escalated.Ui;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Escalated.Controllers.Newsletter;
 
 internal static class NewsletterHttp
 {
+    /// <summary>
+    /// The page, through the Inertia renderer: a real Inertia response with the UI
+    /// on, <c>{component, props}</c> JSON with it off. Either way nested props are
+    /// snake_case, as the newsletter pages read them (<c>from_name</c>, <c>summary_total</c>).
+    /// </summary>
     public static IActionResult Inertia(ControllerBase controller, string component, object props) =>
-        controller.Ok(new { component, props });
+        new InertiaResult(component, props);
 
-    public static IActionResult Redirect(ControllerBase controller, string url, object? extra = null) =>
-        controller.Ok(extra is null ? new { redirect = url } : Merge(new { redirect = url }, extra));
+    /// <summary>
+    /// After a newsletter form post: a 303 to <paramref name="url"/> for an Inertia
+    /// visit with the UI on, and the <c>{redirect}</c> JSON the API has always answered otherwise.
+    /// </summary>
+    public static IActionResult Redirect(ControllerBase controller, string url, object? extra = null)
+    {
+        var options = controller.HttpContext?.RequestServices?.GetService<IOptions<EscalatedOptions>>()?.Value;
+        if (options?.Ui.Enabled == true && InertiaHeaders.IsInertia(controller.Request))
+        {
+            var status = extra?.GetType().GetProperty("status")?.GetValue(extra) as string;
+            return new UiRedirectResult(url) { Success = status };
+        }
+
+        return controller.Ok(extra is null ? new { redirect = url } : Merge(new { redirect = url }, extra));
+    }
 
     public static string? OptionalString(JsonElement body, string key, int? max = null)
     {
