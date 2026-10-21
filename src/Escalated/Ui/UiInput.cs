@@ -11,11 +11,13 @@ namespace Escalated.Ui;
 public sealed class UiInput
 {
     private readonly Dictionary<string, List<string?>> _values;
+    private readonly Dictionary<string, JsonElement> _json;
 
-    private UiInput(Dictionary<string, List<string?>> values, IFormFileCollection? files)
+    private UiInput(Dictionary<string, List<string?>> values, IFormFileCollection? files, Dictionary<string, JsonElement>? json = null)
     {
         _values = values;
         Files = files;
+        _json = json ?? new Dictionary<string, JsonElement>(StringComparer.Ordinal);
     }
 
     public IFormFileCollection? Files { get; }
@@ -42,6 +44,7 @@ public sealed class UiInput
             return new UiInput(values, null);
         }
 
+        var json = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         try
         {
             using var document = await JsonDocument.ParseAsync(request.Body, cancellationToken: ct);
@@ -49,6 +52,7 @@ public sealed class UiInput
             {
                 foreach (var property in document.RootElement.EnumerateObject())
                 {
+                    json[property.Name] = property.Value.Clone();
                     values[property.Name] = property.Value.ValueKind == JsonValueKind.Array
                         ? property.Value.EnumerateArray().Select(Scalar).ToList()
                         : new List<string?> { Scalar(property.Value) };
@@ -60,10 +64,16 @@ public sealed class UiInput
             // An unreadable body reads as an empty form, and validation reports what is missing.
         }
 
-        return new UiInput(values, null);
+        return new UiInput(values, null, json);
     }
 
     public bool Has(string key) => _values.ContainsKey(key);
+
+    /// <summary>
+    /// A JSON body's value as sent, for nested input (an array of objects, an object
+    /// keyed by priority). Null when the key is absent or the body was a form.
+    /// </summary>
+    public JsonElement? Json(string key) => _json.TryGetValue(key, out var value) ? value : null;
 
     public string? String(string key)
     {

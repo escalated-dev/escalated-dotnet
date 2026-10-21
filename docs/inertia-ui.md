@@ -94,7 +94,8 @@ public sealed class MyLayout : IEscalatedUiRootView
 
 Some page routes share a path with a JSON API action: `GET support/agent/tickets`
 (the ticket queue page, and the API's ticket list), `GET support/admin/tickets`
-(likewise), `POST support/agent/tickets/bulk`, `support/admin/settings`, and the departments, tags
+(likewise), `POST support/agent/tickets/bulk`, `support/admin/settings`, and the departments, tags,
+SLA policy, escalation rule, canned response, macro, webhook
 and workflows admin routes. With the UI on, a request reaches the page when it
 is an Inertia visit or a GET whose `Accept` names `text/html`; every other
 request (an API client sending `Accept: application/json`, or no `Accept`)
@@ -160,6 +161,17 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Admin/Departments/Index` | `GET support/admin/departments` |
 | `Escalated/Admin/Departments/Form` | `GET support/admin/departments/create`, `GET support/admin/departments/{id}/edit` |
 | `Escalated/Admin/Tags/Index` | `GET support/admin/tags` |
+| `Escalated/Admin/SlaPolicies/Index` | `GET support/admin/sla-policies` |
+| `Escalated/Admin/SlaPolicies/Form` | `GET support/admin/sla-policies/create`, `GET support/admin/sla-policies/{id}/edit` |
+| `Escalated/Admin/EscalationRules/Index` | `GET support/admin/escalation-rules` |
+| `Escalated/Admin/EscalationRules/Form` | `GET support/admin/escalation-rules/create`, `GET support/admin/escalation-rules/{id}/edit` |
+| `Escalated/Admin/CannedResponses/Index` | `GET support/admin/canned-responses` |
+| `Escalated/Admin/Macros/Index` | `GET support/admin/macros` |
+| `Escalated/Admin/Statuses/Index` | `GET support/admin/statuses` |
+| `Escalated/Admin/Statuses/Form` | `GET support/admin/statuses/create`, `GET support/admin/statuses/{id}/edit` |
+| `Escalated/Admin/Webhooks/Index` | `GET support/admin/webhooks` |
+| `Escalated/Admin/Webhooks/Form` | `GET support/admin/webhooks/create`, `GET support/admin/webhooks/{id}/edit` |
+| `Escalated/Admin/Webhooks/DeliveryLog` | `GET support/admin/webhooks/{id}/deliveries` |
 | `Escalated/Admin/Workflows/Index` | `GET support/admin/workflows` |
 | `Escalated/Admin/Workflows/Form` | `GET support/admin/workflows/create`, `GET support/admin/workflows/{id}` |
 
@@ -194,7 +206,15 @@ Admin form posts: `POST support/admin/settings` saves the keys in
 `widget_allowed_origins`. The other Settings controls are configuration here
 (`Escalated:AllowCustomerClose`, `Escalated:Attachments`, ...), so the page hides
 them. Departments: `POST support/admin/departments`, `PUT` and `DELETE
-support/admin/departments/{id}`. Tags: `POST support/admin/tags`, `PUT` and
+support/admin/departments/{id}`. SLA policies, escalation rules, canned responses,
+macros, statuses and webhooks the same way (`POST support/admin/<name>`, `PUT` and
+`DELETE support/admin/<name>/{id}`), plus `POST
+support/admin/webhooks/deliveries/{id}/retry`. SLA targets arrive as objects keyed
+by priority (`first_response_hours.high`); blank entries mean no target. Webhook
+URLs must be public http(s) addresses, and legacy event names are stored as their
+canonical names. Marking a status the default clears the default of the other
+statuses in its category. Custom statuses are kept for the page as
+escalated-laravel keeps them; tickets still use the built-in states. Tags: `POST support/admin/tags`, `PUT` and
 `DELETE support/admin/tags/{id}`. Workflows: the workflow admin routes
 (`docs/workflows.md`) answer page requests with the page, and page form posts
 (`POST`, `PUT`, `DELETE`, `toggle`, `reorder`) with a 303 to the list, or back to
@@ -203,4 +223,4 @@ the form with its errors.
 ### Not served yet
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/ApiTokens/Index, Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/CannedResponses/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/EscalationRules/Form, Admin/EscalationRules/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Macros/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Roles/Form, Admin/Roles/Index, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/SlaPolicies/Form, Admin/SlaPolicies/Index, Admin/Statuses/Form, Admin/Statuses/Index, Admin/Users/Index, Admin/Webhooks/DeliveryLog, Admin/Webhooks/Form, Admin/Webhooks/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Error, Guest/Create, Guest/Show, Plugin/Page.
+`Escalated/`): Admin/ApiTokens/Index, Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Roles/Form, Admin/Roles/Index, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Users/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Error, Guest/Create, Guest/Show, Plugin/Page.

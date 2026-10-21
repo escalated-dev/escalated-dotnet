@@ -21,6 +21,12 @@ public class TicketStatusModel
     [MaxLength(20)]
     public string? Color { get; set; }
 
+    /// <summary>The built-in state this status belongs to: <c>new</c>, <c>open</c>, <c>pending</c>, <c>on_hold</c> or <c>solved</c>.</summary>
+    [MaxLength(20)]
+    public string Category { get; set; } = "open";
+
+    public string? Description { get; set; }
+
     public bool IsDefault { get; set; }
 
     public int Position { get; set; }
