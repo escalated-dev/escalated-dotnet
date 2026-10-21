@@ -83,6 +83,17 @@ Guest answers carry `Cache-Control: no-store, private` and
   email.
 - The code is spent even when nothing matches.
 
+## Guest pages
+
+With `Escalated:Ui:Enabled` on, the shared `Guest/Create` and `Guest/Show` pages
+run the same flow in a browser (see [inertia-ui.md](inertia-ui.md)):
+`GET support/guest/create` (404 while `guest_tickets_enabled` is off) posts to
+`POST support/guest` with `guest_name`, `guest_email`, `subject`, `description`,
+`priority`, `department_id`, `attachments[]` and a `ticket` code, and redirects
+to the private link `GET support/guest/{token}`. That page takes `reply` and
+`rate` posts, and serves the ticket's files (never an internal note's) at
+`support/guest/{token}/attachments/{id}`, all until the grant expires.
+
 ## Live chat
 
 `POST support/widget/chat/start` needs `email` and a `chat` code. It is throttled

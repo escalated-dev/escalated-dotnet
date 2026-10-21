@@ -155,6 +155,8 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Customer/Index` | `GET support` |
 | `Escalated/Customer/Create` | `GET support/create` |
 | `Escalated/Customer/Show` | `GET support/{reference}` |
+| `Escalated/Guest/Create` | `GET support/guest/create` |
+| `Escalated/Guest/Show` | `GET support/guest/{token}` |
 | `Escalated/Customer/KnowledgeBase/Index` | `GET support/kb` |
 | `Escalated/Customer/KnowledgeBase/Article` | `GET support/kb/{slug}` |
 | `Escalated/Admin/Tickets/Index` | `GET support/admin/tickets` |
@@ -235,6 +237,11 @@ optional `expires_in_days` 1-365) flashes the new token once as
 `plain_text_token`; `DELETE support/admin/api-tokens/{id}` revokes one. The page's
 `api_enabled` is true once your pipeline includes `ApiTokenAuthMiddleware`.
 
+Guest pages: `POST support/guest` opens a ticket with a `ticket` email code and
+redirects to its private link; `POST support/guest/{token}/reply` and `rate` act on
+it, and `GET support/guest/{token}/attachments/{id}` serves its files, while the
+grant lasts. See [guest-access.md](guest-access.md).
+
 Knowledge base: articles and categories take `POST support/admin/kb-articles`
 (`kb-categories`), `PUT` and `DELETE .../{id}`; a blank slug is made from the
 title (name), publishing stamps `published_at` once, and deleting a category
@@ -251,4 +258,4 @@ the form with its errors.
 ### Not served yet
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Error, Guest/Create, Guest/Show, Plugin/Page.
+`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Error, Plugin/Page.
