@@ -81,6 +81,13 @@ public class EscalatedOptions
     public bool EnableNewsletters { get; set; }
 
     /// <summary>
+    /// The Inertia UI: the shared Vue pages (<c>@escalated-dev/escalated</c>) served
+    /// by this package. Off by default, so an API-only host is unchanged.
+    /// See <c>docs/inertia-ui.md</c>.
+    /// </summary>
+    public UiOptions Ui { get; set; } = new();
+
+    /// <summary>
     /// Newsletter broadcast and tracking configuration.
     /// </summary>
     public NewsletterOptions Newsletters { get; set; } = new();
@@ -238,6 +245,48 @@ public class SmtpOptions
     public bool EnableSsl { get; set; } = true;
 
     public int TimeoutSeconds { get; set; } = 30;
+}
+
+/// <summary>
+/// The Inertia UI (configuration section <c>Escalated:Ui</c>). escalated-laravel
+/// defaults <c>ui.enabled</c> to true; this package defaults it to false because it
+/// shipped as a JSON API first, and turning pages on changes what browsers get
+/// on routes the API already answers.
+/// </summary>
+public class UiOptions
+{
+    /// <summary>Serve the Inertia pages. Default false.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// The asset version. When an Inertia request carries another one, it gets
+    /// <c>409</c> with <c>X-Inertia-Location</c> and the browser reloads the page.
+    /// Set it to your frontend build's hash. Null: no version check.
+    /// </summary>
+    public string? Version { get; set; }
+
+    /// <summary>The <c>&lt;title&gt;</c> of the default root view.</summary>
+    public string Title { get; set; } = "Support";
+
+    /// <summary>
+    /// Markup the default root view puts in <c>&lt;head&gt;</c>: your Vite or
+    /// bundler tags for the app that calls <c>createInertiaApp</c> with the
+    /// Escalated pages. Trusted configuration, written as is.
+    /// </summary>
+    public string? HeadHtml { get; set; }
+
+    /// <summary>Markup the default root view puts at the end of <c>&lt;body&gt;</c>. Written as is.</summary>
+    public string? BodyHtml { get; set; }
+
+    /// <summary>The id of the element the app mounts on (Inertia's default is <c>app</c>).</summary>
+    public string RootElementId { get; set; } = "app";
+
+    /// <summary>
+    /// Install the bundled <c>window.route(name, params)</c> helper that the shared
+    /// pages call (Laravel hosts get it from Ziggy). Default true. A host that
+    /// ships its own helper sets this to false.
+    /// </summary>
+    public bool RouteHelper { get; set; } = true;
 }
 
 public class SlaOptions

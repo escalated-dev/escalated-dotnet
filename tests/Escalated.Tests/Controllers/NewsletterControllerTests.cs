@@ -119,8 +119,8 @@ public class NewsletterControllerTests
         var listId = await db.NewsletterLists.Select(l => l.Id).SingleAsync();
 
         var show = await controller.Show(listId, CancellationToken.None);
-        var inertia = Assert.IsType<OkObjectResult>(show);
-        Assert.Contains("Lists/Show", inertia.Value?.ToString());
+        var inertia = Assert.IsType<Escalated.Ui.InertiaResult>(show);
+        Assert.Equal("Escalated/Admin/Newsletters/Lists/Show", inertia.Component);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class NewsletterControllerTests
         await controller.Store(body, CancellationToken.None);
 
         var index = await controller.Index(CancellationToken.None);
-        Assert.IsType<OkObjectResult>(index);
+        Assert.IsType<Escalated.Ui.InertiaResult>(index);
         Assert.Equal(1, await db.NewsletterTemplates.CountAsync());
     }
 

@@ -306,6 +306,12 @@ public class TicketService
         if (!string.IsNullOrEmpty(filters.RequesterId))
             query = query.Where(t => t.RequesterId == filters.RequesterId);
 
+        if (filters.TagIds is { Length: > 0 } tagIds)
+            query = query.Where(t => _db.TicketTags.Any(tt => tt.TicketId == t.Id && tagIds.Contains(tt.TagId)));
+
+        if (!string.IsNullOrEmpty(filters.FollowedBy))
+            query = query.Where(t => _db.TicketFollowers.Any(f => f.TicketId == t.Id && f.UserId == filters.FollowedBy));
+
         // Sort
         query = (filters.SortBy?.ToLower(), filters.SortDir?.ToLower()) switch
         {
@@ -514,4 +520,10 @@ public class TicketListFilters
     public string? RequesterId { get; set; }
     public string? SortBy { get; set; }
     public string? SortDir { get; set; }
+
+    /// <summary>Tickets carrying any of these tags.</summary>
+    public int[]? TagIds { get; set; }
+
+    /// <summary>Tickets this host user follows.</summary>
+    public string? FollowedBy { get; set; }
 }

@@ -48,8 +48,8 @@ public class InboundEmailService
     private readonly AttachmentDownloader? _downloader;
     private readonly AttachmentOptions _attachmentOptions;
 
-    /// <summary>Never accepted from inbound email (same list as Laravel).</summary>
-    private static readonly HashSet<string> BlockedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    /// <summary>Never accepted from inbound email or page uploads (same list as Laravel).</summary>
+    internal static readonly HashSet<string> BlockedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         "exe", "bat", "cmd", "com", "msi", "scr", "pif", "vbs", "vbe",
         "js", "jse", "wsf", "wsh", "ps1", "psm1", "psd1", "reg",
