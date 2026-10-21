@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-21
+
+### Upgrading
+- **Guest tickets and widget chats now need a verified email.** `POST support/widget/tickets` and `POST support/widget/chat/start` need `verification_id` and `verification_code` from `POST verification`, answering 422 without them. Ticket creation answers 201 with `guest_access_token` and `expires_at` instead of `id` and `guestToken`. The bundled widget already sends the code step. Codes are emailed through `IEscalatedMailTransport`, so configure `Escalated:Email:Smtp` (or your own transport); without one, no code can arrive. Set `Escalated:GuestAccess:Secret` (or `Email:InboundSecret`) to the same value on every instance.
+- **Permanent guest tokens stop authorizing** the widget's ticket routes and the hub. Set `Escalated:GuestAccess:LegacyTokens` to `true` to accept them during a transition; creation then also returns `guestToken`. Guests with older tickets can verify their email and look the ticket up by reference for a new link.
+- **New migration `VerifiedGuestAccess`** (all three providers) adds `escalated_guest_verifications` and the ticket columns `GuestAccessHash` and `GuestAccessExpiresAt`.
+- Nothing is emailed until `Escalated:Email:Smtp:Host` is set, so existing installs send nothing new; the first notification logs that emails are off. Agents and followers are emailed through your `IUserDirectory` addresses.
+- A host that registered its own `IEscalatedNotificationSender` now has it called for every notifying event, not only mentions. Register `NullNotificationSender` to keep notifications off.
+- **New migration `WorkflowDelayedActions`** (all three providers) adds `escalated_delayed_actions`. Run `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`.
+- Event names need no migration. Stored webhook subscriptions and Workflows that use a legacy name (`ticket.tagged`, `ticket.untagged`, `tag.added`, `tag.removed`, `internal_note.added`, `internal_note.created`, `ticket.replied`, `chat.session_started`, `chat.session_ended`) are read as the canonical name and keep firing. The payload's `event` field and the `X-Escalated-Event` header carry the canonical name, so a receiver that switches on the old name should accept the new one. Creating a webhook stores canonical names.
+
 ### Added
 - **Verified guest access** (escalated-laravel `docs/guest-access.md`; see [docs/guest-access.md](docs/guest-access.md)). `POST verification` and `POST lookup` on `support/widget` and the new `support/guest` prefix. Guests prove their mailbox with an emailed eight-digit code: it is bound to the email and the purpose (`ticket`, `chat`, `lookup`), lasts 10 minutes, allows 5 guesses and is spent once. Code delivery per mailbox is budgeted (3 per client IP and 10 overall per hour, 429 with `Retry-After`). Only HMAC digests of the email and code are stored (`Escalated:GuestAccess:Secret`, falling back to `Email:InboundSecret`).
 - Guest tickets get an expiring access grant (`guest_access_token`, `expires_at`; `GuestAccess:TtlMinutes`, default 1440). Only its SHA-256 is stored, and a new grant revokes the previous one. `GET support/widget/tickets/{reference}`, its `reply` and `rate` take it as `Authorization: Bearer`. The SignalR hub accepts it as `guest_token`.
@@ -28,15 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tag events are dispatched after the tag is saved, so a Workflow's `tags` condition sees it.
 - **Webhook and trigger names follow the shared event vocabulary** (escalated-developer-context ADR 2026-10-21). Internal notes are sent as `note.created` (was `internal_note.added`), tags as `ticket.tag_added` / `ticket.tag_removed` (were `ticket.tagged` / `ticket.untagged`), and the tag trigger is `ticket.tag_added` (was `ticket.tagged`).
 - `WorkflowEngine.TriggerEvents` no longer offers `reply.agent_reply`, which nothing ever raised; a Workflow saved with it never ran.
-
-### Upgrading
-- **Guest tickets and widget chats now need a verified email.** `POST support/widget/tickets` and `POST support/widget/chat/start` need `verification_id` and `verification_code` from `POST verification`, answering 422 without them. Ticket creation answers 201 with `guest_access_token` and `expires_at` instead of `id` and `guestToken`. The bundled widget already sends the code step. Codes are emailed through `IEscalatedMailTransport`, so configure `Escalated:Email:Smtp` (or your own transport); without one, no code can arrive. Set `Escalated:GuestAccess:Secret` (or `Email:InboundSecret`) to the same value on every instance.
-- **Permanent guest tokens stop authorizing** the widget's ticket routes and the hub. Set `Escalated:GuestAccess:LegacyTokens` to `true` to accept them during a transition; creation then also returns `guestToken`. Guests with older tickets can verify their email and look the ticket up by reference for a new link.
-- **New migration `VerifiedGuestAccess`** (all three providers) adds `escalated_guest_verifications` and the ticket columns `GuestAccessHash` and `GuestAccessExpiresAt`.
-- Nothing is emailed until `Escalated:Email:Smtp:Host` is set, so existing installs send nothing new; the first notification logs that emails are off. Agents and followers are emailed through your `IUserDirectory` addresses.
-- A host that registered its own `IEscalatedNotificationSender` now has it called for every notifying event, not only mentions. Register `NullNotificationSender` to keep notifications off.
-- **New migration `WorkflowDelayedActions`** (all three providers) adds `escalated_delayed_actions`. Run `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`.
-- Event names need no migration. Stored webhook subscriptions and Workflows that use a legacy name (`ticket.tagged`, `ticket.untagged`, `tag.added`, `tag.removed`, `internal_note.added`, `internal_note.created`, `ticket.replied`, `chat.session_started`, `chat.session_ended`) are read as the canonical name and keep firing. The payload's `event` field and the `X-Escalated-Event` header carry the canonical name, so a receiver that switches on the old name should accept the new one. Creating a webhook stores canonical names.
 
 ## [0.2.2] - 2026-10-21
 
