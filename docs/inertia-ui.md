@@ -183,6 +183,17 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Admin/KnowledgeBase/Articles/Index` | `GET support/admin/kb-articles` |
 | `Escalated/Admin/KnowledgeBase/Articles/Form` | `GET support/admin/kb-articles/create`, `GET support/admin/kb-articles/{id}/edit` |
 | `Escalated/Admin/KnowledgeBase/Categories/Index` | `GET support/admin/kb-categories` |
+| `Escalated/Admin/Reports` | `GET support/admin/reports` |
+| `Escalated/Admin/Reports/Dashboard` | `GET support/admin/reports/dashboard` |
+| `Escalated/Admin/Reports/AgentMetrics` | `GET support/admin/reports/agents` |
+| `Escalated/Admin/Reports/SlaReport` | `GET support/admin/reports/sla` |
+| `Escalated/Admin/Reports/CsatReport` | `GET support/admin/reports/csat` |
+| `Escalated/Admin/Reports/ResponseTimes` | `GET support/admin/reports/response-times` (or `/frt`) |
+| `Escalated/Admin/Reports/ResolutionTimes` | `GET support/admin/reports/resolution-times` (or `/resolution`) |
+| `Escalated/Admin/Reports/AgentRanking` | `GET support/admin/reports/agent-ranking` |
+| `Escalated/Admin/Reports/SlaTrends` | `GET support/admin/reports/sla-trends` |
+| `Escalated/Admin/Reports/Cohorts` | `GET support/admin/reports/cohorts` |
+| `Escalated/Admin/Reports/Comparison` | `GET support/admin/reports/comparison` |
 | `Escalated/Admin/Workflows/Index` | `GET support/admin/workflows` |
 | `Escalated/Admin/Workflows/Form` | `GET support/admin/workflows/create`, `GET support/admin/workflows/{id}` |
 | `Escalated/Admin/Workflows/Logs` | `GET support/admin/workflows/logs` (`?workflow=id`), `GET support/admin/workflows/{id}/logs` |
@@ -238,6 +249,16 @@ optional `expires_in_days` 1-365) flashes the new token once as
 `plain_text_token`; `DELETE support/admin/api-tokens/{id}` revokes one. The page's
 `api_enabled` is true once your pipeline includes `ApiTokenAuthMiddleware`.
 
+Reports cover the last `days` (or `period`; default 30, at most 365) and are
+computed from the tickets and ratings as escalated-laravel's `ReportingService`
+computes them: response times against a 4 hour target, resolution against 24,
+agents ranked by resolution rate (30%), first response (25%), CSAT (25%) and
+volume (20%), `sla-trends` grouped by `group_by` (`day`, `week`, `month`).
+Agents with no directory entry show their id. The channel cohorts know only
+`chat` (a ticket with a chat session); others read `unknown`. The page's export
+button and `Reports/AgentDetail` are not served yet (escalated-laravel renders
+that page with props it does not read).
+
 Guest pages: `POST support/guest` opens a ticket with a `ticket` email code and
 redirects to its private link; `POST support/guest/{token}/reply` and `rate` act on
 it, and `GET support/guest/{token}/attachments/{id}` serves its files, while the
@@ -262,4 +283,4 @@ the form with its errors.
 workflow form renders the builder itself.
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.
+`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports/AgentDetail, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.
