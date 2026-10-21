@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
@@ -258,6 +259,45 @@ public class AdminPagesTests
 
         await SendAsync(client, HttpMethod.Delete, $"/support/admin/workflows/{workflow.Id}");
         Assert.False(await host.QueryAsync(db => db.Workflows.AnyAsync(w => w.Id == workflow.Id)));
+    }
+
+    [Fact]
+    public async Task Workflows_LogsPageRendersTheExecutions()
+    {
+        var (host, client) = await StartAsync();
+        await using var __ = host;
+        var (workflowId, ticketId) = await host.QueryAsync(async db =>
+            (await db.Workflows.Select(w => w.Id).SingleAsync(), await db.Tickets.Select(t => t.Id).SingleAsync()));
+        await host.SeedAsync(async db =>
+        {
+            db.WorkflowLogs.Add(new WorkflowLog
+            {
+                WorkflowId = workflowId,
+                TicketId = ticketId,
+                TriggerEvent = "ticket.created",
+                ActionsExecutedJson = """[{"action_type":"change_priority","status":"success","message":"Priority set"}]""",
+                StartedAt = DateTime.UtcNow.AddMilliseconds(-40),
+                CompletedAt = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        });
+
+        var page = await PageAsync(client, "/support/admin/workflows/logs");
+        AssertPage(page, "Escalated/Admin/Workflows/Logs");
+        var props = page.GetProperty("props");
+        var log = Keys(Assert.Single(props.GetProperty("logs").EnumerateArray()), "id", "created_at", "workflow_name",
+            "ticket_reference", "event", "matched", "actions_executed", "duration_ms", "status", "action_details");
+        Assert.Equal("Route refunds", log.GetProperty("workflow_name").GetString());
+        Assert.Equal("ESC-00001", log.GetProperty("ticket_reference").GetString());
+        Assert.Equal(1, log.GetProperty("actions_executed").GetInt32());
+        Keys(log.GetProperty("action_details")[0], "action_type", "status", "message");
+        Keys(Assert.Single(props.GetProperty("workflows").EnumerateArray()), "id", "name");
+
+        var filtered = await PageAsync(client, $"/support/admin/workflows/logs?workflow={workflowId + 1}");
+        Assert.Empty(filtered.GetProperty("props").GetProperty("logs").EnumerateArray());
+
+        var api = await client.GetFromJsonAsync<JsonElement>("/support/admin/workflows/logs");
+        Assert.Single(api.GetProperty("logs").EnumerateArray());
     }
 
     [Fact]

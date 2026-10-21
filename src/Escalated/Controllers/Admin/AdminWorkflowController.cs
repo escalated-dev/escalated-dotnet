@@ -256,7 +256,7 @@ public class AdminWorkflowController : ControllerBase
 
     /// <summary>
     /// The Logs page: the newest executions (filter with <c>?workflow=id</c>), and
-    /// the workflows to filter by.
+    /// the workflows to filter by. A page request gets <c>Escalated/Admin/Workflows/Logs</c>.
     /// </summary>
     [HttpGet("logs")]
     public async Task<IActionResult> Logs([FromQuery] int? workflow, CancellationToken ct)
@@ -270,6 +270,15 @@ public class AdminWorkflowController : ControllerBase
         var logs = await query.OrderByDescending(l => l.CreatedAt).ThenByDescending(l => l.Id).Take(LogsLimit).ToListAsync(ct);
         var workflows = await _db.Workflows.AsNoTracking().OrderBy(w => w.Position).ThenBy(w => w.Id)
             .Select(w => new { id = w.Id, name = w.Name }).ToListAsync(ct);
+
+        if (IsPage)
+        {
+            return UiResults.Render("Escalated/Admin/Workflows/Logs", new
+            {
+                logs = logs.Select(LogToWire).ToList(),
+                workflows = workflows.Select(w => new Dictionary<string, object?> { ["id"] = w.id, ["name"] = w.name }).ToList(),
+            });
+        }
 
         return Ok(new { logs = logs.Select(LogToWire).ToList(), workflows });
     }
