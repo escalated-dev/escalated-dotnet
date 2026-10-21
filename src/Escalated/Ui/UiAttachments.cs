@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 namespace Escalated.Ui;
 
 /// <summary>
-/// Files attached to a reply from a page (<c>attachments[]</c>), checked against
+/// Files attached to a ticket or reply from a page (<c>attachments[]</c>), checked against
 /// <see cref="AttachmentOptions"/> and stored through <see cref="IAttachmentStorage"/>.
 /// </summary>
 internal static class UiAttachments
@@ -43,7 +43,7 @@ internal static class UiAttachments
     }
 
     public static async Task StoreAsync(EscalatedDbContext db, IAttachmentStorage storage, IFormFileCollection? files,
-        int replyId, CancellationToken ct)
+        string attachableType, int attachableId, CancellationToken ct)
     {
         if (files is null || files.Count == 0)
         {
@@ -58,8 +58,8 @@ internal static class UiAttachments
             var path = await storage.PutAsync(name, stream, contentType, ct);
             db.Attachments.Add(new Attachment
             {
-                AttachableType = "reply",
-                AttachableId = replyId,
+                AttachableType = attachableType,
+                AttachableId = attachableId,
                 Filename = name,
                 MimeType = contentType,
                 Size = file.Length,

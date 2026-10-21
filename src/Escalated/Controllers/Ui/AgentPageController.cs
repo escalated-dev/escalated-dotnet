@@ -353,7 +353,7 @@ public class AgentPageController : ControllerBase
         // The reply composer posts both kinds to the reply route, flagging notes.
         var isNote = note || input.Bool("is_internal_note");
         var reply = await _tickets.AddReplyAsync(ticket, body!, this.CurrentUserId(), null, isNote, ct);
-        await UiAttachments.StoreAsync(_db, _storage, input.Files, reply.Id, ct);
+        await UiAttachments.StoreAsync(_db, _storage, input.Files, "reply", reply.Id, ct);
 
         return UiResults.Back(HttpContext, ShowUrl(ticket), success: isNote ? "Note added." : "Reply sent.");
     }
