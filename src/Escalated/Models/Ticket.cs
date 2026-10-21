@@ -55,6 +55,18 @@ public class Ticket
     [MaxLength(255)]
     public string? GuestToken { get; set; }
 
+    /// <summary>
+    /// SHA-256 of the current guest access grant (see <c>GuestAccessService</c>).
+    /// Never serialized; a new grant replaces it, which revokes the previous one.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    [MaxLength(64)]
+    public string? GuestAccessHash { get; set; }
+
+    /// <summary>When the current guest access grant stops working.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DateTime? GuestAccessExpiresAt { get; set; }
+
     // First-class Contact FK (Pattern B convergence). Populated from
     // the public widget submission path or by backfill from GuestEmail.
     public int? ContactId { get; set; }

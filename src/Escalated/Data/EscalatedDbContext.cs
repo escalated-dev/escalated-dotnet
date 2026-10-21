@@ -166,6 +166,7 @@ public class EscalatedDbContext : DbContext
     public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
     public DbSet<ChatRoutingRule> ChatRoutingRules => Set<ChatRoutingRule>();
     public DbSet<Workflow> Workflows => Set<Workflow>();
+    public DbSet<GuestVerification> GuestVerifications => Set<GuestVerification>();
     public DbSet<WorkflowLog> WorkflowLogs => Set<WorkflowLog>();
     public DbSet<WorkflowDelayedAction> WorkflowDelayedActions => Set<WorkflowDelayedAction>();
     public DbSet<NewsletterList> NewsletterLists => Set<NewsletterList>();

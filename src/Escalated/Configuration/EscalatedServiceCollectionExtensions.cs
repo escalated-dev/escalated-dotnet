@@ -159,6 +159,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<WorkflowExecutorService>();
         services.AddScoped<WorkflowRunnerService>();
         services.AddScoped<WorkflowDelayedActionProcessor>();
+        services.AddScoped<GuestAccessService>();
         services.AddScoped<CapacityService>();
         services.AddScoped<SkillRoutingService>();
         services.AddScoped<BusinessHoursCalculator>();

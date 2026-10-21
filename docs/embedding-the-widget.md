@@ -95,7 +95,7 @@ the list it:
 - treats the visitor as a guest even if the same browser is signed in to your
   app: `HttpContext.User` is replaced with an anonymous principal, before and
   again after your authentication middleware (a global MVC authorization
-  filter). Guest tokens in the URL work as before.
+  filter). Guest access grants (`Authorization: Bearer`) work as for any guest.
 
 `Access-Control-Allow-Credentials` is never sent, so browsers send no cookies
 with these requests.
@@ -124,18 +124,21 @@ Returns what the widget needs before it renders:
   "departments": [{ "id": 1, "name": "Sales" }],
   "kb_enabled": true,
   "guest_tickets_enabled": true,
+  "guest_verification_required": true,
   "accepts_metadata": true,
-  "status_lookup_enabled": false
+  "status_lookup_enabled": true
 }
 ```
 
-The widget routes are always mapped, so `enabled` is always true. `color`,
-`position` and `greeting` come from the `widget_color`, `widget_position` and
-`widget_greeting` settings. `departments` lists active departments.
-`kb_enabled` follows `Escalated:KnowledgeBase:Enabled`.
-`status_lookup_enabled` is false: this backend has no mailbox verification, so
-the widget hides its Status tab, and no route looks a ticket up by a claimed
-email address.
+While the `widget_enabled` setting is off (`0` or `false`; it is on by default),
+every widget route answers 403 and `/config` answers `{ "enabled": false }`.
+`color`, `position` and `greeting` come from the `widget_color`,
+`widget_position` and `widget_greeting` settings. `departments` lists active
+departments. `kb_enabled` follows `Escalated:KnowledgeBase:Enabled`, and
+`guest_tickets_enabled` the `guest_tickets_enabled` setting (on by default).
+Guests verify their email with a code before they open a ticket, start a chat
+or look a ticket up ([verified guest access](guest-access.md)), so
+`guest_verification_required` and `status_lookup_enabled` are true.
 
 ### What the shared widget calls
 
@@ -143,9 +146,12 @@ email address.
 |---|---|---|
 | `GET /articles?q=` | | `{ "articles": [{ "title", "slug", "excerpt" }] }`; queries under 2 characters find nothing |
 | `GET /articles/{slug}` | | `{ "title", "slug", "body", "category" }`; 404 unless published |
-| `POST /tickets` | `name`, `email`, `subject`, `description`, `department_id?`, `metadata?` | `reference`, `message`, `guestToken` |
+| `POST /verification` | `email`, `purpose` (`ticket`, `chat`, `lookup`) | 202 `{ "verification_id", "expires_in": 600, "message" }`; the code is emailed |
+| `POST /tickets` | `name`, `email`, `subject`, `description`, `department_id?`, `metadata?`, `verification_id`, `verification_code` | 201 `{ "message", "reference", "guest_access_token", "expires_at" }` |
+| `POST /lookup` | `email`, `reference`, `verification_id`, `verification_code` | `{ "data": [{ "reference", "subject", "guest_access_token", "expires_at" }] }` |
+| `GET /tickets/{reference}` | `Authorization: Bearer <guest_access_token>` | `{ "reference", "subject", "status", "status_label", "status_color", "created_at", "department", "replies" }` |
 | `GET /chat/availability` | `department_id?` | `{ "available": true }` |
-| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?` | `{ "id": "<token>", "status", "agent" }` |
+| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?`, `verification_id`, `verification_code` | `{ "id": "<token>", "status", "agent" }` |
 | `GET /chat/{id}/messages` | | `{ "messages": [{ "id", "body", "is_agent", "author": { "name" }, "created_at" }], "typing": null, "agent", "ended" }` |
 | `POST /chat/{id}/messages` | `{ "body" }` | the stored message |
 | `POST /chat/{id}/typing` | | sent to agents watching the chat over SignalR |

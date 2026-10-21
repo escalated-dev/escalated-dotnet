@@ -70,7 +70,7 @@ public class WidgetEmbeddingTests
 
         var response = await PostTicketAsync(host, Shop);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Equal(Shop, Header(response, "Access-Control-Allow-Origin"));
         Assert.Equal("Retry-After", Header(response, "Access-Control-Expose-Headers"));
         Assert.Contains("Origin", Header(response, "Vary"));
@@ -84,7 +84,7 @@ public class WidgetEmbeddingTests
 
         var response = await PostTicketAsync(host, "https://evil.example.net");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Null(Header(response, "Access-Control-Allow-Origin"));
     }
 
@@ -96,9 +96,9 @@ public class WidgetEmbeddingTests
         var same = await PostTicketAsync(host, "http://localhost");
         var none = await PostTicketAsync(host, null);
 
-        Assert.Equal(HttpStatusCode.OK, same.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, same.StatusCode);
         Assert.Null(Header(same, "Access-Control-Allow-Origin"));
-        Assert.Equal(HttpStatusCode.OK, none.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, none.StatusCode);
         Assert.Null(Header(none, "Access-Control-Allow-Origin"));
     }
 
@@ -262,7 +262,7 @@ public class WidgetEmbeddingTests
 
         Assert.Equal(HttpStatusCode.BadRequest, list.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, tooMany.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, none.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, none.StatusCode);
         Assert.Equal(1, await host.QueryAsync(db => db.Tickets.CountAsync()));
         Assert.Null(await host.QueryAsync(db => db.Tickets.Select(t => t.Metadata).SingleAsync()));
     }
@@ -273,13 +273,13 @@ public class WidgetEmbeddingTests
         await using var host = await StartAsync();
         var request = new HttpRequestMessage(HttpMethod.Post, "/support/widget/chat/start")
         {
-            Content = JsonContent.Create(new
+            Content = JsonContent.Create(await GuestProof.ProvedAsync(host, "/support/widget/chat/start", new
             {
                 name = "Visitor",
                 email = "v@example.com",
                 message = "hello",
                 metadata = new { plan = "pro", embedded_on = "https://spoofed.example" },
-            }),
+            })),
         };
         request.Headers.Add("Origin", Shop);
 
@@ -329,7 +329,7 @@ public class WidgetEmbeddingTests
         Assert.Equal("Hi there! How can we help?", root.GetProperty("greeting").GetString());
         Assert.True(root.GetProperty("kb_enabled").GetBoolean());
         Assert.True(root.GetProperty("guest_tickets_enabled").GetBoolean());
-        Assert.False(root.TryGetProperty("guest_verification_required", out _));
+        Assert.True(root.GetProperty("guest_verification_required").GetBoolean());
         var department = Assert.Single(root.GetProperty("departments").EnumerateArray());
         Assert.Equal("Sales", department.GetProperty("name").GetString());
         Assert.True(department.TryGetProperty("id", out _));
@@ -459,21 +459,21 @@ public class WidgetEmbeddingTests
         return request;
     }
 
-    private static Task<HttpResponseMessage> PostTicketAsync(EscalatedTestHost host, string? origin, object? metadata = null)
+    private static async Task<HttpResponseMessage> PostTicketAsync(EscalatedTestHost host, string? origin, object? metadata = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/support/widget/tickets")
         {
-            Content = JsonContent.Create(new
+            Content = JsonContent.Create(await GuestProof.ProvedAsync(host, "/support/widget/tickets", new
             {
                 subject = "Help",
                 description = "d",
                 name = "Guest",
                 email = "guest@example.com",
                 metadata,
-            }),
+            })),
         };
         if (origin is not null) request.Headers.Add("Origin", origin);
-        return host.Client.SendAsync(request);
+        return await host.Client.SendAsync(request);
     }
 
     private static async Task<JsonDocument> StoredTicketMetadataAsync(EscalatedTestHost host)

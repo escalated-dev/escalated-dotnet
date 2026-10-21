@@ -962,6 +962,58 @@ namespace Escalated.Migrations.Postgres
                     b.ToTable("escalated_escalation_rules", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.GuestVerification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ClientDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("client_digest");
+
+                    b.Property<string>("CodeDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_digest");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmailDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("email_digest");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("EmailDigest", "CreatedAt");
+
+                    b.ToTable("escalated_guest_verifications", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Holiday", b =>
                 {
                     b.Property<int>("Id")
@@ -2080,6 +2132,13 @@ namespace Escalated.Migrations.Postgres
                     b.Property<DateTime?>("FirstResponseDueAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("GuestAccessExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GuestAccessHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("GuestEmail")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -2156,6 +2215,8 @@ namespace Escalated.Migrations.Postgres
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("GuestAccessHash");
 
                     b.HasIndex("GuestEmail");
 

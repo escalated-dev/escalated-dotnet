@@ -140,6 +140,8 @@ app.Run();
 
 The `Email.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
 
+Guests verify their email with an emailed code before they open a ticket, start a chat or look a ticket up, and get an expiring access grant; see [docs/guest-access.md](docs/guest-access.md). That needs working outbound mail.
+
 Notification emails (new ticket, replies, assignment, status, escalation, SLA breach, mentions) go out once `Email.Smtp.Host` is set; until then nothing is sent and that is logged once. See [docs/notification-emails.md](docs/notification-emails.md) for the recipients, settings and threading.
 
 ### 4. Create the tables

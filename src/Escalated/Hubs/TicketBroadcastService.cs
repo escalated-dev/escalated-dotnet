@@ -28,13 +28,16 @@ public sealed class TicketBroadcastService
     private readonly EscalatedDbContext db;
     private readonly TicketRealtimeAudience audience;
     private readonly IHubContext<EscalatedHub>? hub;
+    private readonly bool legacyGuestTokens;
 
-    public TicketBroadcastService(TicketAccess access, EscalatedDbContext db, TicketRealtimeAudience audience, IHubContext<EscalatedHub>? hub = null)
+    public TicketBroadcastService(TicketAccess access, EscalatedDbContext db, TicketRealtimeAudience audience, IHubContext<EscalatedHub>? hub = null,
+        Microsoft.Extensions.Options.IOptions<Escalated.Configuration.EscalatedOptions>? options = null)
     {
         this.access = access;
         this.db = db;
         this.audience = audience;
         this.hub = hub;
+        legacyGuestTokens = options?.Value.GuestAccess.LegacyTokens == true;
     }
 
     public async Task<IReadOnlyList<string>> RecipientsAsync(int ticketId, string room, CancellationToken ct = default)
@@ -56,7 +59,9 @@ public sealed class TicketBroadcastService
                 && await access.CanViewAsync(principal, ticketId, ct);
         }
         return member.GuestTicketId == ticketId && member.GuestToken is not null
-            && await TicketAccessScope.WithoutVisibilityAsync(() => db.Tickets.AsNoTracking().AnyAsync(ticket => ticket.Id == ticketId && ticket.GuestToken == member.GuestToken, ct));
+            && await TicketAccessScope.WithoutVisibilityAsync(() => db.Tickets.AsNoTracking()
+                .Where(Escalated.Services.GuestAccessService.Opens(member.GuestToken, legacyGuestTokens, DateTime.UtcNow))
+                .AnyAsync(ticket => ticket.Id == ticketId, ct));
     }
 
     public async Task SendAsync(int ticketId, string room, string eventName, object payload, string? exceptConnection = null, CancellationToken ct = default)

@@ -33,6 +33,7 @@ public static class EscalatedModelConfiguration
             e.HasIndex(t => t.AssignedTo);
             e.HasIndex(t => t.DepartmentId);
             e.HasIndex(t => t.GuestToken);
+            e.HasIndex(t => t.GuestAccessHash);
             e.HasIndex(t => t.GuestEmail);
             e.HasIndex(t => t.ContactId);
             e.HasIndex(t => new { t.RequesterType, t.RequesterId });
@@ -398,6 +399,13 @@ public static class EscalatedModelConfiguration
             e.ToTable($"{prefix}chat_routing_rules");
             e.HasIndex(r => r.Priority);
             e.HasOne(r => r.Department).WithMany().HasForeignKey(r => r.DepartmentId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<GuestVerification>(e =>
+        {
+            e.ToTable($"{prefix}guest_verifications");
+            e.HasIndex(v => new { v.EmailDigest, v.CreatedAt });
+            e.HasIndex(v => v.ExpiresAt);
         });
 
         modelBuilder.Entity<Workflow>(e =>

@@ -88,7 +88,8 @@ public class TicketAccessTests
     [Fact]
     public async Task Widget_RestrictsAuthenticatedAgentsEvenWithAValidGuestToken()
     {
-        var (host, _, _) = await StartAsync();
+        // A permanent guest token, accepted while the legacy-token transition is on.
+        var (host, _, _) = await StartAsync(o => o.GuestAccess.LegacyTokens = true);
         await using var lease = host;
         using var guest = await host.Client.GetAsync("/support/widget/tickets/private-token");
         Assert.Equal(HttpStatusCode.OK, guest.StatusCode);
@@ -304,7 +305,8 @@ public class TicketAccessTests
         clients.Setup(c => c.Client("admin-connection")).Returns(adminClient.Object);
         var transport = new Mock<IHubContext<EscalatedHub>>();
         transport.SetupGet(h => h.Clients).Returns(clients.Object);
-        var broadcasts = new TicketBroadcastService(access, db, audience, transport.Object);
+        var broadcasts = new TicketBroadcastService(access, db, audience, transport.Object,
+            Options.Create(new EscalatedOptions { GuestAccess = { LegacyTokens = true } }));
         var context = new Mock<HubCallerContext>();
         context.SetupGet(c => c.ConnectionId).Returns("agent-connection");
         context.SetupGet(c => c.User).Returns(await access.PrincipalAsync("agent"));

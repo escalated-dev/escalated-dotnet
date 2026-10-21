@@ -20,6 +20,7 @@ namespace Escalated.Controllers.Widget;
 [ApiController]
 [Route("support/widget/chat")]
 [AllowAnonymous]
+[WidgetEnabled]
 public class WidgetChatController : ControllerBase
 {
     private const int MaxMessageLength = 5000;
@@ -61,7 +62,8 @@ public class WidgetChatController : ControllerBase
     /// visitor's token for every other chat route.
     /// </summary>
     [HttpPost("start")]
-    public async Task<IActionResult> Start([FromBody] StartChatRequest request)
+    [GuestThrottle(GuestThrottleScope.Ticket)]
+    public async Task<IActionResult> Start([FromBody] StartChatRequest request, [FromServices] GuestAccessService access)
     {
         var invalid = WidgetMetadata.Validate(request.Metadata);
         if (invalid is not null)
@@ -76,6 +78,13 @@ public class WidgetChatController : ControllerBase
             ModelState.AddModelError(WidgetDepartments.Field, WidgetDepartments.Invalid);
             return ValidationProblem(ModelState);
         }
+
+        // The visitor proves the email with a `chat` code, as for a ticket.
+        if (GuestAccessService.NormalizeEmail(request.Email) is null)
+            return GuestAccessEndpoints.Invalid(this, new Dictionary<string, string[]> { ["email"] = new[] { "A valid email address is required." } });
+        if (string.IsNullOrEmpty(request.VerificationId) || string.IsNullOrEmpty(request.VerificationCode)
+            || !await access.ConsumeAsync(request.VerificationId, request.VerificationCode, request.Email, "chat", HttpContext.RequestAborted))
+            return GuestAccessEndpoints.InvalidCode(this);
 
         try
         {
@@ -99,6 +108,7 @@ public class WidgetChatController : ControllerBase
         }
         catch (Exception ex)
         {
+            await access.ReleaseAsync(request.VerificationId!, CancellationToken.None);
             return BadRequest(new { error = ex.Message });
         }
     }
@@ -273,6 +283,12 @@ public record StartChatRequest(string? Name, string? Email, string? Message, int
     /// <summary>The shared widget's <c>department_id</c>; wins over <c>departmentId</c>.</summary>
     [JsonPropertyName("department_id")]
     public int? WidgetDepartmentId { get; init; }
+
+    [JsonPropertyName("verification_id")]
+    public string? VerificationId { get; init; }
+
+    [JsonPropertyName("verification_code")]
+    public string? VerificationCode { get; init; }
 }
 
 public record VisitorMessageRequest(string? Body);
