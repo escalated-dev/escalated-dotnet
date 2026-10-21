@@ -204,6 +204,37 @@ public class EmailOptions
 {
     public string Domain { get; set; } = "localhost";
     public string InboundSecret { get; set; } = string.Empty;
+
+    /// <summary>The address notification emails come from (default: <c>support@{Domain}</c>).</summary>
+    public string? FromAddress { get; set; }
+
+    /// <summary>The display name notification emails come from.</summary>
+    public string FromName { get; set; } = "Support";
+
+    /// <summary>
+    /// The SMTP server notification emails are sent through. Until
+    /// <see cref="SmtpOptions.Host"/> is set no email is sent, and that is logged once.
+    /// </summary>
+    public SmtpOptions Smtp { get; set; } = new();
+}
+
+/// <summary>SMTP settings for <c>SmtpMailTransport</c> (configuration section <c>Escalated:Email:Smtp</c>).</summary>
+public class SmtpOptions
+{
+    /// <summary>The SMTP server. Empty (the default) leaves notification emails off.</summary>
+    public string? Host { get; set; }
+
+    public int Port { get; set; } = 587;
+
+    /// <summary>Leave empty for a server that needs no authentication.</summary>
+    public string? Username { get; set; }
+
+    public string? Password { get; set; }
+
+    /// <summary>Use TLS (STARTTLS on 587). On by default.</summary>
+    public bool EnableSsl { get; set; } = true;
+
+    public int TimeoutSeconds { get; set; } = 30;
 }
 
 public class SlaOptions

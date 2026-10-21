@@ -9,6 +9,7 @@ namespace Escalated.Events;
 /// <list type="number">
 ///   <item><see cref="WebhookEventDispatcher"/>, which delivers it to subscribed outbound webhooks;</item>
 ///   <item><see cref="WorkflowEventDispatcher"/>, which runs matching Workflows;</item>
+///   <item><see cref="NotificationEventDispatcher"/>, which sends notifications;</item>
 ///   <item>every <see cref="IEscalatedEventDispatcher"/> the host registered, in registration order.</item>
 /// </list>
 ///
@@ -29,15 +30,18 @@ public sealed class EscalatedEventDispatcher : IEscalatedEventDispatcher
 {
     private readonly WebhookEventDispatcher _webhooks;
     private readonly WorkflowEventDispatcher _workflows;
+    private readonly NotificationEventDispatcher? _notifications;
     private readonly IServiceProvider _services;
 
     public EscalatedEventDispatcher(
         WebhookEventDispatcher webhooks,
         WorkflowEventDispatcher workflows,
-        IServiceProvider services)
+        IServiceProvider services,
+        NotificationEventDispatcher? notifications = null)
     {
         _webhooks = webhooks;
         _workflows = workflows;
+        _notifications = notifications;
         _services = services;
     }
 
@@ -46,6 +50,7 @@ public sealed class EscalatedEventDispatcher : IEscalatedEventDispatcher
     {
         await _webhooks.DispatchAsync(@event, ct);
         await _workflows.DispatchAsync(@event, ct);
+        if (_notifications is not null) await _notifications.DispatchAsync(@event, ct);
 
         foreach (var listener in HostDispatchers())
         {
@@ -61,5 +66,5 @@ public sealed class EscalatedEventDispatcher : IEscalatedEventDispatcher
     /// </summary>
     private IEnumerable<IEscalatedEventDispatcher> HostDispatchers() =>
         _services.GetServices<IEscalatedEventDispatcher>()
-            .Where(d => d is not (EscalatedEventDispatcher or WorkflowEventDispatcher or WebhookEventDispatcher));
+            .Where(d => d is not (EscalatedEventDispatcher or WorkflowEventDispatcher or WebhookEventDispatcher or NotificationEventDispatcher));
 }

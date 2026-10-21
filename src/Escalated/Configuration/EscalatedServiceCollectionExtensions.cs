@@ -90,6 +90,7 @@ public static class EscalatedServiceCollectionExtensions
         // listener: registering one, before or after this call, adds to the
         // pipeline instead of replacing the Workflow bridge.
         services.AddSingleton<WorkflowEventDispatcher>();
+        services.AddSingleton<NotificationEventDispatcher>();
         services.AddSingleton<WebhookEventDispatcher>();
         services.AddScoped<EscalatedEventDispatcher>();
         services.AddScoped<IEscalatedEventDispatcher>(sp => sp.GetRequiredService<EscalatedEventDispatcher>());
@@ -116,10 +117,13 @@ public static class EscalatedServiceCollectionExtensions
         services.AddTransient<IStartupFilter, WidgetCorsStartupFilter>();
         services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options => options.Filters.Add(new WidgetGuestFilter()));
 
-        // No-op default so @-mention (and other) notifications resolve even
-        // before the host wires up its own delivery. Hosts register their
-        // own IEscalatedNotificationSender before/after AddEscalated.
-        services.TryAddSingleton<IEscalatedNotificationSender, NullNotificationSender>();
+        // Notification emails: the default sender picks recipients as the Laravel
+        // reference does and sends through SMTP (Escalated:Email:Smtp). With no SMTP
+        // host it sends nothing and logs that once. Hosts register their own
+        // IEscalatedNotificationSender (or IEscalatedMailTransport) before or after
+        // AddEscalated; NotificationEventDispatcher calls whichever resolves.
+        services.TryAddSingleton<IEscalatedMailTransport, SmtpMailTransport>();
+        services.TryAddScoped<IEscalatedNotificationSender, EmailNotificationSender>();
 
         services.AddEscalatedLocalization();
 
