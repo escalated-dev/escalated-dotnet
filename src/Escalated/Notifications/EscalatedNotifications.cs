@@ -5,8 +5,11 @@ using Escalated.Services.Email;
 namespace Escalated.Notifications;
 
 /// <summary>
-/// Interface for sending Escalated notifications. Host apps implement this
-/// to integrate with their email/notification system.
+/// Sends Escalated's notifications. Escalated calls it for every ticket event
+/// that notifies someone (see <c>NotificationEventDispatcher</c>). The default,
+/// <see cref="EmailNotificationSender"/>, picks the recipients the way the Laravel
+/// reference does and emails them through <see cref="IEscalatedMailTransport"/>.
+/// Host apps register their own implementation to notify another way.
 /// </summary>
 public interface IEscalatedNotificationSender
 {
@@ -21,14 +24,23 @@ public interface IEscalatedNotificationSender
     Task SendMentionNotificationAsync(Reply reply, Ticket ticket, string mentionedUserId, CancellationToken ct = default);
 
     Task SendAssignmentNotificationAsync(Ticket ticket, string agentId, CancellationToken ct = default);
+
+    /// <summary>As <see cref="SendAssignmentNotificationAsync(Ticket, string, CancellationToken)"/>, knowing who assigned it.</summary>
+    Task SendAssignmentNotificationAsync(Ticket ticket, string agentId, string? causerId, CancellationToken ct = default)
+        => SendAssignmentNotificationAsync(ticket, agentId, ct);
+
     Task SendStatusChangeNotificationAsync(Ticket ticket, string oldStatus, string newStatus, CancellationToken ct = default);
+
+    /// <summary>As <see cref="SendStatusChangeNotificationAsync(Ticket, string, string, CancellationToken)"/>, knowing who changed it.</summary>
+    Task SendStatusChangeNotificationAsync(Ticket ticket, string oldStatus, string newStatus, string? causerId, CancellationToken ct = default)
+        => SendStatusChangeNotificationAsync(ticket, oldStatus, newStatus, ct);
     Task SendSlaBreachNotificationAsync(Ticket ticket, string breachType, CancellationToken ct = default);
     Task SendEscalationNotificationAsync(Ticket ticket, CancellationToken ct = default);
     Task SendResolvedNotificationAsync(Ticket ticket, CancellationToken ct = default);
 }
 
 /// <summary>
-/// No-op default implementation. Host apps register their own sender.
+/// Sends nothing. Register it to switch notifications off whatever the email settings.
 /// </summary>
 public class NullNotificationSender : IEscalatedNotificationSender
 {
@@ -80,6 +92,48 @@ public static class EmailTemplates
             ReplyTo = SignedReplyTo(ticket, email),
         };
     }
+
+    /// <summary>
+    /// Any other notice about a ticket: threaded to the ticket's anchor message so
+    /// it lands in the same conversation. <paramref name="html"/> must already be
+    /// encoded; use <see cref="Encode"/> for ticket fields.
+    /// </summary>
+    public static EmailMessage Notice(Ticket ticket, string subject, string html, string recipientEmail, EmailOptions email)
+    {
+        var anchor = MessageIdUtil.BuildMessageId(ticket.Id, null, email.Domain);
+        return new EmailMessage
+        {
+            Subject = subject,
+            Body = html,
+            InReplyTo = anchor,
+            References = anchor,
+            ToEmail = recipientEmail,
+            ReplyTo = SignedReplyTo(ticket, email),
+        };
+    }
+
+    public static EmailMessage Assigned(Ticket ticket, string recipientEmail, EmailOptions email) =>
+        Notice(ticket, $"Assigned to you: [{ticket.Reference}] {ticket.Subject}",
+            $"<p>Ticket <strong>{Encode(ticket.Reference)}</strong> ({Encode(ticket.Subject)}) has been assigned to you.</p>",
+            recipientEmail, email);
+
+    public static EmailMessage StatusChanged(Ticket ticket, string oldStatus, string newStatus, string recipientEmail, EmailOptions email) =>
+        Notice(ticket, $"[{ticket.Reference}] status changed to {newStatus}",
+            $"<p>The status of ticket <strong>{Encode(ticket.Reference)}</strong> ({Encode(ticket.Subject)}) changed from {Encode(oldStatus)} to {Encode(newStatus)}.</p>",
+            recipientEmail, email);
+
+    public static EmailMessage TicketEscalated(Ticket ticket, string recipientEmail, EmailOptions email) =>
+        Notice(ticket, $"Escalated: [{ticket.Reference}] {ticket.Subject}",
+            $"<p>Ticket <strong>{Encode(ticket.Reference)}</strong> ({Encode(ticket.Subject)}) has been escalated.</p>",
+            recipientEmail, email);
+
+    public static EmailMessage Mention(Ticket ticket, Reply note, string recipientEmail, EmailOptions email) =>
+        Notice(ticket, $"You were mentioned on [{ticket.Reference}] {ticket.Subject}",
+            $"<p>You were mentioned in an internal note on ticket <strong>{Encode(ticket.Reference)}</strong>:</p><blockquote>{Encode(note.Body)}</blockquote>",
+            recipientEmail, email);
+
+    /// <summary>HTML-encodes a ticket field for an email body.</summary>
+    public static string Encode(string? value) => System.Net.WebUtility.HtmlEncode(value ?? string.Empty);
 
     public static EmailMessage SlaBreachAlert(Ticket ticket, string breachType, string recipientEmail, EmailOptions email)
     {

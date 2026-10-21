@@ -140,6 +140,8 @@ app.Run();
 
 The `Email.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
 
+Notification emails (new ticket, replies, assignment, status, escalation, SLA breach, mentions) go out once `Email.Smtp.Host` is set; until then nothing is sent and that is logged once. See [docs/notification-emails.md](docs/notification-emails.md) for the recipients, settings and threading.
+
 ### 4. Create the tables
 
 The package ships its migrations for SQLite, PostgreSQL and SQL Server. Apply them at startup:
