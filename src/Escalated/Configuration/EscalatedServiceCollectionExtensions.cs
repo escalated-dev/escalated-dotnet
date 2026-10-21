@@ -136,6 +136,8 @@ public static class EscalatedServiceCollectionExtensions
         services.TryAddScoped<Escalated.Ui.IEscalatedUiRootView, Escalated.Ui.DefaultEscalatedUiRootView>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Ui.EscalatedUiSharedProps>());
         services.AddScoped<Escalated.Ui.UiPresenter>();
+        services.TryAddSingleton(sp => new Escalated.Ui.UiPresence(sp.GetService<TimeProvider>()));
+        services.AddScoped<Escalated.Controllers.Ui.TicketPageServices>();
 
         // The admin, agent and customer authorization policies the controllers
         // require. A host policy of the same name takes precedence.

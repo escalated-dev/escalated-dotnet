@@ -76,6 +76,26 @@ public sealed class UiPresenter
             .Select(t => new Dictionary<string, object?> { ["id"] = t.Id, ["name"] = t.Name, ["color"] = t.Color }).ToList();
 
     /// <summary>
+    /// Staff as <c>{id, name, email}</c>, for the assignee pickers: everyone holding
+    /// the <c>escalated-agent</c> or <c>escalated-admin</c> role, as escalated-laravel
+    /// lists the users its agent and admin gates pass.
+    /// </summary>
+    public async Task<List<Dictionary<string, object?>>> AgentOptionsAsync(CancellationToken ct = default)
+    {
+        var ids = await _db.RoleUsers.AsNoTracking()
+            .Where(ru => ru.Role != null && (ru.Role.Slug == "escalated-agent" || ru.Role.Slug == "escalated-admin"))
+            .Select(ru => ru.UserId).Distinct().ToListAsync(ct);
+
+        var agents = new List<Dictionary<string, object?>>();
+        foreach (var id in ids.OrderBy(i => i, StringComparer.Ordinal))
+        {
+            agents.Add((await UserAsync(id, ct))!);
+        }
+
+        return agents.OrderBy(a => a["name"] as string, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>
     /// Tickets for a list (queue, dashboard, customer index), with requester,
     /// assignee, department, tags and the latest reply loaded in a few queries.
     /// </summary>
