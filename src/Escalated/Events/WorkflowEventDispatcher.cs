@@ -51,6 +51,23 @@ public class WorkflowEventDispatcher : IEscalatedEventDispatcher
         _logger = logger;
     }
 
+    /// <summary>
+    /// Until disposed, events raised on this async flow do not run Workflows, as
+    /// while a Workflow is executing. Used for actions run outside an event, such
+    /// as delayed actions.
+    /// </summary>
+    internal static IDisposable SuppressNested()
+    {
+        var previous = Running.Value;
+        Running.Value = true;
+        return new Restore(previous);
+    }
+
+    private sealed class Restore(bool previous) : IDisposable
+    {
+        public void Dispose() => Running.Value = previous;
+    }
+
     public async Task DispatchAsync<TEvent>(TEvent @event, CancellationToken ct = default)
         where TEvent : class
     {

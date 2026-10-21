@@ -54,7 +54,7 @@ public class WorkflowRunnerService
 
         if (workflows.Count == 0) return;
 
-        var conditionMap = TicketToConditionMap(ticket);
+        var conditionMap = await ConditionMapAsync(ticket, ct);
 
         foreach (var wf in workflows)
         {
@@ -77,7 +77,7 @@ public class WorkflowRunnerService
 
             try
             {
-                var executed = await _executor.ExecuteAsync(ticket, wf.Actions, ct);
+                var executed = await _executor.ExecuteAsync(ticket, wf.Actions, ct, wf.Id);
                 log.ActionsExecutedJson = SafeSerialize(executed);
                 log.CompletedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync(ct);
@@ -96,10 +96,17 @@ public class WorkflowRunnerService
         }
     }
 
+    /// <summary>Whether <paramref name="wf"/>'s conditions match <paramref name="ticket"/> as stored now.</summary>
+    internal async Task<bool> MatchesAsync(Workflow wf, Ticket ticket, CancellationToken ct = default) =>
+        Evaluate(wf, await ConditionMapAsync(ticket, ct));
+
     /// <summary>
     /// Parse the workflow's <see cref="Workflow.Conditions"/> JSON and
     /// evaluate it against the ticket field-map. Null/blank conditions
-    /// match everything (NestJS parity).
+    /// match everything (NestJS parity). Besides the contract's
+    /// <c>{all}</c>/<c>{any}</c>, it reads the shapes older Workflows were stored
+    /// in: a flat list (treated as <c>all</c>) and Laravel's
+    /// <c>{match, rules}</c> (or the builder's old <c>{match, conditions}</c>).
     /// </summary>
     private bool Evaluate(Workflow wf, Dictionary<string, string> conditionMap)
     {
@@ -109,8 +116,23 @@ public class WorkflowRunnerService
         }
         try
         {
-            var conditions = JsonSerializer.Deserialize<Dictionary<string, object>>(wf.Conditions)
-                             ?? new Dictionary<string, object>();
+            using var doc = JsonDocument.Parse(wf.Conditions);
+            var root = doc.RootElement;
+            var conditions = new Dictionary<string, object>();
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                conditions["all"] = root.Clone();
+            }
+            else if (root.ValueKind == JsonValueKind.Object)
+            {
+                if (root.TryGetProperty("all", out var all)) conditions["all"] = all.Clone();
+                else if (root.TryGetProperty("any", out var any)) conditions["any"] = any.Clone();
+                else if (root.TryGetProperty("rules", out var rules) || root.TryGetProperty("conditions", out rules))
+                {
+                    var match = root.TryGetProperty("match", out var m) && m.ValueKind == JsonValueKind.String && m.GetString() == "any" ? "any" : "all";
+                    conditions[match] = rules.Clone();
+                }
+            }
             return _engine.EvaluateConditions(conditions, conditionMap);
         }
         catch (JsonException ex)
@@ -125,6 +147,25 @@ public class WorkflowRunnerService
     {
         try { return JsonSerializer.Serialize(value); }
         catch { return "[]"; }
+    }
+
+    /// <summary>
+    /// The ticket as the condition fields see it, with its tag names
+    /// (newline-separated, read as a list by <see cref="WorkflowEngine"/>) and the
+    /// <c>hours_since_*</c> ages.
+    /// </summary>
+    private async Task<Dictionary<string, string>> ConditionMapAsync(Ticket ticket, CancellationToken ct)
+    {
+        var map = TicketToConditionMap(ticket);
+        var tags = await _db.TicketTags.AsNoTracking()
+            .Where(tt => tt.TicketId == ticket.Id)
+            .Join(_db.Tags, tt => tt.TagId, t => t.Id, (tt, t) => t.Name)
+            .ToListAsync(ct);
+        map["tags"] = string.Join(WorkflowEngine.ListSeparator, tags);
+        var now = DateTime.UtcNow;
+        map["hours_since_created"] = Math.Floor((now - ticket.CreatedAt).TotalHours).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        map["hours_since_updated"] = Math.Floor((now - ticket.UpdatedAt).TotalHours).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return map;
     }
 
     private static Dictionary<string, string> TicketToConditionMap(Ticket ticket)

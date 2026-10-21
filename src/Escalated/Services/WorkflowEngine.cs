@@ -9,7 +9,15 @@ namespace Escalated.Services;
 public class WorkflowEngine
 {
     public static readonly string[] Operators = { "equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with", "greater_than", "less_than", "greater_or_equal", "less_or_equal", "is_empty", "is_not_empty" };
-    public static readonly string[] ActionTypes = { "change_status", "assign_agent", "change_priority", "add_tag", "remove_tag", "set_department", "add_note", "send_webhook", "set_type", "delay", "add_follower", "send_notification" };
+    /// <summary>
+    /// The actions a Workflow can be saved with: the contract's core catalog
+    /// (escalated-developer-context <c>domain-model/workflow-admin-contract.md</c>)
+    /// plus the optional ones <see cref="WorkflowExecutorService"/> runs.
+    /// </summary>
+    public static readonly string[] ActionTypes = { "change_status", "change_priority", "add_tag", "remove_tag", "set_department", "assign_agent", "add_note", "insert_canned_reply", "add_follower", "delay", "send_webhook", "set_type" };
+
+    /// <summary>Older action names the executor still runs and the admin still accepts, never offers.</summary>
+    public static readonly string[] LegacyActionTypes = { "move_department", "add_internal_note" };
     /// <summary>
     /// The triggers a Workflow can be saved with: the shared event vocabulary
     /// (ADR 2026-10-21) minus <c>chat.transferred</c>, which this package does not
@@ -85,7 +93,31 @@ public class WorkflowEngine
             return op == "equals" ? equal : op == "not_equals" && !equal;
         }
         var actual = ticket.GetValueOrDefault(field, "");
+        if (field == "tags")
+        {
+            return ApplyListOperator(op, actual.Split(ListSeparator, StringSplitOptions.RemoveEmptyEntries), expected);
+        }
         return ApplyOperator(op, actual, expected);
+    }
+
+    /// <summary>Separates the values of a list field (<c>tags</c>) in the condition map.</summary>
+    public const char ListSeparator = '\n';
+
+    /// <summary>
+    /// <c>tags</c> is a list: <c>equals</c>/<c>contains</c> mean the ticket has the tag
+    /// (case-insensitive), the <c>not_*</c> forms mean it does not.
+    /// </summary>
+    private static bool ApplyListOperator(string op, string[] values, string expected)
+    {
+        var has = values.Any(v => string.Equals(v.Trim(), expected.Trim(), StringComparison.OrdinalIgnoreCase));
+        return op switch
+        {
+            "equals" or "contains" => has,
+            "not_equals" or "not_contains" => !has,
+            "is_empty" => values.Length == 0,
+            "is_not_empty" => values.Length > 0,
+            _ => false,
+        };
     }
 
     public static bool ApplyOperator(string op, string actual, string expected)

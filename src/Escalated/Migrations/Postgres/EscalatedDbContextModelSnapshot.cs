@@ -3,7 +3,6 @@ using System;
 using Escalated.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,7 +13,6 @@ namespace Escalated.Migrations.Postgres
     [DbContext(typeof(EscalatedDbContext))]
     partial class EscalatedDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
@@ -2511,6 +2509,58 @@ namespace Escalated.Migrations.Postgres
                     b.ToTable("escalated_workflows", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.WorkflowDelayedAction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Cancelled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExecuteAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("execute_at");
+
+                    b.Property<bool>("Executed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("RemainingActions")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("remaining_actions");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ticket_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("WorkflowId")
+                        .HasColumnType("integer")
+                        .HasColumnName("workflow_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex("WorkflowId");
+
+                    b.HasIndex("ExecuteAt", "Executed", "Cancelled");
+
+                    b.ToTable("escalated_delayed_actions", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.WorkflowLog", b =>
                 {
                     b.Property<int>("Id")
@@ -2980,6 +3030,21 @@ namespace Escalated.Migrations.Postgres
                         .IsRequired();
 
                     b.Navigation("Webhook");
+                });
+
+            modelBuilder.Entity("Escalated.Models.WorkflowDelayedAction", b =>
+                {
+                    b.HasOne("Escalated.Models.Ticket", null)
+                        .WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Escalated.Models.Workflow", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Escalated.Models.WorkflowLog", b =>
