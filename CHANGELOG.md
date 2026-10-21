@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- **Migrations now create the whole schema.** The package ships one baseline migration per provider (SQLite, PostgreSQL, SQL Server) and picks the set for the provider in use. Call `await app.Services.MigrateEscalatedDatabaseAsync()` at startup, or run `dotnet ef database update --context EscalatedDbContext`. The old README step `dotnet ef migrations add` is no longer needed.
+- A database created with `EnsureCreated()` (as the demo host did) is adopted by `MigrateEscalatedDatabaseAsync()`: the baseline is recorded as applied and only later migrations run. Tables added to the model after that database was created are not back-filled; compare against the baseline if you skipped versions.
+- Hosts that keep Escalated's migrations in their own assembly (`MigrationsAssembly("MyApp")`) are unaffected.
+- Inbound email attachments are now stored. Configure `Attachments.LocalRoot` or register your own `IAttachmentStorage`.
+
+### Fixed
+- An empty database got no Escalated tables: the bundled migrations only added deltas on top of tables nothing created. `Migrate()` on an empty SQLite database failed in the first migration.
+- Inbound email attachments were dropped. Inline attachments are now stored through `IAttachmentStorage` (default: local files under `Attachments.LocalRoot`), provider-hosted ones are downloaded, files over `MaxSizeKb` or with executable extensions are skipped, and at most `MaxPerReply` are kept. Ticket and reply screens now load them (`EscalatedDbContext.LoadAttachmentsAsync`).
+- Webhook and attachment-download URLs could reach internal hosts: only literal private IPs were refused. The HTTP handler now resolves the host itself, refuses the connection if any resolved address is loopback, private, link-local or cloud-metadata, connects to the address it checked, never follows redirects and ignores the system proxy.
+- The SignalR hub accepted joins without Escalated's services registered, and in the default visibility mode. Every join is now authorized: staff rooms need a staff user, a ticket room needs access to the ticket or its guest token, and a chat room needs access or that chat's visitor token.
+- Creating a role whose name slugs onto an existing role ("Escalated Admin", or "A/B" next to "A B") returned 500. Slugs are now suffixed until free, and a duplicate name answers 422.
+
 ## [0.2.1] - 2026-10-19
 
 ### Changed

@@ -88,6 +88,13 @@ public static class EscalatedModelConfiguration
             e.HasIndex(a => new { a.AttachableType, a.AttachableId });
         });
 
+        // Attachments are polymorphic (AttachableType + AttachableId), which EF cannot
+        // express as a relationship. Left to convention, these collections became
+        // shadow TicketId/ReplyId columns nothing ever wrote, so Include() always
+        // came back empty. They are filled by EscalatedDbContext.LoadAttachmentsAsync.
+        modelBuilder.Entity<Ticket>().Ignore(t => t.Attachments);
+        modelBuilder.Entity<Reply>().Ignore(r => r.Attachments);
+
         modelBuilder.Entity<TicketActivity>(e =>
         {
             e.ToTable($"{prefix}ticket_activities");

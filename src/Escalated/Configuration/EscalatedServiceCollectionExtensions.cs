@@ -66,6 +66,24 @@ public static class EscalatedServiceCollectionExtensions
         services.AddHttpClient();
         services.TryAddSingleton(TimeProvider.System);
 
+        // Webhook deliveries and inbound attachment downloads go to URLs that admins
+        // and email senders choose. Their handler resolves the host itself, refuses
+        // loopback/private/link-local/metadata addresses, and never follows redirects.
+        services.AddHttpClient(WebhookDispatcher.HttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => OutboundUrlGuard.CreateHandler());
+        services.AddHttpClient<AttachmentDownloader>()
+            .ConfigurePrimaryHttpMessageHandler(() => OutboundUrlGuard.CreateHandler());
+        services.TryAddSingleton(sp => new AttachmentDownloaderOptions
+        {
+            MaxBytes = (long)sp.GetRequiredService<IOptions<EscalatedOptions>>().Value.Attachments.MaxSizeKb * 1024,
+        });
+        services.TryAddSingleton<IAttachmentStorage>(sp =>
+        {
+            var root = sp.GetRequiredService<IOptions<EscalatedOptions>>().Value.Attachments.LocalRoot;
+            var contentRoot = sp.GetService<Microsoft.Extensions.Hosting.IHostEnvironment>()?.ContentRootPath ?? AppContext.BaseDirectory;
+            return new LocalFileAttachmentStorage(Path.IsPathRooted(root) ? root : Path.Combine(contentRoot, root));
+        });
+
         // Domain events. Escalated's services dispatch through EscalatedEventDispatcher,
         // which delivers webhooks, runs Workflows, then hands the event to every
         // IEscalatedEventDispatcher the host registered. A host dispatcher is a

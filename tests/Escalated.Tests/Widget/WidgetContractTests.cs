@@ -462,23 +462,6 @@ public class WidgetContractTests
         }
     }
 
-    [Fact]
-    public void Migration_AddsTheIndexedVisitorTokenHash()
-    {
-        var options = new DbContextOptionsBuilder<EscalatedDbContext>().UseSqlServer("Server=localhost;Database=unused;Trusted_Connection=True").Options;
-        using var db = new EscalatedDbContext(options);
-        var migration = new ChatSessionVisitorToken { ActiveProvider = db.Database.ProviderName! };
-        var generator = db.GetService<IMigrationsSqlGenerator>();
-        var model = db.GetService<IDesignTimeModel>().Model;
-
-        var up = string.Join("\n", generator.Generate(migration.UpOperations, model).Select(c => c.CommandText));
-        var down = string.Join("\n", generator.Generate(migration.DownOperations, model).Select(c => c.CommandText));
-
-        Assert.Contains("[VisitorTokenHash] nvarchar(64) NULL", up);
-        Assert.Contains("IX_escalated_chat_sessions_VisitorTokenHash", up);
-        Assert.Contains("DROP COLUMN [VisitorTokenHash]", down);
-    }
-
     private static Task<EscalatedTestHost> StartAsync(
         Action<EscalatedOptions>? configure = null,
         Action<IServiceCollection>? configureServices = null) =>

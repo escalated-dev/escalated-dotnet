@@ -180,62 +180,12 @@ public class AttachmentDownloader
             throw new InvalidOperationException("Attachment download URL must use HTTP or HTTPS.");
         }
 
-        if (IsLocalAddress(uri.Host))
+        if (!OutboundUrlGuard.TryValidateUri(downloadUrl, out _))
         {
             throw new InvalidOperationException("Attachment download URL cannot target a local address.");
         }
 
         return uri;
-    }
-
-    private static bool IsLocalAddress(string host)
-    {
-        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-            host.Equals("localhost.localdomain", StringComparison.OrdinalIgnoreCase) ||
-            host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return IPAddress.TryParse(host, out var address) && IsPrivateOrLocalAddress(address);
-    }
-
-    private static bool IsPrivateOrLocalAddress(IPAddress address)
-    {
-        if (IPAddress.IsLoopback(address) ||
-            address.Equals(IPAddress.Any) ||
-            address.Equals(IPAddress.IPv6Any))
-        {
-            return true;
-        }
-
-        if (address.IsIPv4MappedToIPv6)
-        {
-            address = address.MapToIPv4();
-        }
-
-        var bytes = address.GetAddressBytes();
-        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-        {
-            return bytes[0] == 0 ||
-                   bytes[0] == 10 ||
-                   bytes[0] == 127 ||
-                   bytes[0] == 169 && bytes[1] == 254 ||
-                   bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31 ||
-                   bytes[0] == 192 && bytes[1] == 168 ||
-                   bytes[0] >= 224;
-        }
-
-        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-        {
-            return address.IsIPv6LinkLocal ||
-                   address.IsIPv6Multicast ||
-                   address.IsIPv6SiteLocal ||
-                   bytes[0] == 0xfc ||
-                   bytes[0] == 0xfd;
-        }
-
-        return false;
     }
 
     private static async Task<byte[]> ReadContentWithinLimitAsync(

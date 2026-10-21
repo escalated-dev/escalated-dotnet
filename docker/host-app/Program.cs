@@ -34,7 +34,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var ctx = scope.ServiceProvider.GetRequiredService<EscalatedDbContext>();
-    ctx.Database.EnsureCreated();
+    await EscalatedDatabase.MigrateAsync(ctx);
     var now = DateTime.UtcNow;
 
     if (!ctx.AgentProfiles.Any())
