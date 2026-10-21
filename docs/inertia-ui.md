@@ -150,6 +150,9 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Agent/Dashboard` | `GET support/agent` |
 | `Escalated/Agent/TicketIndex` | `GET support/agent/tickets` |
 | `Escalated/Agent/TicketShow` | `GET support/agent/tickets/{reference}` |
+| `Escalated/Customer/Index` | `GET support` |
+| `Escalated/Customer/Create` | `GET support/create` |
+| `Escalated/Customer/Show` | `GET support/{reference}` |
 
 Agent form posts (`support/agent/tickets/{reference}/…`): `reply`, `note` (files
 in `attachments[]` are stored through `IAttachmentStorage`, within
@@ -157,7 +160,14 @@ in `attachments[]` are stored through `IAttachmentStorage`, within
 `tags` (sets the ticket's tags to `tag_ids`), `department`, `macro`, `follow`
 (toggles) and `actions/{action}`, plus `POST support/agent/tickets/bulk`.
 
+Customer form posts: `POST support` (open a ticket; `subject`, `description`,
+`priority`, `department_id`, `ticket_type`, `attachments[]`), and on
+`support/{reference}/…`: `reply`, `close` (403 unless `AllowCustomerClose`),
+`reopen`, `rate` (1-5 with an optional comment, once, on a resolved or closed
+ticket). A customer reaches only tickets they opened (anyone else's is a 404),
+sees only public replies, and sees staff by display name only.
+
 ### Not served yet
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/ApiTokens/Index, Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/CannedResponses/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Departments/Form, Admin/Departments/Index, Admin/EscalationRules/Form, Admin/EscalationRules/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Macros/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Roles/Form, Admin/Roles/Index, Admin/Settings, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/SlaPolicies/Form, Admin/SlaPolicies/Index, Admin/Statuses/Form, Admin/Statuses/Index, Admin/Tags/Index, Admin/Tickets/Index, Admin/Tickets/Show, Admin/Users/Index, Admin/Webhooks/DeliveryLog, Admin/Webhooks/Form, Admin/Webhooks/Index, Admin/Workflows/Builder, Admin/Workflows/Form, Admin/Workflows/Index, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/Create, Customer/Index, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Customer/Show, Error, Guest/Create, Guest/Show, Plugin/Page.
+`Escalated/`): Admin/ApiTokens/Index, Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/CannedResponses/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Departments/Form, Admin/Departments/Index, Admin/EscalationRules/Form, Admin/EscalationRules/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Macros/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Roles/Form, Admin/Roles/Index, Admin/Settings, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/SlaPolicies/Form, Admin/SlaPolicies/Index, Admin/Statuses/Form, Admin/Statuses/Index, Admin/Tags/Index, Admin/Tickets/Index, Admin/Tickets/Show, Admin/Users/Index, Admin/Webhooks/DeliveryLog, Admin/Webhooks/Form, Admin/Webhooks/Index, Admin/Workflows/Builder, Admin/Workflows/Form, Admin/Workflows/Index, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Error, Guest/Create, Guest/Show, Plugin/Page.

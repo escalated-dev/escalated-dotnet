@@ -255,6 +255,112 @@ public sealed class UiPresenter
     };
 
     /// <summary>
+    /// A ticket as its requester may see it (escalated-laravel <c>CustomerTicketPayload</c>):
+    /// an allow-list of fields, public replies only, and staff reduced to a display
+    /// name with no id or email. Used for the customer list rows and, with
+    /// <paramref name="ticket"/>'s replies and attachments loaded, for <c>Customer/Show</c>.
+    /// </summary>
+    public async Task<Dictionary<string, object?>> CustomerTicketAsync(Ticket ticket, bool withThread, CancellationToken ct = default)
+    {
+        var requester = await RequesterAsync(ticket, ct);
+        var department = ticket.Department ?? (ticket.DepartmentId is { } departmentId
+            ? await _db.Departments.AsNoTracking().FirstOrDefaultAsync(d => d.Id == departmentId, ct)
+            : null);
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["id"] = ticket.Id,
+            ["reference"] = ticket.Reference,
+            ["subject"] = ticket.Subject,
+            ["description"] = ticket.Description ?? string.Empty,
+            ["status"] = ticket.Status.ToValue(),
+            ["priority"] = ticket.Priority.ToValue(),
+            ["ticket_type"] = ticket.TicketType,
+            ["channel"] = ticket.ChatSessions.Count > 0 ? "chat" : null,
+            ["department"] = department is null ? null : new Dictionary<string, object?> { ["name"] = department.Name },
+            ["requester"] = requester is null ? null : new Dictionary<string, object?> { ["name"] = requester["name"], ["email"] = requester["email"] },
+            ["requester_name"] = requester?["name"],
+            ["requester_email"] = requester?["email"],
+            ["assignee"] = ticket.AssignedTo is null ? null : await StaffAsync(ticket.AssignedTo, ct),
+            ["resolved_at"] = ticket.ResolvedAt,
+            ["closed_at"] = ticket.ClosedAt,
+            ["created_at"] = ticket.CreatedAt,
+            ["updated_at"] = ticket.UpdatedAt,
+        };
+
+        var publicReplies = withThread
+            ? ticket.Replies.Where(r => !r.IsInternalNote).OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id).ToList()
+            : await _db.Replies.AsNoTracking().Where(r => r.TicketId == ticket.Id && !r.IsInternalNote)
+                .OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id).Take(1).ToListAsync(ct);
+        payload["last_reply_at"] = publicReplies.FirstOrDefault()?.CreatedAt;
+
+        if (!withThread)
+        {
+            return payload;
+        }
+
+        var replies = new List<Dictionary<string, object?>>();
+        foreach (var reply in publicReplies)
+        {
+            replies.Add(new Dictionary<string, object?>
+            {
+                ["id"] = reply.Id,
+                ["body"] = reply.Body,
+                ["is_internal_note"] = false,
+                ["is_pinned"] = reply.IsPinned,
+                ["author"] = await CustomerReplyAuthorAsync(reply, ticket, requester, ct),
+                ["attachments"] = reply.Attachments.Select(CustomerAttachment).ToList(),
+                ["created_at"] = reply.CreatedAt,
+            });
+        }
+
+        payload["replies"] = replies;
+        payload["attachments"] = ticket.Attachments.Select(CustomerAttachment).ToList();
+        payload["satisfaction_rating"] = ticket.SatisfactionRating is { } rating
+            ? new Dictionary<string, object?> { ["rating"] = rating.Rating, ["comment"] = rating.Comment }
+            : null;
+        return payload;
+    }
+
+    /// <summary>The requester's own replies keep their identity; staff are a display name only.</summary>
+    private async Task<Dictionary<string, object?>> CustomerReplyAuthorAsync(Reply reply, Ticket ticket,
+        Dictionary<string, object?>? requester, CancellationToken ct)
+    {
+        if (reply.AuthorId is null || (ticket.RequesterId is not null && reply.AuthorId == ticket.RequesterId))
+        {
+            return new Dictionary<string, object?>
+            {
+                ["id"] = reply.AuthorId ?? (object)0,
+                ["name"] = requester?["name"] ?? "Guest",
+                ["email"] = requester?["email"] ?? string.Empty,
+            };
+        }
+
+        return await StaffAsync(reply.AuthorId, ct);
+    }
+
+    private async Task<Dictionary<string, object?>> StaffAsync(string userId, CancellationToken ct)
+    {
+        var user = await UserAsync(userId, ct);
+        var name = user?["name"] as string;
+        return new Dictionary<string, object?>
+        {
+            ["id"] = 0,
+            ["name"] = string.IsNullOrEmpty(name) || name == userId ? "Support" : name,
+            ["email"] = string.Empty,
+        };
+    }
+
+    private static Dictionary<string, object?> CustomerAttachment(Attachment attachment) => new()
+    {
+        ["id"] = attachment.Id,
+        ["original_filename"] = attachment.Filename,
+        ["mime_type"] = attachment.MimeType,
+        ["size"] = attachment.Size,
+        ["url"] = attachment.Url,
+    };
+
+    /// <summary>
     /// A Laravel-style length-aware paginator: <c>data</c>, <c>current_page</c>,
     /// <c>last_page</c>, <c>per_page</c>, <c>total</c>, <c>from</c>, <c>to</c> and
     /// <c>links</c> (previous, numbered pages, next).
