@@ -5,7 +5,10 @@ using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Escalated.Authorization;
+using Escalated.Configuration;
+using Escalated.Ui;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 
 namespace Escalated.Controllers.Admin;
 
@@ -27,6 +30,11 @@ namespace Escalated.Controllers.Admin;
 /// the shared Vue page (<c>Escalated/Admin/Users/Index</c>) is unchanged.
 /// Hosts wiring the gates differently (Identity claims, Spatie-style
 /// custom pivots) can override this controller in their own routes.
+///
+/// <para>With <c>Escalated:Ui:Enabled</c> on, a page request (an Inertia visit or a
+/// browser GET) gets the page itself, and a page's role toggle a 303 back with a
+/// flash, as escalated-laravel's <c>UserController</c> answers. JSON callers are
+/// unchanged.</para>
 /// </summary>
 [ApiController]
 [Route("support/admin/users")]
@@ -38,12 +46,19 @@ public class AdminUsersController : ControllerBase
 
     private readonly EscalatedDbContext _db;
     private readonly IUserDirectory _directory;
+    private readonly EscalatedOptions _options;
 
-    public AdminUsersController(EscalatedDbContext db, IUserDirectory directory)
+    public AdminUsersController(EscalatedDbContext db, IUserDirectory directory, IOptions<EscalatedOptions>? options = null)
     {
         _db = db;
         _directory = directory;
+        _options = options?.Value ?? new EscalatedOptions();
     }
+
+    /// <summary>A request for the page rather than the JSON, with the UI on.</summary>
+    private bool IsPage => _options.Ui.Enabled && EscalatedPageAttribute.IsPageRequest(Request);
+
+    private string IndexUrl => $"/{_options.RoutePrefix.Trim('/')}/admin/users";
 
     /// <summary>
     /// GET /support/admin/users — paged + searchable list of host users, each
@@ -101,6 +116,17 @@ public class AdminUsersController : ControllerBase
         var total = dirPage.Total;
         var lastPage = total == 0 ? 1 : (int)Math.Ceiling(total / (double)perPage);
 
+        if (IsPage)
+        {
+            var query = new Dictionary<string, string?> { ["search"] = string.IsNullOrEmpty(term) ? null : term };
+            return UiResults.Render("Escalated/Admin/Users/Index", new
+            {
+                users = UiPresenter.Paginator(rows.Cast<object?>().ToList(), total, safePage, perPage, Request.Path, query),
+                filters = new Dictionary<string, object?> { ["search"] = term },
+                currentUserId = this.CurrentUserId(),
+            });
+        }
+
         return Ok(new IndexResponse(
             Users: new PaginatedUsers(rows, safePage, perPage, total, lastPage),
             Filters: new IndexFilters(term),
@@ -150,7 +176,9 @@ public class AdminUsersController : ControllerBase
 
         if (request is null || (request.Role != "admin" && request.Role != "agent"))
         {
-            return BadRequest(new { error = "Role must be 'admin' or 'agent'." });
+            return IsPage
+                ? UiResults.Back(HttpContext, IndexUrl, errors: new Dictionary<string, string> { ["role"] = "The selected role is invalid." })
+                : BadRequest(new { error = "Role must be 'admin' or 'agent'." });
         }
 
         var target = await _directory.FindAsync(userId, ct);
@@ -166,7 +194,9 @@ public class AdminUsersController : ControllerBase
             && !string.IsNullOrEmpty(currentUserId)
             && currentUserId == target.Id)
         {
-            return BadRequest(new { error = "You cannot remove your own admin role." });
+            return IsPage
+                ? UiResults.Back(HttpContext, IndexUrl, error: "You cannot remove your own admin role.")
+                : BadRequest(new { error = "You cannot remove your own admin role." });
         }
 
         var adminRole = await EnsureRoleAsync(AdminRoleSlug, "Escalated Admin", ct);
@@ -197,7 +227,7 @@ public class AdminUsersController : ControllerBase
 
         await _db.SaveChangesAsync(ct);
 
-        return Ok(new { message = "User updated." });
+        return IsPage ? UiResults.Back(HttpContext, IndexUrl, success: "User updated.") : Ok(new { message = "User updated." });
     }
 
     private async Task<Role> EnsureRoleAsync(string slug, string name, CancellationToken ct)

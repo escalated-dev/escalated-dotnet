@@ -137,6 +137,7 @@ public static class EscalatedServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Ui.EscalatedUiSharedProps>());
         services.AddScoped<Escalated.Ui.UiPresenter>();
         services.TryAddSingleton(sp => new Escalated.Ui.UiPresence(sp.GetService<TimeProvider>()));
+        services.TryAddSingleton<Escalated.Middleware.ApiTokenAuthState>();
         services.AddScoped<Escalated.Controllers.Ui.TicketPageServices>();
 
         // The admin, agent and customer authorization policies the controllers
