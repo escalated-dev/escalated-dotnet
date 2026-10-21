@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The bundled widget is now `@escalated-dev/escalated` 0.12.3. It keeps its script settings when `embed.js` is placed in the page `<head>`, and Enter no longer picks a stale mention suggestion.
+
 ### Upgrading
 - **Migrations now create the whole schema.** The package ships one baseline migration per provider (SQLite, PostgreSQL, SQL Server) and picks the set for the provider in use. Call `await app.Services.MigrateEscalatedDatabaseAsync()` at startup, or run `dotnet ef database update --context EscalatedDbContext`. The old README step `dotnet ef migrations add` is no longer needed.
 - A database created with `EnsureCreated()` (as the demo host did) is adopted by `MigrateEscalatedDatabaseAsync()`: the baseline is recorded as applied and only later migrations run. Tables added to the model after that database was created are not back-filled; compare against the baseline if you skipped versions.
