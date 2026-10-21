@@ -39,7 +39,7 @@ public class BaselineMigrationTests
         var tables = await SqliteTablesAsync(connection);
         var expected = db.Model.GetEntityTypes().Select(e => e.GetTableName()).Where(t => t is not null).Distinct().ToList();
         Assert.NotEmpty(expected);
-        Assert.Empty(expected.Where(t => !tables.Contains(t!)));
+        Assert.All(expected, table => Assert.Contains(table!, tables));
         Assert.Contains("escalated_tickets", tables);
         Assert.Contains("escalated_department_agent", tables);
 
