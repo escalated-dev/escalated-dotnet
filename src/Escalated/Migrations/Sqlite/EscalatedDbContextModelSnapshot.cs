@@ -915,6 +915,58 @@ namespace Escalated.Migrations.Sqlite
                     b.ToTable("escalated_escalation_rules", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.GuestVerification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClientDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("client_digest");
+
+                    b.Property<string>("CodeDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("code_digest");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmailDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("email_digest");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("EmailDigest", "CreatedAt");
+
+                    b.ToTable("escalated_guest_verifications", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Holiday", b =>
                 {
                     b.Property<int>("Id")
@@ -1985,6 +2037,13 @@ namespace Escalated.Migrations.Sqlite
                     b.Property<DateTime?>("FirstResponseDueAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("GuestAccessExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GuestAccessHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("GuestEmail")
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
@@ -2061,6 +2120,8 @@ namespace Escalated.Migrations.Sqlite
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("GuestAccessHash");
 
                     b.HasIndex("GuestEmail");
 

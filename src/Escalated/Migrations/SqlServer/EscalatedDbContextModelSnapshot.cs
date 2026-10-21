@@ -962,6 +962,58 @@ namespace Escalated.Migrations.SqlServer
                     b.ToTable("escalated_escalation_rules", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.GuestVerification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ClientDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("client_digest");
+
+                    b.Property<string>("CodeDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("code_digest");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("email_digest");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("EmailDigest", "CreatedAt");
+
+                    b.ToTable("escalated_guest_verifications", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Holiday", b =>
                 {
                     b.Property<int>("Id")
@@ -2080,6 +2132,13 @@ namespace Escalated.Migrations.SqlServer
                     b.Property<DateTime?>("FirstResponseDueAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("GuestAccessExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuestAccessHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("GuestEmail")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -2156,6 +2215,8 @@ namespace Escalated.Migrations.SqlServer
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("GuestAccessHash");
 
                     b.HasIndex("GuestEmail");
 

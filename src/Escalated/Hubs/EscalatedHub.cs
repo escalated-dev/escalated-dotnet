@@ -22,12 +22,15 @@ public class EscalatedHub : Hub
     private readonly EscalatedDbContext? db;
     private readonly TicketRealtimeAudience? audience;
     private readonly TicketBroadcastService? broadcasts;
-    public EscalatedHub(TicketAccess? access = null, EscalatedDbContext? db = null, TicketRealtimeAudience? audience = null, TicketBroadcastService? broadcasts = null)
+    private readonly bool legacyGuestTokens;
+    public EscalatedHub(TicketAccess? access = null, EscalatedDbContext? db = null, TicketRealtimeAudience? audience = null, TicketBroadcastService? broadcasts = null,
+        Microsoft.Extensions.Options.IOptions<Escalated.Configuration.EscalatedOptions>? options = null)
     {
         this.access = access;
         this.db = db;
         this.audience = audience;
         this.broadcasts = broadcasts;
+        legacyGuestTokens = options?.Value.GuestAccess.LegacyTokens == true;
     }
 
     private bool Restricted => access?.IsRestricted == true;
@@ -53,7 +56,7 @@ public class EscalatedHub : Hub
             var chatToken = query?["chat_token"].ToString();
             var allowed = false;
             if (!string.IsNullOrEmpty(token))
-                allowed = await TicketAccessScope.WithoutVisibilityAsync(() => db.Tickets.AnyAsync(ticket => ticket.Id == ticketId && ticket.GuestToken == token));
+                allowed = await TicketAccessScope.WithoutVisibilityAsync(() => db.Tickets.Where(GuestAccessService.Opens(token, legacyGuestTokens, DateTime.UtcNow)).AnyAsync(ticket => ticket.Id == ticketId));
             if (!allowed && chatSessionId is not null && !string.IsNullOrEmpty(chatToken))
             {
                 var hash = ChatSessionService.HashVisitorToken(chatToken);

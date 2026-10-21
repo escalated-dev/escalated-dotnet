@@ -9,6 +9,9 @@ public enum GuestThrottleScope
 {
     Ticket,
     Reply,
+
+    /// <summary>Verification-code requests and verified lookups.</summary>
+    Verification,
 }
 
 /// <summary>
@@ -45,7 +48,12 @@ public sealed class MemoryGuestRateLimiter : IGuestRateLimiter, IDisposable
         _limiter = PartitionedRateLimiter.Create<(GuestThrottleScope Scope, string Ip), (GuestThrottleScope Scope, string Ip)>(
             key => RateLimitPartition.GetFixedWindowLimiter(key, k => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = Math.Max(1, k.Scope == GuestThrottleScope.Ticket ? config.TicketsPerMinute : config.RepliesPerMinute),
+                PermitLimit = Math.Max(1, k.Scope switch
+                {
+                    GuestThrottleScope.Ticket => config.TicketsPerMinute,
+                    GuestThrottleScope.Verification => config.VerificationsPerMinute,
+                    _ => config.RepliesPerMinute,
+                }),
                 Window = Window,
                 QueueLimit = 0,
                 AutoReplenishment = true,

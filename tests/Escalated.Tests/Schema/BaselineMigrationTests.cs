@@ -94,8 +94,10 @@ public class BaselineMigrationTests
             var baseline = legacy.GetService<IMigrationsAssembly>().Migrations.Keys.Min(StringComparer.Ordinal)!;
             await legacy.GetService<IMigrator>().MigrateAsync(baseline);
             await legacy.Database.ExecuteSqlRawAsync("DROP TABLE \"__EFMigrationsHistory\"");
-            legacy.Tickets.Add(new Ticket { Reference = "OLD-1", Subject = "Before upgrade" });
-            await legacy.SaveChangesAsync();
+            // Written as SQL: the model has columns later migrations add.
+            await legacy.Database.ExecuteSqlRawAsync(
+                "INSERT INTO escalated_tickets (Reference, Subject, Status, Priority, SlaFirstResponseBreached, SlaResolutionBreached, CreatedAt, UpdatedAt) " +
+                "VALUES ('OLD-1', 'Before upgrade', 0, 1, 0, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00')");
         }
 
         await using var db = new EscalatedDbContext(Sqlite(connection));

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace Escalated.Controllers.Widget;
 
@@ -23,6 +24,7 @@ namespace Escalated.Controllers.Widget;
 [ApiController]
 [Route("support/widget")]
 [AllowAnonymous]
+[WidgetEnabled]
 public class WidgetController : ControllerBase
 {
     private readonly TicketService _ticketService;
@@ -37,11 +39,14 @@ public class WidgetController : ControllerBase
     }
 
     /// <summary>
-    /// What the widget needs before it renders. The widget routes are always
-    /// mounted, so the widget is always enabled; colour, position and greeting
-    /// come from the <c>widget_color</c>, <c>widget_position</c> and
-    /// <c>widget_greeting</c> settings, and <c>kb_enabled</c> from
-    /// <see cref="KnowledgeBaseOptions.Enabled"/>.
+    /// What the widget needs before it renders. While the <c>widget_enabled</c>
+    /// setting is off every widget route answers 403 (<c>{enabled: false}</c>);
+    /// colour, position and greeting come from the <c>widget_color</c>,
+    /// <c>widget_position</c> and <c>widget_greeting</c> settings,
+    /// <c>guest_tickets_enabled</c> from that setting, and <c>kb_enabled</c> from
+    /// <see cref="KnowledgeBaseOptions.Enabled"/>. Guests verify their email
+    /// (<c>guest_verification_required</c>), which is what lets the Status tab
+    /// look tickets up (<c>status_lookup_enabled</c>).
     /// </summary>
     [HttpGet("config")]
     public async Task<IActionResult> Config(
@@ -63,13 +68,12 @@ public class WidgetController : ControllerBase
             greeting = await settings.GetAsync("widget_greeting", "Hi there! How can we help?", ct),
             departments,
             kb_enabled = options.Value.KnowledgeBase.Enabled,
-            guest_tickets_enabled = true,
+            guest_tickets_enabled = await GuestSettings.IsOnAsync(settings, GuestSettings.GuestTicketsEnabled, ct),
+            guest_verification_required = true,
             // Tickets and chats keep host parameters sent as `metadata`.
             accepts_metadata = true,
-            // Looking a ticket up needs mailbox verification, which this
-            // backend does not offer, so widgets hide their Status tab. There
-            // is deliberately no lookup by a claimed email address.
-            status_lookup_enabled = false,
+            // Lookups need a verified email (POST lookup), never a claimed one.
+            status_lookup_enabled = true,
         });
     }
 
@@ -152,13 +156,37 @@ public class WidgetController : ControllerBase
         return text.Length > 200 ? text[..200] + "..." : text;
     }
 
+    /// <summary>Body: <c>{email, purpose: ticket|chat|lookup}</c>. Emails a code; answers 202 <c>{verification_id, expires_in, message}</c>.</summary>
+    [HttpPost("verification")]
+    [GuestThrottle(GuestThrottleScope.Verification)]
+    public Task<IActionResult> Verification([FromBody] GuestVerificationRequest request) =>
+        GuestAccessEndpoints.VerificationAsync(this, request);
+
+    /// <summary>Body: <c>{email, reference, verification_id, verification_code}</c>. Answers <c>{data: [{reference, subject, guest_access_token, expires_at}]}</c>.</summary>
+    [HttpPost("lookup")]
+    [GuestThrottle(GuestThrottleScope.Verification)]
+    public Task<IActionResult> Lookup([FromBody] GuestLookupRequest request) =>
+        GuestAccessEndpoints.LookupAsync(this, request);
+
     /// <summary>
-    /// Create a guest (anonymous) ticket.
+    /// Create a guest ticket. The guest proves the email with a <c>ticket</c> code
+    /// (<c>verification_id</c>, <c>verification_code</c>) and gets an expiring access
+    /// grant: 201 <c>{message, reference, guest_access_token, expires_at}</c>.
     /// </summary>
     [HttpPost("tickets")]
     [GuestThrottle(GuestThrottleScope.Ticket)]
-    public async Task<IActionResult> CreateGuestTicket([FromBody] GuestTicketRequest request)
+    public async Task<IActionResult> CreateGuestTicket(
+        [FromBody] GuestTicketRequest request,
+        [FromServices] SettingsService settings,
+        [FromServices] GuestAccessService access,
+        [FromServices] IOptions<EscalatedOptions> options)
     {
+        var ct = HttpContext.RequestAborted;
+        GuestAccessEndpoints.NoStore(Response);
+
+        if (!await GuestSettings.IsOnAsync(settings, GuestSettings.GuestTicketsEnabled, ct))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Guest tickets are disabled." });
+
         var invalid = WidgetMetadata.Validate(request.Metadata);
         if (invalid is not null)
         {
@@ -167,90 +195,135 @@ public class WidgetController : ControllerBase
         }
 
         var departmentId = request.WidgetDepartmentId ?? request.DepartmentId;
-        if (!await WidgetDepartments.IsAllowedAsync(_db, departmentId, HttpContext.RequestAborted))
+        if (!await WidgetDepartments.IsAllowedAsync(_db, departmentId, ct))
         {
             ModelState.AddModelError(WidgetDepartments.Field, WidgetDepartments.Invalid);
             return ValidationProblem(ModelState);
         }
 
-        var ticket = await _ticketService.CreateAsync(
-            request.Subject,
-            request.Description,
-            guestName: request.Name,
-            guestEmail: request.Email,
-            departmentId: departmentId,
-            metadata: WidgetMetadata.Sanitize(request.Metadata, HttpContext.Items[WidgetOrigins.ItemKey] as string));
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 255) errors["name"] = new[] { "Your name is required." };
+        if (GuestAccessService.NormalizeEmail(request.Email) is null) errors["email"] = new[] { "A valid email address is required." };
+        if (string.IsNullOrWhiteSpace(request.Subject) || request.Subject.Length > 255) errors["subject"] = new[] { "The subject is required (at most 255 characters)." };
+        if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Length > 5000) errors["description"] = new[] { "The description is required (at most 5000 characters)." };
+        if (string.IsNullOrEmpty(request.VerificationId)) errors["verification_id"] = new[] { "Request a verification code first." };
+        if (string.IsNullOrEmpty(request.VerificationCode)) errors["verification_code"] = new[] { "Enter the code from your email." };
+        if (errors.Count > 0) return GuestAccessEndpoints.Invalid(this, errors);
 
-        return Ok(new
+        if (!await access.ConsumeAsync(request.VerificationId, request.VerificationCode, request.Email, "ticket", ct))
+            return GuestAccessEndpoints.InvalidCode(this);
+
+        Models.Ticket ticket;
+        string token;
+        DateTime expires;
+        try
         {
-            ticket.Id,
-            ticket.Reference,
-            ticket.GuestToken,
-            message = "Ticket created. Save your token to check status."
-        });
+            ticket = await _ticketService.CreateAsync(
+                request.Subject.Trim(),
+                request.Description,
+                guestName: request.Name!.Trim(),
+                guestEmail: request.Email!.Trim(),
+                departmentId: departmentId,
+                metadata: WidgetMetadata.Sanitize(request.Metadata, HttpContext.Items[WidgetOrigins.ItemKey] as string));
+            (token, expires) = await access.IssueGrantAsync(ticket, ct);
+        }
+        catch
+        {
+            await access.ReleaseAsync(request.VerificationId!, CancellationToken.None);
+            throw;
+        }
+
+        var body = new Dictionary<string, object?>
+        {
+            ["message"] = "Ticket created successfully.",
+            ["reference"] = ticket.Reference,
+            ["guest_access_token"] = token,
+            ["expires_at"] = expires,
+        };
+
+        // During the transition, older widgets keep getting the permanent token they used.
+        if (options.Value.GuestAccess.LegacyTokens) body["guestToken"] = ticket.GuestToken;
+
+        return StatusCode(StatusCodes.Status201Created, body);
     }
 
     /// <summary>
-    /// Look up a guest ticket by its magic token.
+    /// A guest ticket's status, as the widget's Status tab reads it. Needs
+    /// <c>Authorization: Bearer &lt;guest_access_token&gt;</c> for this
+    /// <paramref name="reference"/>; with <see cref="GuestAccessOptions.LegacyTokens"/>
+    /// the segment may instead be a permanent guest token from before.
     /// </summary>
-    [HttpGet("tickets/{token}")]
-    public async Task<IActionResult> LookupByToken(string token)
+    [HttpGet("tickets/{reference}")]
+    public async Task<IActionResult> TicketStatus(string reference, [FromServices] GuestAccessService access)
     {
-        var ticket = await _db.Tickets
-            .Include(t => t.Replies.Where(r => !r.IsInternalNote).OrderByDescending(r => r.CreatedAt))
-            .Include(t => t.Department)
-            .FirstOrDefaultAsync(t => t.GuestToken == token);
+        GuestAccessEndpoints.NoStore(Response);
+        var ticket = await GuestTicketAsync(reference, access, HttpContext.RequestAborted);
+        if (ticket == null) return NotFound(new { message = "Ticket not found." });
 
-        if (ticket == null) return NotFound(new { error = "Ticket not found." });
+        await _db.Entry(ticket).Reference(t => t.Department).LoadAsync();
+        var replies = await _db.Replies
+            .Where(r => r.TicketId == ticket.Id && !r.IsInternalNote && (r.Type == null || r.Type != "note"))
+            .OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id)
+            .Take(20)
+            .ToListAsync();
 
         return Ok(new
         {
-            ticket.Id,
-            ticket.Reference,
-            ticket.Subject,
-            ticket.Description,
+            reference = ticket.Reference,
+            subject = ticket.Subject,
             status = ticket.Status.ToValue(),
-            priority = ticket.Priority.ToValue(),
+            status_label = ticket.Status.Label(),
+            status_color = ticket.Status.Color(),
+            created_at = ticket.CreatedAt,
             department = ticket.Department?.Name,
-            ticket.CreatedAt,
-            ticket.UpdatedAt,
-            replies = ticket.Replies.Select(r => new
+            replies = replies.Select(r =>
             {
-                r.Id,
-                r.Body,
-                r.CreatedAt,
-                authorType = r.AuthorType
-            })
+                var isAgent = IsStaff(r, ticket);
+                return new
+                {
+                    body = r.Body,
+                    author = isAgent ? "Support" : ticket.GuestName ?? "You",
+                    is_agent = isAgent,
+                    created_at = r.CreatedAt,
+                };
+            }),
         });
     }
 
-    /// <summary>
-    /// Submit a reply on a guest ticket using the magic token.
-    /// </summary>
-    [HttpPost("tickets/{token}/reply")]
-    // Throttled before the token lookup, so wrong-token guesses are counted too.
+    /// <summary>A guest's reply on their ticket; the same access as <see cref="TicketStatus"/>.</summary>
+    [HttpPost("tickets/{reference}/reply")]
+    [HttpPost("tickets/{reference}/replies")]
+    // Throttled before the grant is checked, so guesses are counted too.
     [GuestThrottle(GuestThrottleScope.Reply)]
-    public async Task<IActionResult> GuestReply(string token, [FromBody] GuestReplyRequest request)
+    public async Task<IActionResult> GuestReply(string reference, [FromBody] GuestReplyRequest request, [FromServices] GuestAccessService access)
     {
-        var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.GuestToken == token);
-        if (ticket == null) return NotFound(new { error = "Ticket not found." });
+        GuestAccessEndpoints.NoStore(Response);
+        var ticket = await GuestTicketAsync(reference, access, HttpContext.RequestAborted);
+        if (ticket == null) return NotFound(new { message = "Ticket not found." });
+        if (string.IsNullOrWhiteSpace(request.Body) || request.Body.Length > 10000)
+            return GuestAccessEndpoints.Invalid(this, new Dictionary<string, string[]> { ["body"] = new[] { "The reply is required." } });
 
         var reply = await _ticketService.AddReplyAsync(ticket, request.Body);
-        return Ok(reply);
+        return StatusCode(StatusCodes.Status201Created, new { id = reply.Id, body = reply.Body, created_at = reply.CreatedAt });
     }
 
     /// <summary>
-    /// Submit a satisfaction rating for a ticket.
+    /// Submit a satisfaction rating for a ticket; the same access as <see cref="TicketStatus"/>.
     /// </summary>
-    [HttpPost("tickets/{token}/rate")]
-    public async Task<IActionResult> Rate(string token, [FromBody] RateRequest request)
+    [HttpPost("tickets/{reference}/rate")]
+    [GuestThrottle(GuestThrottleScope.Reply)]
+    public async Task<IActionResult> Rate(string reference, [FromBody] RateRequest request, [FromServices] GuestAccessService access)
     {
-        var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.GuestToken == token);
-        if (ticket == null) return NotFound();
+        GuestAccessEndpoints.NoStore(Response);
+        var ticket = await GuestTicketAsync(reference, access, HttpContext.RequestAborted);
+        if (ticket == null) return NotFound(new { message = "Ticket not found." });
+
+        if (request.Rating is < 1 or > 5)
+            return GuestAccessEndpoints.Invalid(this, new Dictionary<string, string[]> { ["rating"] = new[] { "The rating must be from 1 to 5." } });
 
         var existing = await _db.SatisfactionRatings.FirstOrDefaultAsync(r => r.TicketId == ticket.Id);
         if (existing != null)
-            return BadRequest(new { error = "Rating already submitted." });
+            return BadRequest(new { message = "Rating already submitted." });
 
         var rating = new Models.SatisfactionRating
         {
@@ -262,8 +335,35 @@ public class WidgetController : ControllerBase
         _db.SatisfactionRatings.Add(rating);
         await _db.SaveChangesAsync();
 
-        return Ok(rating);
+        return Ok(new { message = "Rating submitted.", rating = rating.Rating });
     }
+
+    /// <summary>
+    /// The ticket a guest request may act on: the bearer grant must be this
+    /// reference's unexpired grant. With legacy tokens on, a permanent guest token
+    /// in the URL segment is still accepted.
+    /// </summary>
+    private async Task<Models.Ticket?> GuestTicketAsync(string reference, GuestAccessService access, CancellationToken ct)
+    {
+        var header = Request.Headers.Authorization.ToString();
+        if (header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            var token = header["Bearer ".Length..].Trim();
+            if (token.Length is 0 or > 256) return null;
+            var ticket = await _db.Tickets.Where(access.Opens(token)).FirstOrDefaultAsync(ct);
+            return ticket is not null && ticket.Reference == reference && ticket.GuestAccessHash == GuestAccessService.HashGrant(token)
+                ? ticket
+                : null;
+        }
+
+        if (string.IsNullOrEmpty(reference) || reference.Length > 128) return null;
+        var legacy = await _db.Tickets.Where(access.Opens(reference)).FirstOrDefaultAsync(ct);
+        return legacy is not null && legacy.GuestToken == reference ? legacy : null;
+    }
+
+    /// <summary>Replies by someone other than the guest are from support.</summary>
+    private static bool IsStaff(Models.Reply reply, Models.Ticket ticket) =>
+        !string.IsNullOrEmpty(reply.AuthorId) && reply.AuthorType != "visitor" && reply.AuthorId != ticket.RequesterId;
 
     /// <summary>
     /// Record feedback (helpful/not helpful) on a KB article.
@@ -279,10 +379,16 @@ public class WidgetController : ControllerBase
 /// <param name="Metadata">Optional host parameters; see <see cref="WidgetMetadata"/>.</param>
 public record GuestTicketRequest(string Subject, string? Description, string? Name, string? Email, int? DepartmentId = null, JsonElement? Metadata = null)
 {
+    [JsonPropertyName("verification_id")]
+    public string? VerificationId { get; init; }
+
+    [JsonPropertyName("verification_code")]
+    public string? VerificationCode { get; init; }
+
     /// <summary>The shared widget's <c>department_id</c>; wins over <c>departmentId</c>.</summary>
     [JsonPropertyName("department_id")]
     public int? WidgetDepartmentId { get; init; }
 }
-public record GuestReplyRequest(string Body);
+public record GuestReplyRequest(string? Body);
 public record RateRequest(int Rating, string? Comment = null);
 public record FeedbackRequest(bool Helpful);

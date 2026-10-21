@@ -107,10 +107,10 @@ public class NotificationEmailTests
         var (host, mail) = await StartAsync(inboundSecret: "s3cret");
         await using var _ = host;
 
-        var response = await host.Client.PostAsJsonAsync("/support/widget/tickets",
-            new { subject = "Where is my order?", description = "It is late", name = "Gail", email = "gail@example.com" });
+        var response = await host.Client.PostAsJsonAsync("/support/widget/tickets", await GuestProof.ProvedAsync(host, "/support/widget/tickets",
+            new { subject = "Where is my order?", description = "It is late", name = "Gail", email = "gail@example.com" }));
         response.EnsureSuccessStatusCode();
-        var id = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var id = await host.QueryAsync(db => db.Tickets.Select(t => t.Id).SingleAsync());
 
         var message = Assert.Single(mail.Sent);
         Assert.Equal("gail@example.com", message.ToEmail);
@@ -234,8 +234,8 @@ public class NotificationEmailTests
             services.AddSingleton<IEscalatedNotificationSender, RecordingSender>());
         await using var _ = host;
 
-        await host.Client.PostAsJsonAsync("/support/widget/tickets",
-            new { subject = "Hello", description = "x", name = "Gail", email = "gail@example.com" });
+        (await host.Client.PostAsJsonAsync("/support/widget/tickets", await GuestProof.ProvedAsync(host, "/support/widget/tickets",
+            new { subject = "Hello", description = "x", name = "Gail", email = "gail@example.com" }))).EnsureSuccessStatusCode();
 
         var sender = (RecordingSender)host.Services.GetRequiredService<IEscalatedNotificationSender>();
         Assert.Equal(new[] { "new-ticket" }, sender.Calls);
@@ -283,8 +283,8 @@ public class NotificationEmailTests
 
         for (var i = 0; i < 2; i++)
         {
-            var response = await host.Client.PostAsJsonAsync("/support/widget/tickets",
-                new { subject = $"Hello {i}", description = "x", name = "Gail", email = "gail@example.com" });
+            var response = await host.Client.PostAsJsonAsync("/support/widget/tickets", await GuestProof.ProvedAsync(host, "/support/widget/tickets",
+                new { subject = $"Hello {i}", description = "x", name = "Gail", email = "gail@example.com" }));
             response.EnsureSuccessStatusCode();
         }
 

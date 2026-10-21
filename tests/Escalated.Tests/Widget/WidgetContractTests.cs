@@ -26,15 +26,15 @@ public class WidgetContractTests
     private const string Shop = "https://shop.example.com";
 
     [Fact]
-    public async Task Config_HidesTheStatusTab()
+    public async Task Config_OffersTheVerifiedStatusTab()
     {
         await using var host = await StartAsync();
 
         using var json = await GetJsonAsync(host, "/support/widget/config");
 
-        Assert.False(json.RootElement.GetProperty("status_lookup_enabled").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("status_lookup_enabled").GetBoolean());
         Assert.True(json.RootElement.GetProperty("guest_tickets_enabled").GetBoolean());
-        Assert.False(json.RootElement.TryGetProperty("guest_verification_required", out _));
+        Assert.True(json.RootElement.GetProperty("guest_verification_required").GetBoolean());
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public class WidgetContractTests
         await using var host = await StartAsync();
         var sales = await SeedDepartmentAsync(host, "Sales", active: true);
 
-        var response = await host.Client.PostAsJsonAsync("/support/widget/tickets", new
+        var response = await PostAsync(host, "/support/widget/tickets", new
         {
             subject = "Help",
             description = "d",
@@ -496,8 +496,9 @@ public class WidgetContractTests
         return json.RootElement.GetProperty("id").GetString()!;
     }
 
-    private static Task<HttpResponseMessage> PostAsync(EscalatedTestHost host, string path, object body) =>
-        host.Client.PostAsync(path, JsonContent.Create(body));
+    /// <summary>Posts <paramref name="body"/>, with a fresh email proof where the route needs one.</summary>
+    private static async Task<HttpResponseMessage> PostAsync(EscalatedTestHost host, string path, object body) =>
+        await host.Client.PostAsync(path, JsonContent.Create(await GuestProof.ProvedAsync(host, path, body)));
 
     private static async Task<JsonDocument> GetJsonAsync(EscalatedTestHost host, string path)
     {

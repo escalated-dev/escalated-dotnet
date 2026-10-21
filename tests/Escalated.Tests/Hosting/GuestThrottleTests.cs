@@ -28,7 +28,7 @@ public class GuestThrottleTests
 
         var statuses = await CreateTicketsAsync(host, 6);
 
-        Assert.Equal(new[] { 200, 200, 200, 200, 200, 429 }, statuses);
+        Assert.Equal(new[] { 201, 201, 201, 201, 201, 429 }, statuses);
         Assert.Equal(5, await host.QueryAsync(db => Task.FromResult(db.Tickets.Count())));
     }
 
@@ -54,7 +54,7 @@ public class GuestThrottleTests
 
         var statuses = await RepliesAsync(host, token, 11);
 
-        Assert.Equal(Enumerable.Repeat(200, 10), statuses.Take(10));
+        Assert.Equal(Enumerable.Repeat(201, 10), statuses.Take(10));
         Assert.Equal(429, statuses[10]);
     }
 
@@ -63,7 +63,7 @@ public class GuestThrottleTests
     {
         await using var host = await StartAsync(o => o.GuestRateLimit.RepliesPerMinute = 2);
 
-        var statuses = await RepliesAsync(host, "not-a-real-token", 3);
+        var statuses = await RepliesAsync(host, ("ESC-NOPE", "not-a-real-token"), 3);
 
         Assert.Equal(new[] { 404, 404, 429 }, statuses);
     }
@@ -75,7 +75,7 @@ public class GuestThrottleTests
         var token = await GuestTokenAsync(host);
         await CreateTicketsAsync(host, 4);
 
-        Assert.Equal(new[] { 200 }, await RepliesAsync(host, token, 1));
+        Assert.Equal(new[] { 201 }, await RepliesAsync(host, token, 1));
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class GuestThrottleTests
         await using var host = await StartAsync(o => o.GuestRateLimit.TicketsPerMinute = 1);
         await CreateTicketsAsync(host, 1, "203.0.113.1");
 
-        Assert.Equal(new[] { 200 }, await CreateTicketsAsync(host, 1, "203.0.113.2"));
+        Assert.Equal(new[] { 201 }, await CreateTicketsAsync(host, 1, "203.0.113.2"));
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class GuestThrottleTests
     {
         await using var host = await StartAsync(o => o.GuestRateLimit.TicketsPerMinute = 2);
 
-        Assert.Equal(new[] { 200, 200, 429 }, await CreateTicketsAsync(host, 3));
+        Assert.Equal(new[] { 201, 201, 429 }, await CreateTicketsAsync(host, 3));
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class GuestThrottleTests
 
         var statuses = await CreateTicketsAsync(host, 8);
 
-        Assert.All(statuses, s => Assert.Equal(200, s));
+        Assert.All(statuses, s => Assert.Equal(201, s));
     }
 
     [Fact]
@@ -139,15 +139,16 @@ public class GuestThrottleTests
     private static Task<EscalatedTestHost> StartAsync(Action<EscalatedOptions>? configure = null) =>
         EscalatedTestHost.StartAsync(configure, services => services.AddSingleton<IStartupFilter, ClientIpFromHeader>());
 
-    private static Task<HttpResponseMessage> PostTicketAsync(EscalatedTestHost host, int n, string? ip = null)
+    private static async Task<HttpResponseMessage> PostTicketAsync(EscalatedTestHost host, int n, string? ip = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/support/widget/tickets")
         {
             // A distinct email per call, so only the per-IP limit can be what trips.
-            Content = JsonContent.Create(new { subject = "Help", description = "d", name = "Guest", email = $"guest{n}@example.com" }),
+            Content = JsonContent.Create(await GuestProof.ProvedAsync(host, "/support/widget/tickets",
+                new { subject = "Help", description = "d", name = "Guest", email = $"guest{n}@example.com" })),
         };
         if (ip is not null) request.Headers.Add(ClientIpHeader, ip);
-        return host.Client.SendAsync(request);
+        return await host.Client.SendAsync(request);
     }
 
     private static async Task<int[]> CreateTicketsAsync(EscalatedTestHost host, int times, string? ip = null)
@@ -161,24 +162,28 @@ public class GuestThrottleTests
         return statuses;
     }
 
-    private static async Task<int[]> RepliesAsync(EscalatedTestHost host, string token, int times)
+    private static async Task<int[]> RepliesAsync(EscalatedTestHost host, (string Reference, string Token) grant, int times)
     {
         var statuses = new int[times];
         for (var i = 0; i < times; i++)
         {
-            var response = await host.Client.PostAsJsonAsync($"/support/widget/tickets/{token}/reply", new { body = "hi" });
-            statuses[i] = (int)response.StatusCode;
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/support/widget/tickets/{grant.Reference}/reply")
+            {
+                Content = JsonContent.Create(new { body = "hi" }),
+            };
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", grant.Token);
+            statuses[i] = (int)(await host.Client.SendAsync(request)).StatusCode;
         }
 
         return statuses;
     }
 
-    private static async Task<string> GuestTokenAsync(EscalatedTestHost host)
+    private static async Task<(string Reference, string Token)> GuestTokenAsync(EscalatedTestHost host)
     {
         var response = await PostTicketAsync(host, 1000);
         response.EnsureSuccessStatusCode();
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        return json.RootElement.GetProperty("guestToken").GetString()!;
+        return (json.RootElement.GetProperty("reference").GetString()!, json.RootElement.GetProperty("guest_access_token").GetString()!);
     }
 
     /// <summary>

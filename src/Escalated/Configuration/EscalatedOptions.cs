@@ -57,6 +57,9 @@ public class EscalatedOptions
     /// </summary>
     public SlaOptions Sla { get; set; } = new();
 
+    /// <summary>Verified guest access: email codes and expiring guest grants.</summary>
+    public GuestAccessOptions GuestAccess { get; set; } = new();
+
     /// <summary>
     /// Attachment configuration.
     /// </summary>
@@ -306,6 +309,38 @@ public class GuestRateLimitOptions
 
     /// <summary>Guest replies per IP per minute. Default 10.</summary>
     public int RepliesPerMinute { get; set; } = 10;
+
+    /// <summary>Verification-code requests and lookups per IP per minute. Default 10.</summary>
+    public int VerificationsPerMinute { get; set; } = 10;
+}
+
+/// <summary>
+/// Verified guest access (see <c>docs/guest-access.md</c>): guests prove they own
+/// a mailbox with an emailed code, and get an expiring, hashed access grant.
+/// </summary>
+public class GuestAccessOptions
+{
+    /// <summary>
+    /// Key for the HMAC digests of guest emails and codes. Falls back to
+    /// <see cref="EmailOptions.InboundSecret"/>; without either a random key per
+    /// process is used (logged), which breaks verification across instances.
+    /// </summary>
+    public string? Secret { get; set; }
+
+    /// <summary>Lifetime of a guest access grant in minutes. Default 1440 (24 h), clamped to 5 minutes..7 days.</summary>
+    public int TtlMinutes { get; set; } = 1440;
+
+    /// <summary>
+    /// Transition setting: let the permanent guest tokens issued before verified
+    /// access still read and reply to their ticket. Default false.
+    /// </summary>
+    public bool LegacyTokens { get; set; }
+
+    /// <summary>Codes one client IP may request for one mailbox per hour. Default 3.</summary>
+    public int ChallengesPerClientPerHour { get; set; } = 3;
+
+    /// <summary>Codes one mailbox may be sent per hour, from all IPs. Default 10.</summary>
+    public int ChallengesPerMailboxPerHour { get; set; } = 10;
 }
 
 /// <summary>
