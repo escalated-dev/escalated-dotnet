@@ -45,6 +45,29 @@ public static class UiRoutes
         ["escalated.agent.tickets.macro"] = "{prefix}/agent/tickets/{ticket}/macro",
         ["escalated.agent.tickets.follow"] = "{prefix}/agent/tickets/{ticket}/follow",
         ["escalated.agent.tickets.custom-action"] = "{prefix}/agent/tickets/{ticket}/actions/{action}",
+
+        // Admin
+        ["escalated.admin.settings"] = "{prefix}/admin/settings",
+        ["escalated.admin.settings.update"] = "{prefix}/admin/settings",
+        ["escalated.admin.departments.index"] = "{prefix}/admin/departments",
+        ["escalated.admin.departments.create"] = "{prefix}/admin/departments/create",
+        ["escalated.admin.departments.store"] = "{prefix}/admin/departments",
+        ["escalated.admin.departments.edit"] = "{prefix}/admin/departments/{department}/edit",
+        ["escalated.admin.departments.update"] = "{prefix}/admin/departments/{department}",
+        ["escalated.admin.departments.destroy"] = "{prefix}/admin/departments/{department}",
+        ["escalated.admin.tags.index"] = "{prefix}/admin/tags",
+        ["escalated.admin.tags.store"] = "{prefix}/admin/tags",
+        ["escalated.admin.tags.update"] = "{prefix}/admin/tags/{tag}",
+        ["escalated.admin.tags.destroy"] = "{prefix}/admin/tags/{tag}",
+        ["escalated.admin.workflows.index"] = "{prefix}/admin/workflows",
+        ["escalated.admin.workflows.create"] = "{prefix}/admin/workflows/create",
+        ["escalated.admin.workflows.store"] = "{prefix}/admin/workflows",
+        ["escalated.admin.workflows.edit"] = "{prefix}/admin/workflows/{workflow}",
+        ["escalated.admin.workflows.update"] = "{prefix}/admin/workflows/{workflow}",
+        ["escalated.admin.workflows.destroy"] = "{prefix}/admin/workflows/{workflow}",
+        ["escalated.admin.workflows.toggle"] = "{prefix}/admin/workflows/{workflow}/toggle",
+        ["escalated.admin.workflows.reorder"] = "{prefix}/admin/workflows/reorder",
+        ["escalated.admin.workflows.logs"] = "{prefix}/admin/workflows/logs",
     };
 
     /// <summary>The routes with <c>{prefix}</c> filled in, as absolute paths.</summary>

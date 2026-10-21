@@ -4,6 +4,9 @@ using Escalated.Data;
 using Escalated.Events;
 using Escalated.Models;
 using Escalated.Services;
+using Escalated.Ui;
+using Escalated.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +22,12 @@ namespace Escalated.Controllers.Admin;
 /// <c>actions</c> as <c>{type, value}</c>, <c>is_active</c>). Responses use the
 /// contract's snake_case workflow object. Validation failures answer 422 with
 /// <c>{message, errors: {field: [..]}}</c>.
+///
+/// <para>With <c>Escalated:Ui:Enabled</c> on, the same routes also serve the
+/// <c>Escalated/Admin/Workflows/Index</c> and <c>Form</c> pages: a page request
+/// (an Inertia visit, or a browser GET) gets the page, and a page form post gets a
+/// 303 back to the list with a flash, or back to the form with its errors, as
+/// escalated-laravel's <c>WorkflowController</c> answers. JSON callers are unchanged.</para>
 /// </summary>
 [ApiController]
 [Route("support/admin/workflows")]
@@ -71,17 +80,64 @@ public class AdminWorkflowController : ControllerBase
 
     private readonly EscalatedDbContext _db;
     private readonly AuditLogService _audit;
+    private readonly EscalatedOptions _options;
 
-    public AdminWorkflowController(EscalatedDbContext db, AuditLogService audit)
+    public AdminWorkflowController(EscalatedDbContext db, AuditLogService audit, IOptions<EscalatedOptions> options)
     {
         _db = db;
         _audit = audit;
+        _options = options.Value;
     }
+
+    /// <summary>A request for the page rather than the JSON, with the UI on.</summary>
+    private bool IsPage => _options.Ui.Enabled && EscalatedPageAttribute.IsPageRequest(Request);
+
+    private string IndexUrl => $"/{_options.RoutePrefix.Trim('/')}/admin/workflows";
+
+    private IActionResult ToIndex(string success) => new UiRedirectResult(IndexUrl) { Success = success };
+
+    /// <summary>Back to the form with the first message of each field, as the page shows them.</summary>
+    private IActionResult BackWithErrors(Dictionary<string, List<string>> errors, int? id) =>
+        UiResults.Back(HttpContext, id is null ? $"{IndexUrl}/create" : $"{IndexUrl}/{id}",
+            errors: errors.ToDictionary(e => e.Key, e => e.Value.First()));
+
+    private async Task<IActionResult> IndexPageAsync(List<Workflow> workflows, CancellationToken ct)
+    {
+        var ids = workflows.Select(w => w.Id).ToList();
+        var stats = await _db.WorkflowLogs.AsNoTracking().IgnoreQueryFilters().Where(l => ids.Contains(l.WorkflowId))
+            .GroupBy(l => l.WorkflowId)
+            .Select(g => new { Id = g.Key, Count = g.Count(), Last = g.Max(l => l.CreatedAt) })
+            .ToDictionaryAsync(x => x.Id, ct);
+
+        return UiResults.Render("Escalated/Admin/Workflows/Index", new
+        {
+            workflows = workflows.Select(w =>
+            {
+                var wire = ToWire(w);
+                wire["trigger_count"] = stats.TryGetValue(w.Id, out var s) ? s.Count : 0;
+                wire["last_triggered_at"] = stats.TryGetValue(w.Id, out var last) ? last.Last : null;
+                return wire;
+            }).ToList(),
+        });
+    }
+
+    private static IActionResult FormPage(Workflow? workflow)
+    {
+        var props = FormOptions();
+        props["workflow"] = workflow is null ? null : ToWire(workflow);
+        return UiResults.Render("Escalated/Admin/Workflows/Form", props);
+    }
+
+    /// <summary>The Form page for a new workflow.</summary>
+    [HttpGet("create")]
+    [EscalatedPage]
+    public IActionResult Create() => FormPage(null);
 
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
         var workflows = await _db.Workflows.AsNoTracking().OrderBy(w => w.Position).ThenBy(w => w.Id).ToListAsync(ct);
+        if (IsPage) return await IndexPageAsync(workflows, ct);
         return Ok(new { workflows = workflows.Select(ToWire).ToList() });
     }
 
@@ -94,6 +150,7 @@ public class AdminWorkflowController : ControllerBase
     {
         var workflow = await _db.Workflows.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id, ct);
         if (workflow is null) return NotFound();
+        if (IsPage) return FormPage(workflow);
 
         var body = FormOptions();
         body["workflow"] = ToWire(workflow);
@@ -104,7 +161,7 @@ public class AdminWorkflowController : ControllerBase
     public async Task<IActionResult> Store([FromBody] JsonElement body, CancellationToken ct)
     {
         var (input, errors) = Validate(body);
-        if (input is null) return Invalid(errors);
+        if (input is null) return IsPage ? BackWithErrors(errors, null) : Invalid(errors);
 
         var position = await _db.Workflows.AnyAsync(ct) ? await _db.Workflows.MaxAsync(w => w.Position, ct) + 1 : 0;
         var workflow = new Workflow { Position = position, CreatedAt = DateTime.UtcNow };
@@ -115,6 +172,7 @@ public class AdminWorkflowController : ControllerBase
         await _audit.LogAsync(nameof(Workflow), workflow.Id, "workflow.created", this.CurrentUserId(),
             newValues: new { name = workflow.Name, trigger_event = workflow.TriggerEvent }, ct: ct);
 
+        if (IsPage) return ToIndex("Workflow created.");
         return StatusCode(StatusCodes.Status201Created, new { workflow = ToWire(workflow) });
     }
 
@@ -125,7 +183,7 @@ public class AdminWorkflowController : ControllerBase
         if (workflow is null) return NotFound();
 
         var (input, errors) = Validate(body);
-        if (input is null) return Invalid(errors);
+        if (input is null) return IsPage ? BackWithErrors(errors, id) : Invalid(errors);
 
         var old = new { name = workflow.Name, trigger_event = workflow.TriggerEvent };
         input.ApplyTo(workflow);
@@ -134,6 +192,7 @@ public class AdminWorkflowController : ControllerBase
         await _audit.LogAsync(nameof(Workflow), workflow.Id, "workflow.updated", this.CurrentUserId(),
             oldValues: old, newValues: new { name = workflow.Name, trigger_event = workflow.TriggerEvent }, ct: ct);
 
+        if (IsPage) return ToIndex("Workflow updated.");
         return Ok(new { workflow = ToWire(workflow) });
     }
 
@@ -151,6 +210,7 @@ public class AdminWorkflowController : ControllerBase
         await _audit.LogAsync(nameof(Workflow), id, "workflow.deleted", this.CurrentUserId(),
             oldValues: new { name = workflow.Name, trigger_event = workflow.TriggerEvent }, ct: ct);
 
+        if (IsPage) return ToIndex("Workflow deleted.");
         return NoContent();
     }
 
@@ -164,6 +224,7 @@ public class AdminWorkflowController : ControllerBase
         workflow.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
 
+        if (IsPage) return ToIndex(workflow.IsActive ? "Workflow enabled." : "Workflow disabled.");
         return Ok(new { workflow = ToWire(workflow) });
     }
 
@@ -176,7 +237,8 @@ public class AdminWorkflowController : ControllerBase
             || ids.ValueKind != JsonValueKind.Array
             || ids.EnumerateArray().Any(i => i.ValueKind != JsonValueKind.Number || !i.TryGetInt32(out _)))
         {
-            return Invalid(new Dictionary<string, List<string>> { ["workflow_ids"] = new() { "The workflow ids must be a list of integers." } });
+            var invalid = new Dictionary<string, List<string>> { ["workflow_ids"] = new() { "The workflow ids must be a list of integers." } };
+            return IsPage ? UiResults.Back(HttpContext, IndexUrl, errors: invalid.ToDictionary(e => e.Key, e => e.Value.First())) : Invalid(invalid);
         }
 
         var order = ids.EnumerateArray().Select(i => i.GetInt32()).ToList();
@@ -188,6 +250,7 @@ public class AdminWorkflowController : ControllerBase
         }
 
         await _db.SaveChangesAsync(ct);
+        if (IsPage) return ToIndex("Workflows reordered.");
         return Ok(new { message = "Workflows reordered." });
     }
 
