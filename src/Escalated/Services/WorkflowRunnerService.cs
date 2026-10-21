@@ -44,8 +44,11 @@ public class WorkflowRunnerService
 
     public async Task RunForEventAsync(string triggerEvent, Ticket ticket, CancellationToken ct = default)
     {
+        // Workflows saved under a legacy name (ADR 2026-10-21, e.g. `ticket.replied`)
+        // keep firing on the canonical event.
+        var names = Escalated.Events.EventNames.NamesFor(Escalated.Events.EventNames.Canonicalize(triggerEvent)).ToArray();
         var workflows = await _db.Workflows
-            .Where(w => w.TriggerEvent == triggerEvent && w.IsActive)
+            .Where(w => names.Contains(w.TriggerEvent) && w.IsActive)
             .OrderBy(w => w.Position)
             .ToListAsync(ct);
 

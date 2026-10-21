@@ -108,6 +108,11 @@ public class ChatSessionService
         }
 
         await _events.DispatchAsync(new ChatSessionStartedEvent(session), ct);
+        if (!string.IsNullOrEmpty(session.AgentId))
+        {
+            // Routing handed the chat straight to an agent: announce it as `chat.assigned`.
+            await _events.DispatchAsync(new ChatSessionAcceptedEvent(session, session.AgentId), ct);
+        }
 
         return session;
     }
@@ -172,6 +177,8 @@ public class ChatSessionService
         session.UpdatedAt = DateTime.UtcNow;
         _db.ChatSessions.Update(session);
         await _db.SaveChangesAsync(ct);
+
+        await _events.DispatchAsync(new ChatMessageEvent(session, reply, authorType), ct);
 
         return reply;
     }
@@ -263,3 +270,6 @@ public class ChatSessionService
 public record ChatSessionStartedEvent(ChatSession Session);
 public record ChatSessionAcceptedEvent(ChatSession Session, string AgentId);
 public record ChatSessionEndedEvent(ChatSession Session, string? CauserId);
+
+/// <summary>A message was posted in a live chat (webhook and trigger name <c>chat.message</c>).</summary>
+public record ChatMessageEvent(ChatSession Session, Reply Reply, string AuthorType);

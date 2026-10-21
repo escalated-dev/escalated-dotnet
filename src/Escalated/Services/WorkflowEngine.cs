@@ -10,7 +10,13 @@ public class WorkflowEngine
 {
     public static readonly string[] Operators = { "equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with", "greater_than", "less_than", "greater_or_equal", "less_or_equal", "is_empty", "is_not_empty" };
     public static readonly string[] ActionTypes = { "change_status", "assign_agent", "change_priority", "add_tag", "remove_tag", "set_department", "add_note", "send_webhook", "set_type", "delay", "add_follower", "send_notification" };
-    public static readonly string[] TriggerEvents = { "ticket.created", "ticket.updated", "ticket.status_changed", "ticket.assigned", "ticket.priority_changed", "ticket.tagged", "ticket.department_changed", "reply.created", "reply.agent_reply", "sla.warning", "sla.breached", "ticket.reopened" };
+    /// <summary>
+    /// The triggers a Workflow can be saved with: the shared event vocabulary
+    /// (ADR 2026-10-21) minus <c>chat.transferred</c>, which this package does not
+    /// raise yet. Legacy names are still read from saved Workflows, never offered.
+    /// </summary>
+    public static readonly string[] TriggerEvents = Escalated.Events.EventNames.Canonical
+        .Where(name => name != Escalated.Events.EventNames.ChatTransferred).ToArray();
 
     public bool EvaluateConditions(Dictionary<string, object> conditions, Dictionary<string, string> ticket)
     {

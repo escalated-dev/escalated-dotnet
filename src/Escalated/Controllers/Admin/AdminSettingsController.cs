@@ -245,11 +245,32 @@ public class AdminSettingsController : ControllerBase
             return BadRequest(new { error = "Webhook URL must be an absolute HTTP(S) URL that does not target a local or private address." });
         }
 
+        webhook.Events = CanonicalWebhookEvents(webhook.Events);
         webhook.CreatedAt = DateTime.UtcNow;
         webhook.UpdatedAt = DateTime.UtcNow;
         _db.Webhooks.Add(webhook);
         await _db.SaveChangesAsync();
         return Ok(webhook);
+    }
+
+    /// <summary>
+    /// A subscription list with legacy names (ADR 2026-10-21) stored as their
+    /// canonical names, duplicates dropped. A value that is not a JSON string
+    /// array is kept as it was sent.
+    /// </summary>
+    private static string CanonicalWebhookEvents(string events)
+    {
+        try
+        {
+            var names = System.Text.Json.JsonSerializer.Deserialize<List<string>>(events);
+            if (names is null) return events;
+            return System.Text.Json.JsonSerializer.Serialize(
+                names.Select(Escalated.Events.EventNames.Canonicalize).Distinct().ToList());
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return events;
+        }
     }
 
     // --- API Tokens ---
