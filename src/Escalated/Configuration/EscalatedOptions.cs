@@ -226,6 +226,13 @@ public class AttachmentOptions
     public int MaxSizeKb { get; set; } = 10240; // 10 MB
     public int MaxPerReply { get; set; } = 5;
     public string Disk { get; set; } = "local";
+
+    /// <summary>
+    /// Directory the default <c>LocalFileAttachmentStorage</c> writes inbound email
+    /// attachments to. Relative paths resolve against the content root. Register
+    /// your own <c>IAttachmentStorage</c> to store them elsewhere (S3, Azure Blob).
+    /// </summary>
+    public string LocalRoot { get; set; } = Path.Combine("storage", "escalated", "attachments");
 }
 
 public class KnowledgeBaseOptions

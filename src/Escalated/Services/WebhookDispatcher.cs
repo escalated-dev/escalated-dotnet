@@ -21,6 +21,9 @@ public class WebhookDispatcher
     private readonly IHostApplicationLifetime? _lifetime;
     private const int MaxAttempts = 3;
 
+    /// <summary>The named client deliveries go through; registered with the SSRF-guarded handler.</summary>
+    public const string HttpClientName = "EscalatedWebhook";
+
     /// <param name="lifetime">
     /// When the host provides one, retries still waiting out their backoff are dropped
     /// as it stops, instead of waking against a disposed service provider.
@@ -96,7 +99,7 @@ public class WebhookDispatcher
 
         try
         {
-            var client = _httpClientFactory.CreateClient("EscalatedWebhook");
+            var client = _httpClientFactory.CreateClient(HttpClientName);
             client.Timeout = TimeSpan.FromSeconds(10);
 
             var request = new HttpRequestMessage(HttpMethod.Post, webhookUri)
@@ -227,76 +230,11 @@ public class WebhookDispatcher
         return TryValidateWebhookUri(webhookUrl, out _);
     }
 
-    private static bool TryValidateWebhookUri(string webhookUrl, out Uri uri)
-    {
-        uri = null!;
-
-        if (!Uri.TryCreate(webhookUrl, UriKind.Absolute, out var parsed))
-        {
-            return false;
-        }
-
-        if (parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)
-        {
-            return false;
-        }
-
-        if (IsLocalAddress(parsed.Host))
-        {
-            return false;
-        }
-
-        uri = parsed;
-        return true;
-    }
-
-    private static bool IsLocalAddress(string host)
-    {
-        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-            host.Equals("localhost.localdomain", StringComparison.OrdinalIgnoreCase) ||
-            host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return IPAddress.TryParse(host, out var address) && IsPrivateOrLocalAddress(address);
-    }
-
-    private static bool IsPrivateOrLocalAddress(IPAddress address)
-    {
-        if (IPAddress.IsLoopback(address) ||
-            address.Equals(IPAddress.Any) ||
-            address.Equals(IPAddress.IPv6Any))
-        {
-            return true;
-        }
-
-        if (address.IsIPv4MappedToIPv6)
-        {
-            address = address.MapToIPv4();
-        }
-
-        var bytes = address.GetAddressBytes();
-        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-        {
-            return bytes[0] == 0 ||
-                   bytes[0] == 10 ||
-                   bytes[0] == 127 ||
-                   bytes[0] == 169 && bytes[1] == 254 ||
-                   bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31 ||
-                   bytes[0] == 192 && bytes[1] == 168 ||
-                   bytes[0] >= 224;
-        }
-
-        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-        {
-            return address.IsIPv6LinkLocal ||
-                   address.IsIPv6Multicast ||
-                   address.IsIPv6SiteLocal ||
-                   bytes[0] == 0xfc ||
-                   bytes[0] == 0xfd;
-        }
-
-        return false;
-    }
+    /// <summary>
+    /// The literal check. Hostnames are resolved and vetted when the request connects,
+    /// by the <see cref="OutboundUrlGuard"/> handler behind the <see cref="HttpClientName"/>
+    /// client, which also refuses to follow redirects.
+    /// </summary>
+    private static bool TryValidateWebhookUri(string webhookUrl, out Uri uri) =>
+        OutboundUrlGuard.TryValidateUri(webhookUrl, out uri);
 }

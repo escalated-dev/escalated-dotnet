@@ -226,6 +226,52 @@ public class InboundEmailServiceTests
         Assert.Equal("https://mailgun.example/att/large", pending.DownloadUrl);
     }
 
+    private sealed class MemoryStorage : IAttachmentStorage
+    {
+        public Dictionary<string, byte[]> Files { get; } = new();
+        public string Name => "memory";
+        public async Task<string> PutAsync(string filename, Stream content, string contentType, CancellationToken ct = default)
+        {
+            using var buffer = new MemoryStream();
+            await content.CopyToAsync(buffer, ct);
+            var key = $"inbound/{Files.Count + 1}-{filename}";
+            Files[key] = buffer.ToArray();
+            return key;
+        }
+    }
+
+    [Fact]
+    public async Task ProcessAsync_StoresInlineAttachmentsOnTheNewTicket()
+    {
+        var db = TestHelpers.CreateInMemoryDb();
+        var options = new EscalatedOptions { Email = new EmailOptions { Domain = "support.example.com" } };
+        var tickets = new TicketService(db, TestHelpers.MockEventDispatcher().Object, Microsoft.Extensions.Options.Options.Create(options));
+        var storage = new MemoryStorage();
+        var svc = new InboundEmailService(db, tickets, new InboundEmailRouter(db, options),
+            NullLogger<InboundEmailService>.Instance, storage: storage,
+            options: Microsoft.Extensions.Options.Options.Create(options));
+        var message = new InboundMessage
+        {
+            FromEmail = "customer@example.com",
+            ToEmail = "support@example.com",
+            Subject = "Receipt attached",
+            BodyText = "See attached",
+            Attachments = new[]
+            {
+                new InboundAttachment { Name = "receipt.txt", ContentType = "text/plain", Content = System.Text.Encoding.UTF8.GetBytes("paid") },
+                new InboundAttachment { Name = "evil.exe", ContentType = "application/octet-stream", Content = new byte[] { 1, 2 } },
+            },
+        };
+
+        await svc.ProcessAsync(message, SeedInboundAudit(db));
+
+        var stored = Assert.Single(db.Attachments.ToList());
+        Assert.Equal("receipt.txt", stored.Filename);
+        Assert.Equal("memory", stored.Disk);
+        Assert.Equal("paid", System.Text.Encoding.UTF8.GetString(storage.Files[stored.Path]));
+        Assert.Equal(db.Tickets.Single().Id, stored.AttachableId);
+    }
+
     [Fact]
     public async Task ProcessAsync_StrangerQuotingSubjectReference_OpensNewTicket()
     {

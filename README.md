@@ -140,12 +140,18 @@ app.Run();
 
 The `Email.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
 
-### 4. Run Migrations
+### 4. Create the tables
 
-```bash
-dotnet ef migrations add InitialEscalated --context EscalatedDbContext
-dotnet ef database update --context EscalatedDbContext
+The package ships its migrations for SQLite, PostgreSQL and SQL Server. Apply them at startup:
+
+```csharp
+var app = builder.Build();
+await app.Services.MigrateEscalatedDatabaseAsync();
 ```
+
+or from the command line with `dotnet ef database update --context EscalatedDbContext`.
+A database created earlier with `EnsureCreated()` is adopted: the baseline is recorded
+as applied and only later migrations run.
 
 Visit `/support` -- you're live.
 

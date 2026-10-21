@@ -3,6 +3,8 @@ using Escalated.Enums;
 using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Escalated.Configuration;
 
 namespace Escalated.Services.Email.Inbound;
 
@@ -26,10 +28,14 @@ namespace Escalated.Services.Email.Inbound;
 /// ticket, and only an accepted reply reopens a resolved or closed
 /// ticket.</para>
 ///
-/// <para>Attachment persistence is scoped out: provider-hosted
-/// attachments (Mailgun) carry their <c>DownloadUrl</c> through to
-/// <see cref="ProcessResult"/> so a follow-up worker can fetch +
-/// persist out-of-band.</para>
+/// <para>Attachments are stored on the reply (or, for a new ticket, the
+/// ticket): inline content through <see cref="IAttachmentStorage"/>,
+/// provider-hosted files (Mailgun) through <see cref="AttachmentDownloader"/>.
+/// Like Laravel, at most <c>Attachments.MaxPerReply</c> are kept, and files over
+/// <c>Attachments.MaxSizeKb</c> or with executable/script extensions are skipped.
+/// A hosted file that could not be fetched is returned in
+/// <see cref="ProcessResult.PendingAttachmentDownloads"/> so the host can
+/// retry it.</para>
 /// </summary>
 public class InboundEmailService
 {
@@ -38,19 +44,39 @@ public class InboundEmailService
     private readonly InboundEmailRouter _router;
     private readonly ILogger<InboundEmailService> _logger;
     private readonly IUserDirectory? _users;
+    private readonly IAttachmentStorage? _storage;
+    private readonly AttachmentDownloader? _downloader;
+    private readonly AttachmentOptions _attachmentOptions;
+
+    /// <summary>Never accepted from inbound email (same list as Laravel).</summary>
+    private static readonly HashSet<string> BlockedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "exe", "bat", "cmd", "com", "msi", "scr", "pif", "vbs", "vbe",
+        "js", "jse", "wsf", "wsh", "ps1", "psm1", "psd1", "reg",
+        "cpl", "hta", "inf", "lnk", "sct", "shb", "sys", "drv",
+        "php", "phtml", "php3", "php4", "php5", "phar",
+        "sh", "bash", "csh", "ksh", "pl", "py", "rb",
+        "dll", "so", "dylib",
+    };
 
     public InboundEmailService(
         EscalatedDbContext db,
         TicketService tickets,
         InboundEmailRouter router,
         ILogger<InboundEmailService> logger,
-        IUserDirectory? users = null)
+        IUserDirectory? users = null,
+        IAttachmentStorage? storage = null,
+        AttachmentDownloader? downloader = null,
+        IOptions<EscalatedOptions>? options = null)
     {
         _db = db;
         _tickets = tickets;
         _router = router;
         _logger = logger;
         _users = users;
+        _storage = storage;
+        _downloader = downloader;
+        _attachmentOptions = options?.Value.Attachments ?? new AttachmentOptions();
     }
 
     /// <summary>
@@ -87,12 +113,14 @@ public class InboundEmailService
             inboundEmail.ProcessedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(ct);
 
+            var replyPending = await StoreAttachmentsAsync(message, ticket.Id, reply.Id, ct);
+
             return new ProcessResult
             {
                 Outcome = ProcessOutcome.RepliedToExisting,
                 TicketId = ticket.Id,
                 ReplyId = reply.Id,
-                PendingAttachmentDownloads = PendingDownloads(message),
+                PendingAttachmentDownloads = replyPending,
             };
         }
 
@@ -131,11 +159,13 @@ public class InboundEmailService
             "[InboundEmailService] Created ticket #{TicketId} from inbound email {InboundId}",
             newTicket.Id, inboundEmail.Id);
 
+        var ticketPending = await StoreAttachmentsAsync(message, newTicket.Id, null, ct);
+
         return new ProcessResult
         {
             Outcome = ProcessOutcome.CreatedNew,
             TicketId = newTicket.Id,
-            PendingAttachmentDownloads = PendingDownloads(message),
+            PendingAttachmentDownloads = ticketPending,
         };
     }
 
@@ -203,23 +233,102 @@ public class InboundEmailService
         return false;
     }
 
-    private static IReadOnlyList<PendingAttachment> PendingDownloads(InboundMessage message)
+    /// <summary>
+    /// Stores the message attachments against the reply (or the ticket when
+    /// <paramref name="replyId"/> is null). Returns the provider-hosted ones
+    /// that still need fetching: all of them when no downloader is available,
+    /// otherwise only those whose download failed.
+    /// </summary>
+    private async Task<IReadOnlyList<PendingAttachment>> StoreAttachmentsAsync(
+        InboundMessage message, int ticketId, int? replyId, CancellationToken ct)
     {
-        var list = new List<PendingAttachment>();
+        var pending = new List<PendingAttachment>();
+        if (message.Attachments.Count == 0) return pending;
+
+        var maxBytes = (long)_attachmentOptions.MaxSizeKb * 1024;
+        var maxCount = _attachmentOptions.MaxPerReply;
+        var stored = 0;
+
         foreach (var attachment in message.Attachments)
         {
-            if (!string.IsNullOrEmpty(attachment.DownloadUrl) && attachment.Content is null)
+            if (maxCount > 0 && stored >= maxCount)
             {
-                list.Add(new PendingAttachment
+                _logger.LogInformation("[InboundEmailService] Attachment limit {Max} reached; skipping the rest", maxCount);
+                break;
+            }
+
+            var filename = AttachmentDownloader.SafeFilename(attachment.Name);
+            var extension = Path.GetExtension(filename).TrimStart('.');
+            if (BlockedExtensions.Contains(extension))
+            {
+                _logger.LogInformation("[InboundEmailService] Blocked inbound attachment {Filename}", filename);
+                continue;
+            }
+
+            var size = attachment.Content?.LongLength ?? attachment.SizeBytes ?? 0;
+            if (maxBytes > 0 && size > maxBytes)
+            {
+                _logger.LogInformation("[InboundEmailService] Skipped oversized inbound attachment {Filename} ({Bytes} bytes)", filename, size);
+                continue;
+            }
+
+            if (attachment.Content is { } content)
+            {
+                if (_storage is null)
                 {
-                    Name = attachment.Name,
-                    ContentType = attachment.ContentType,
-                    SizeBytes = attachment.SizeBytes,
-                    DownloadUrl = attachment.DownloadUrl,
+                    _logger.LogWarning("[InboundEmailService] No IAttachmentStorage registered; dropping {Filename}", filename);
+                    continue;
+                }
+
+                var contentType = string.IsNullOrWhiteSpace(attachment.ContentType) ? "application/octet-stream" : attachment.ContentType;
+                using var stream = new MemoryStream(content, writable: false);
+                var path = await _storage.PutAsync(filename, stream, contentType, ct);
+                _db.Attachments.Add(new Attachment
+                {
+                    AttachableType = replyId.HasValue ? "reply" : "ticket",
+                    AttachableId = replyId ?? ticketId,
+                    Filename = filename,
+                    MimeType = contentType,
+                    Size = content.LongLength,
+                    Path = path,
+                    Disk = _storage.Name,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                 });
+                await _db.SaveChangesAsync(ct);
+                stored++;
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(attachment.DownloadUrl)) continue;
+
+            var hosted = new PendingAttachment
+            {
+                Name = attachment.Name,
+                ContentType = attachment.ContentType,
+                SizeBytes = attachment.SizeBytes,
+                DownloadUrl = attachment.DownloadUrl,
+            };
+
+            if (_downloader is null)
+            {
+                pending.Add(hosted);
+                continue;
+            }
+
+            try
+            {
+                await _downloader.DownloadAsync(hosted, ticketId, replyId, ct);
+                stored++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "[InboundEmailService] Could not download inbound attachment {Filename}", filename);
+                pending.Add(hosted);
             }
         }
-        return list;
+
+        return pending;
     }
 }
 

@@ -311,14 +311,51 @@ public class AdminSettingsController : ControllerBase
     }
 
     [HttpPost("roles")]
-    public async Task<IActionResult> CreateRole([FromBody] Role role)
+    public async Task<IActionResult> CreateRole([FromBody] CreateRoleRequest request)
     {
-        role.Slug = role.Name.ToLower().Replace(" ", "-");
-        role.CreatedAt = DateTime.UtcNow;
-        role.UpdatedAt = DateTime.UtcNow;
+        var name = request.Name?.Trim() ?? string.Empty;
+        if (name.Length == 0 || name.Length > 100)
+            return UnprocessableEntity(new { message = "The name field is required and may not be greater than 100 characters.", errors = new { name = new[] { "invalid" } } });
+
+        var lowered = name.ToLowerInvariant();
+        if (await _db.Roles.AnyAsync(r => r.Name.ToLower() == lowered))
+            return UnprocessableEntity(new { message = "A role with this name already exists.", errors = new { name = new[] { "taken" } } });
+
+        // A distinct name can still slug onto an existing role ("Escalated Admin" and the
+        // system escalated-admin role, or "A/B" and "A B"): suffix until it is free.
+        var baseSlug = RoleSlug.From(name);
+        var slug = baseSlug;
+        for (var n = 2; await _db.Roles.AnyAsync(r => r.Slug == slug); n++)
+            slug = $"{baseSlug[..Math.Min(baseSlug.Length, 90)]}-{n}";
+
+        var now = DateTime.UtcNow;
+        var role = new Role { Name = name, Slug = slug, Description = request.Description, CreatedAt = now, UpdatedAt = now };
+        if (request.Permissions is { Count: > 0 } ids)
+        {
+            var permissions = await _db.Permissions.Where(p => ids.Contains(p.Id)).ToListAsync();
+            if (permissions.Count != ids.Distinct().Count())
+                return UnprocessableEntity(new { message = "One or more permissions do not exist.", errors = new { permissions = new[] { "invalid" } } });
+            foreach (var permission in permissions) role.Permissions.Add(permission);
+        }
+
         _db.Roles.Add(role);
-        await _db.SaveChangesAsync();
-        return Ok(role);
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Lost a race with a concurrent create of the same slug.
+            return UnprocessableEntity(new { message = "A role with this name already exists.", errors = new { name = new[] { "taken" } } });
+        }
+        return Ok(new { role.Id, role.Name, role.Slug, role.Description, role.IsSystem, role.CreatedAt, role.UpdatedAt });
+    }
+
+    public sealed class CreateRoleRequest
+    {
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public List<int>? Permissions { get; set; }
     }
 
     // --- Audit Logs ---

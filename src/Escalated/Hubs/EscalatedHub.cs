@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Escalated.Authorization;
 using Escalated.Data;
+using Escalated.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Escalated.Hubs;
@@ -8,6 +9,12 @@ namespace Escalated.Hubs;
 /// <summary>
 /// SignalR hub for real-time ticket updates (opt-in via EscalatedOptions.EnableRealTime).
 /// Clients join/leave ticket-specific groups to receive live updates.
+///
+/// <para>Every join is authorized, whatever the visibility mode. The ticket list and
+/// chat queue are staff rooms: an anonymous or customer connection is refused. A ticket
+/// room needs a user who may view that ticket, or a guest presenting the ticket's
+/// <c>guest_token</c>. A chat room needs a user who may view the chat's ticket, or the
+/// visitor presenting that chat's <c>chat_token</c> (or the ticket's <c>guest_token</c>).</para>
 /// </summary>
 public class EscalatedHub : Hub
 {
@@ -25,9 +32,13 @@ public class EscalatedHub : Hub
 
     private bool Restricted => access?.IsRestricted == true;
 
-    private async Task SubscribeAsync(string room, int? ticketId = null, bool staffOnly = false)
+    /// <summary>Authorizes the caller for <paramref name="room"/>, then adds it.</summary>
+    private async Task SubscribeAsync(string room, int? ticketId = null, bool staffOnly = false, int? chatSessionId = null)
     {
-        var userId = access!.UserId(Context.User);
+        // Without Escalated's services there is nothing to check against: fail closed.
+        if (access is null || db is null) throw new HubException("Access denied.");
+
+        var userId = access.UserId(Context.User);
         string? token = null;
         if (userId is not null)
         {
@@ -36,12 +47,28 @@ public class EscalatedHub : Hub
         }
         else
         {
-            token = Context.GetHttpContext()?.Request.Query["guest_token"].ToString();
-            if (staffOnly || ticketId is null || string.IsNullOrEmpty(token)
-                || !await TicketAccessScope.WithoutVisibilityAsync(() => db!.Tickets.AnyAsync(ticket => ticket.Id == ticketId && ticket.GuestToken == token)))
-                throw new HubException("Access denied.");
+            if (staffOnly || ticketId is null) throw new HubException("Access denied.");
+            var query = Context.GetHttpContext()?.Request.Query;
+            token = query?["guest_token"].ToString();
+            var chatToken = query?["chat_token"].ToString();
+            var allowed = false;
+            if (!string.IsNullOrEmpty(token))
+                allowed = await TicketAccessScope.WithoutVisibilityAsync(() => db.Tickets.AnyAsync(ticket => ticket.Id == ticketId && ticket.GuestToken == token));
+            if (!allowed && chatSessionId is not null && !string.IsNullOrEmpty(chatToken))
+            {
+                var hash = ChatSessionService.HashVisitorToken(chatToken);
+                allowed = await TicketAccessScope.WithoutVisibilityAsync(() => db.ChatSessions.AnyAsync(session => session.Id == chatSessionId && session.VisitorTokenHash == hash));
+                if (allowed) token = null;
+            }
+            if (!allowed) throw new HubException("Access denied.");
         }
-        audience!.Add(new TicketSubscription(Context.ConnectionId, room, userId, token, userId is null ? ticketId : null, staffOnly));
+
+        if (Restricted)
+        {
+            audience!.Add(new TicketSubscription(Context.ConnectionId, room, userId, token, userId is null ? ticketId : null, staffOnly));
+            return;
+        }
+        await Groups.AddToGroupAsync(Context.ConnectionId, room);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -53,11 +80,7 @@ public class EscalatedHub : Hub
     /// <summary>
     /// Join a ticket room to receive live updates for that ticket.
     /// </summary>
-    public async Task JoinTicket(int ticketId)
-    {
-        if (Restricted) { await SubscribeAsync($"ticket-{ticketId}", ticketId); return; }
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"ticket-{ticketId}");
-    }
+    public Task JoinTicket(int ticketId) => SubscribeAsync($"ticket-{ticketId}", ticketId);
 
     /// <summary>
     /// Leave a ticket room.
@@ -69,13 +92,9 @@ public class EscalatedHub : Hub
     }
 
     /// <summary>
-    /// Join the global ticket list feed.
+    /// Join the global ticket list feed. Staff only.
     /// </summary>
-    public async Task JoinTicketList()
-    {
-        if (Restricted) { await SubscribeAsync("ticket-list", staffOnly: true); return; }
-        await Groups.AddToGroupAsync(Context.ConnectionId, "ticket-list");
-    }
+    public Task JoinTicketList() => SubscribeAsync("ticket-list", staffOnly: true);
 
     /// <summary>
     /// Leave the global ticket list feed.
@@ -91,9 +110,9 @@ public class EscalatedHub : Hub
     /// </summary>
     public async Task Presence(int ticketId, string userName)
     {
+        await JoinTicket(ticketId);
         if (Restricted)
         {
-            await SubscribeAsync($"ticket-{ticketId}", ticketId);
             await broadcasts!.SendAsync(ticketId, $"ticket-{ticketId}", "PresenceUpdate", new { ticketId, userName, connectionId = Context.ConnectionId }, Context.ConnectionId);
             return;
         }
@@ -104,13 +123,9 @@ public class EscalatedHub : Hub
     // ── Live Chat ──
 
     /// <summary>
-    /// Join the chat queue feed to receive notifications of new chat sessions.
+    /// Join the chat queue feed to receive notifications of new chat sessions. Staff only.
     /// </summary>
-    public async Task JoinChatQueue()
-    {
-        if (Restricted) { await SubscribeAsync("chat-queue", staffOnly: true); return; }
-        await Groups.AddToGroupAsync(Context.ConnectionId, "chat-queue");
-    }
+    public Task JoinChatQueue() => SubscribeAsync("chat-queue", staffOnly: true);
 
     /// <summary>
     /// Leave the chat queue feed.
@@ -126,14 +141,10 @@ public class EscalatedHub : Hub
     /// </summary>
     public async Task JoinChat(int sessionId)
     {
-        if (Restricted)
-        {
-            var ticketId = await TicketAccessScope.WithoutVisibilityAsync(() => db!.ChatSessions.Where(session => session.Id == sessionId).Select(session => (int?)session.TicketId).FirstOrDefaultAsync());
-            if (ticketId is null) throw new HubException("Chat not found.");
-            await SubscribeAsync($"chat-{sessionId}", ticketId);
-            return;
-        }
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"chat-{sessionId}");
+        if (db is null) throw new HubException("Access denied.");
+        var ticketId = await TicketAccessScope.WithoutVisibilityAsync(() => db.ChatSessions.Where(session => session.Id == sessionId).Select(session => (int?)session.TicketId).FirstOrDefaultAsync());
+        if (ticketId is null) throw new HubException("Chat not found.");
+        await SubscribeAsync($"chat-{sessionId}", ticketId, chatSessionId: sessionId);
     }
 
     /// <summary>
@@ -150,9 +161,9 @@ public class EscalatedHub : Hub
     /// </summary>
     public async Task ChatTyping(int sessionId, string userName)
     {
+        await JoinChat(sessionId);
         if (Restricted)
         {
-            await JoinChat(sessionId);
             var ticketId = await TicketAccessScope.WithoutVisibilityAsync(() => db!.ChatSessions.Where(session => session.Id == sessionId).Select(session => session.TicketId).SingleAsync());
             await broadcasts!.SendAsync(ticketId, $"chat-{sessionId}", "ChatTyping", new { sessionId, userName }, Context.ConnectionId);
             return;

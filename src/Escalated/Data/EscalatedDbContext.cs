@@ -72,6 +72,35 @@ public class EscalatedDbContext : DbContext
             foreach (var id in ids) await AssertTicketAccessAsync(id, ct);
     }
 
+    /// <summary>
+    /// Fills <see cref="Ticket.Attachments"/> and each loaded reply's
+    /// <see cref="Reply.Attachments"/> from the polymorphic attachment rows.
+    /// </summary>
+    public async Task LoadAttachmentsAsync(Ticket ticket, CancellationToken ct = default)
+    {
+        var replyIds = ticket.Replies.Select(r => r.Id).ToList();
+        var rows = await Attachments.AsNoTracking()
+            .Where(a => (a.AttachableType.ToLower() == "ticket" && a.AttachableId == ticket.Id)
+                || (a.AttachableType.ToLower() == "reply" && replyIds.Contains(a.AttachableId)))
+            .OrderBy(a => a.Id)
+            .ToListAsync(ct);
+
+        ticket.Attachments = rows.Where(a => a.AttachableType.Equals("ticket", StringComparison.OrdinalIgnoreCase)).ToList();
+        foreach (var reply in ticket.Replies)
+            reply.Attachments = rows.Where(a => a.AttachableId == reply.Id && a.AttachableType.Equals("reply", StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+
+        // Serve the migration set for the provider in use (see EscalatedMigrationsAssembly),
+        // unless the host has substituted its own migrations assembly service.
+        var core = optionsBuilder.Options.FindExtension<Microsoft.EntityFrameworkCore.Infrastructure.CoreOptionsExtension>();
+        if (core?.ReplacedServices?.Keys.Any(k => k.Item1 == typeof(Microsoft.EntityFrameworkCore.Migrations.IMigrationsAssembly)) != true)
+            optionsBuilder.ReplaceService<Microsoft.EntityFrameworkCore.Migrations.IMigrationsAssembly, EscalatedMigrationsAssembly>();
+    }
+
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         await PrepareTicketChangesAsync(cancellationToken);
