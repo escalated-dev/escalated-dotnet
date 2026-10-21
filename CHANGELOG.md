@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Live chat events reach webhooks and Workflows: `chat.started`, `chat.assigned` (an agent accepts, or routing assigns one when the chat starts), `chat.message` (new `ChatMessageEvent`) and `chat.ended`. Payloads carry `chat.session_id`, `ticket_id`, `status`, `agent_id` and `department_id`, never the visitor's token or email.
+- Workflows can be triggered by `ticket.resolved`, `ticket.closed`, `ticket.unassigned`, `ticket.escalated`, `ticket.tag_removed`, `note.created` and the chat events. These were raised but never reached Workflows.
+- `EventNames`: the canonical names, the legacy names, and `EventNames.Canonicalize`.
+
+### Changed
+- **Webhook and trigger names follow the shared event vocabulary** (escalated-developer-context ADR 2026-10-21). Internal notes are sent as `note.created` (was `internal_note.added`), tags as `ticket.tag_added` / `ticket.tag_removed` (were `ticket.tagged` / `ticket.untagged`), and the tag trigger is `ticket.tag_added` (was `ticket.tagged`).
+- `WorkflowEngine.TriggerEvents` no longer offers `reply.agent_reply`, which nothing ever raised; a Workflow saved with it never ran.
+
+### Upgrading
+- Nothing to migrate. Stored webhook subscriptions and Workflows that use a legacy name (`ticket.tagged`, `ticket.untagged`, `tag.added`, `tag.removed`, `internal_note.added`, `internal_note.created`, `ticket.replied`, `chat.session_started`, `chat.session_ended`) are read as the canonical name and keep firing. The payload's `event` field and the `X-Escalated-Event` header carry the canonical name, so a receiver that switches on the old name should accept the new one. Creating a webhook stores canonical names.
+
 ## [0.2.2] - 2026-10-21
 
 ### Changed

@@ -15,10 +15,9 @@ namespace Escalated.Events;
 /// <see cref="WebhookDelivery"/> for each attempt.
 ///
 /// <para>Mirrors the Laravel reference <c>DispatchWebhook</c> listener and the
-/// NestJS <c>WebhookService</c> event handler. Event names follow the core event
-/// list in escalated-developer-context <c>ARCHITECTURE.md</c> where it names the
-/// event (so tags are <c>ticket.tagged</c> / <c>ticket.untagged</c>, as the Workflow
-/// triggers already are), and the Laravel reference where it does not.</para>
+/// NestJS <c>WebhookService</c> event handler. Event names are the shared
+/// vocabulary in <see cref="EventNames"/> (ADR 2026-10-21); a subscription stored
+/// under a legacy name receives the event under its canonical name.</para>
 ///
 /// <para>Resolves <see cref="WebhookDispatcher"/> and its <see cref="EscalatedDbContext"/>
 /// from a fresh scope per event, so it is a singleton and never shares a context
@@ -62,23 +61,27 @@ public class WebhookEventDispatcher : IEscalatedEventDispatcher
     /// <summary>The webhook event name a domain event is delivered as, or <c>null</c> for none.</summary>
     public static string? EventName<TEvent>(TEvent @event) where TEvent : class => @event switch
     {
-        TicketCreatedEvent => "ticket.created",
-        TicketUpdatedEvent => "ticket.updated",
-        TicketStatusChangedEvent => "ticket.status_changed",
-        TicketResolvedEvent => "ticket.resolved",
-        TicketClosedEvent => "ticket.closed",
-        TicketReopenedEvent => "ticket.reopened",
-        TicketAssignedEvent => "ticket.assigned",
-        TicketUnassignedEvent => "ticket.unassigned",
-        TicketEscalatedEvent => "ticket.escalated",
-        TicketPriorityChangedEvent => "ticket.priority_changed",
-        DepartmentChangedEvent => "ticket.department_changed",
-        TagAddedEvent => "ticket.tagged",
-        TagRemovedEvent => "ticket.untagged",
-        ReplyCreatedEvent => "reply.created",
-        InternalNoteAddedEvent => "internal_note.added",
-        SlaBreachedEvent => "sla.breached",
-        SlaWarningEvent => "sla.warning",
+        TicketCreatedEvent => EventNames.TicketCreated,
+        TicketUpdatedEvent => EventNames.TicketUpdated,
+        TicketStatusChangedEvent => EventNames.TicketStatusChanged,
+        TicketResolvedEvent => EventNames.TicketResolved,
+        TicketClosedEvent => EventNames.TicketClosed,
+        TicketReopenedEvent => EventNames.TicketReopened,
+        TicketAssignedEvent => EventNames.TicketAssigned,
+        TicketUnassignedEvent => EventNames.TicketUnassigned,
+        TicketEscalatedEvent => EventNames.TicketEscalated,
+        TicketPriorityChangedEvent => EventNames.TicketPriorityChanged,
+        DepartmentChangedEvent => EventNames.TicketDepartmentChanged,
+        TagAddedEvent => EventNames.TicketTagAdded,
+        TagRemovedEvent => EventNames.TicketTagRemoved,
+        ReplyCreatedEvent => EventNames.ReplyCreated,
+        InternalNoteAddedEvent => EventNames.NoteCreated,
+        SlaBreachedEvent => EventNames.SlaBreached,
+        SlaWarningEvent => EventNames.SlaWarning,
+        ChatSessionStartedEvent => EventNames.ChatStarted,
+        ChatSessionAcceptedEvent => EventNames.ChatAssigned,
+        ChatMessageEvent => EventNames.ChatMessage,
+        ChatSessionEndedEvent => EventNames.ChatEnded,
         _ => null,
     };
 
@@ -97,6 +100,20 @@ public class WebhookEventDispatcher : IEscalatedEventDispatcher
                 break;
             case InternalNoteAddedEvent { Reply: var note }:
                 AddReply(payload, note);
+                break;
+            case ChatSessionStartedEvent e:
+                AddChat(payload, e.Session);
+                break;
+            case ChatSessionAcceptedEvent e:
+                AddChat(payload, e.Session);
+                break;
+            case ChatSessionEndedEvent e:
+                AddChat(payload, e.Session);
+                break;
+            case ChatMessageEvent e:
+                var chat = AddChat(payload, e.Session);
+                chat["reply_id"] = e.Reply.Id;
+                chat["author_type"] = e.AuthorType;
                 break;
         }
 
@@ -151,6 +168,24 @@ public class WebhookEventDispatcher : IEscalatedEventDispatcher
         }
 
         return payload;
+    }
+
+    /// <summary>
+    /// The chat session fields that leave the process. The visitor token hash and
+    /// the visitor's email never do.
+    /// </summary>
+    private static Dictionary<string, object?> AddChat(Dictionary<string, object?> payload, ChatSession session)
+    {
+        var chat = new Dictionary<string, object?>
+        {
+            ["session_id"] = session.Id,
+            ["ticket_id"] = session.TicketId,
+            ["status"] = session.Status,
+            ["agent_id"] = session.AgentId,
+            ["department_id"] = session.DepartmentId,
+        };
+        payload["chat"] = chat;
+        return chat;
     }
 
     private static void AddReply(Dictionary<string, object?> payload, Reply reply)

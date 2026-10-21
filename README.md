@@ -516,18 +516,32 @@ Webhooks subscribe to event names (or `*` for all of them):
 | `ticket.escalated` | `TicketEscalatedEvent` |
 | `ticket.priority_changed` | `TicketPriorityChangedEvent` |
 | `ticket.department_changed` | `DepartmentChangedEvent` |
-| `ticket.tagged` | `TagAddedEvent` |
-| `ticket.untagged` | `TagRemovedEvent` |
+| `ticket.tag_added` | `TagAddedEvent` |
+| `ticket.tag_removed` | `TagRemovedEvent` |
 | `reply.created` | `ReplyCreatedEvent` |
-| `internal_note.added` | `InternalNoteAddedEvent` |
+| `note.created` | `InternalNoteAddedEvent` |
 | `sla.breached` | `SlaBreachedEvent` |
 | `sla.warning` | `SlaWarningEvent` |
+| `chat.started` | `ChatSessionStartedEvent` |
+| `chat.assigned` | `ChatSessionAcceptedEvent` (an agent accepted, or routing assigned one at start) |
+| `chat.message` | `ChatMessageEvent` |
+| `chat.ended` | `ChatSessionEndedEvent` |
+
+These are the shared event vocabulary (escalated-developer-context ADR
+2026-10-21, `EventNames.Canonical`). Workflow triggers use the same names. Names
+from earlier releases are still read: a webhook subscribed to `ticket.tagged`,
+`ticket.untagged` or `internal_note.added`, or a Workflow saved with
+`ticket.replied`, keeps working and receives the canonical name
+(`EventNames.Legacy`). Creating a webhook stores canonical names.
 
 Each delivery is a signed `POST` (`X-Escalated-Event`, and `X-Escalated-Signature`
 when the webhook has a secret) with the body
 `{ "event", "payload", "timestamp" }`. `payload.ticket` carries `id`,
 `reference`, `subject`, `status` and `priority`; reply events add `payload.reply`,
-tag events `payload.tag`, and `ticket.assigned` adds `payload.agent_id`. Every
+tag events `payload.tag`, and `ticket.assigned` adds `payload.agent_id`. Chat
+events carry `payload.chat` (`session_id`, `ticket_id`, `status`, `agent_id`,
+`department_id`; `chat.message` adds `reply_id` and `author_type`), never the
+visitor's token or email. Every
 attempt is recorded as a `WebhookDelivery`.
 
 ## Custom Ticket Actions

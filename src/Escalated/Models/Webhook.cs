@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using Escalated.Events;
 
 namespace Escalated.Models;
 
@@ -34,8 +35,11 @@ public class Webhook
     {
         try
         {
+            // Stored names are read as canonical (ADR 2026-10-21), so a subscription
+            // saved under a legacy name such as `ticket.tagged` keeps receiving it.
             var events = JsonSerializer.Deserialize<List<string>>(Events);
-            return events != null && (events.Contains("*") || events.Contains(eventName));
+            var wanted = EventNames.Canonicalize(eventName);
+            return events != null && events.Any(e => e == "*" || EventNames.Canonicalize(e) == wanted);
         }
         catch
         {
