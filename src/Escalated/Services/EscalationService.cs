@@ -30,6 +30,7 @@ public class EscalationService
     {
         var rules = await _db.EscalationRules
             .Where(r => r.IsActive)
+            .OrderBy(r => r.Order).ThenBy(r => r.Id)
             .ToListAsync(ct);
 
         var escalated = 0;

@@ -26,6 +26,13 @@ public class EscalationRule
     /// </summary>
     public string Actions { get; set; } = "[]";
 
+    /// <summary>What starts the rule. The escalation service runs <c>time_based</c> rules on its schedule.</summary>
+    [MaxLength(50)]
+    public string TriggerType { get; set; } = "time_based";
+
+    /// <summary>Rules run in ascending order.</summary>
+    public int Order { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
