@@ -155,6 +155,8 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Customer/Index` | `GET support` |
 | `Escalated/Customer/Create` | `GET support/create` |
 | `Escalated/Customer/Show` | `GET support/{reference}` |
+| `Escalated/Customer/KnowledgeBase/Index` | `GET support/kb` |
+| `Escalated/Customer/KnowledgeBase/Article` | `GET support/kb/{slug}` |
 | `Escalated/Admin/Tickets/Index` | `GET support/admin/tickets` |
 | `Escalated/Admin/Tickets/Show` | `GET support/admin/tickets/{reference}` |
 | `Escalated/Admin/Settings` | `GET support/admin/settings` |
@@ -176,6 +178,9 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Admin/Roles/Index` | `GET support/admin/roles` |
 | `Escalated/Admin/Roles/Form` | `GET support/admin/roles/create`, `GET support/admin/roles/{id}/edit` |
 | `Escalated/Admin/ApiTokens/Index` | `GET support/admin/api-tokens` |
+| `Escalated/Admin/KnowledgeBase/Articles/Index` | `GET support/admin/kb-articles` |
+| `Escalated/Admin/KnowledgeBase/Articles/Form` | `GET support/admin/kb-articles/create`, `GET support/admin/kb-articles/{id}/edit` |
+| `Escalated/Admin/KnowledgeBase/Categories/Index` | `GET support/admin/kb-categories` |
 | `Escalated/Admin/Workflows/Index` | `GET support/admin/workflows` |
 | `Escalated/Admin/Workflows/Form` | `GET support/admin/workflows/create`, `GET support/admin/workflows/{id}` |
 
@@ -228,7 +233,16 @@ is the list of permission ids). API tokens: `POST support/admin/api-tokens`
 (`name`, `user_id` of a staff user, `abilities` from `agent`, `admin`, `*`,
 optional `expires_in_days` 1-365) flashes the new token once as
 `plain_text_token`; `DELETE support/admin/api-tokens/{id}` revokes one. The page's
-`api_enabled` is true once your pipeline includes `ApiTokenAuthMiddleware`. Tags: `POST support/admin/tags`, `PUT` and
+`api_enabled` is true once your pipeline includes `ApiTokenAuthMiddleware`.
+
+Knowledge base: articles and categories take `POST support/admin/kb-articles`
+(`kb-categories`), `PUT` and `DELETE .../{id}`; a blank slug is made from the
+title (name), publishing stamps `published_at` once, and deleting a category
+leaves its articles and subcategories without one. The public pages show only
+published articles, count a view per visit, and take `POST
+support/kb/{slug}/feedback` (`helpful`). `Escalated:KnowledgeBase:Enabled` off
+makes them 404 and `AllowFeedback` off hides the feedback buttons; with the
+`knowledge_base_public` setting off, visitors who are not signed in get 403. Tags: `POST support/admin/tags`, `PUT` and
 `DELETE support/admin/tags/{id}`. Workflows: the workflow admin routes
 (`docs/workflows.md`) answer page requests with the page, and page form posts
 (`POST`, `PUT`, `DELETE`, `toggle`, `reorder`) with a 303 to the list, or back to
@@ -237,4 +251,4 @@ the form with its errors.
 ### Not served yet
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Error, Guest/Create, Guest/Show, Plugin/Page.
+`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Error, Guest/Create, Guest/Show, Plugin/Page.
