@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Escalated.Services;
 using Microsoft.AspNetCore.Mvc;
 using Escalated.Authorization;
@@ -30,7 +32,7 @@ public class AdminSavedViewController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateSavedViewRequest request)
     {
         var view = await _service.CreateAsync(request.Name, request.Filters, this.CurrentUserId(),
-            request.IsShared, request.SortBy, request.SortDir);
+            request.SharedSnake ?? request.IsShared, request.SortBy, request.SortDir);
         return Ok(view);
     }
 
@@ -41,7 +43,7 @@ public class AdminSavedViewController : ControllerBase
         if (existing == null) return NotFound();
         if (!MayChange(existing)) return Forbid();
 
-        var view = await _service.UpdateAsync(id, request.Name, request.Filters, request.IsShared);
+        var view = await _service.UpdateAsync(id, request.Name, request.Filters, request.SharedSnake ?? request.IsShared);
         return Ok(view);
     }
 
@@ -65,6 +67,47 @@ public class AdminSavedViewController : ControllerBase
         view.UserId is null || view.UserId == this.CurrentUserId();
 }
 
-public record CreateSavedViewRequest(string Name, string Filters,
-    bool IsShared = false, string? SortBy = null, string? SortDir = null);
-public record UpdateSavedViewRequest(string? Name = null, string? Filters = null, bool? IsShared = null);
+/// <summary>
+/// <c>filters</c> may be a JSON object (the shared ticket pages send one) or the
+/// object as a string; <c>is_shared</c> is read alongside <c>isShared</c>.
+/// </summary>
+public record CreateSavedViewRequest(string Name,
+    [property: JsonConverter(typeof(JsonTextOrObjectConverter))] string Filters,
+    bool IsShared = false, string? SortBy = null, string? SortDir = null)
+{
+    [JsonPropertyName("is_shared")]
+    public bool? SharedSnake { get; init; }
+}
+
+public record UpdateSavedViewRequest(string? Name = null,
+    [property: JsonConverter(typeof(JsonTextOrObjectConverter))] string? Filters = null,
+    bool? IsShared = null)
+{
+    [JsonPropertyName("is_shared")]
+    public bool? SharedSnake { get; init; }
+}
+
+/// <summary>Reads a string as itself and any other JSON value as its JSON text.</summary>
+public sealed class JsonTextOrObjectConverter : JsonConverter<string?>
+{
+    public override bool HandleNull => true;
+
+    public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        switch (reader.TokenType)
+        {
+            case JsonTokenType.Null:
+                return null;
+            case JsonTokenType.String:
+                return reader.GetString();
+            default:
+                using (var document = JsonDocument.ParseValue(ref reader))
+                {
+                    return document.RootElement.GetRawText();
+                }
+        }
+    }
+
+    public override void Write(Utf8JsonWriter writer, string? value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value);
+}

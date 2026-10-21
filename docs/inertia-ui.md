@@ -93,8 +93,8 @@ public sealed class MyLayout : IEscalatedUiRootView
 ### Routes the JSON API also answers
 
 Some page routes share a path with a JSON API action: `GET support/agent/tickets`
-(the ticket queue page, and the API's ticket list), `POST
-support/agent/tickets/bulk`, `support/admin/settings`, and the departments, tags
+(the ticket queue page, and the API's ticket list), `GET support/admin/tickets`
+(likewise), `POST support/agent/tickets/bulk`, `support/admin/settings`, and the departments, tags
 and workflows admin routes. With the UI on, a request reaches the page when it
 is an Inertia visit or a GET whose `Accept` names `text/html`; every other
 request (an API client sending `Accept: application/json`, or no `Accept`)
@@ -154,6 +154,8 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Customer/Index` | `GET support` |
 | `Escalated/Customer/Create` | `GET support/create` |
 | `Escalated/Customer/Show` | `GET support/{reference}` |
+| `Escalated/Admin/Tickets/Index` | `GET support/admin/tickets` |
+| `Escalated/Admin/Tickets/Show` | `GET support/admin/tickets/{reference}` |
 | `Escalated/Admin/Settings` | `GET support/admin/settings` |
 | `Escalated/Admin/Departments/Index` | `GET support/admin/departments` |
 | `Escalated/Admin/Departments/Form` | `GET support/admin/departments/create`, `GET support/admin/departments/{id}/edit` |
@@ -165,7 +167,18 @@ Agent form posts (`support/agent/tickets/{reference}/…`): `reply`, `note` (fil
 in `attachments[]` are stored through `IAttachmentStorage`, within
 `Attachments:MaxSizeKb` and `MaxPerReply`), `assign`, `status`, `priority`,
 `tags` (sets the ticket's tags to `tag_ids`), `department`, `macro`, `follow`
-(toggles) and `actions/{action}`, plus `POST support/agent/tickets/bulk`.
+(toggles), `replies/{reply}/pin` (pins or unpins an internal note), `presence`
+(answers `{viewers: [{id, name}]}`, the other staff seen on the ticket in the
+last minute, tracked in process) and `actions/{action}`, plus `POST
+support/agent/tickets/bulk`.
+
+The admin ticket pages take the same posts under `support/admin/tickets/…`
+(no custom actions), plus `snooze` (`snoozed_until`, a future time; a time
+without a zone is read as UTC) and `unsnooze`. Their `agents` prop lists the
+holders of the `escalated-agent` and `escalated-admin` roles, and `savedViews`
+the signed-in admin's saved views plus shared ones. The views dialogs call the
+saved-view API (`support/admin/saved-views`), which now also takes `filters` as
+a JSON object and `is_shared`.
 
 Customer form posts: `POST support` (open a ticket; `subject`, `description`,
 `priority`, `department_id`, `ticket_type`, `attachments[]`), and on
@@ -190,4 +203,4 @@ the form with its errors.
 ### Not served yet
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/ApiTokens/Index, Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/CannedResponses/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/EscalationRules/Form, Admin/EscalationRules/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Macros/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Roles/Form, Admin/Roles/Index, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/SlaPolicies/Form, Admin/SlaPolicies/Index, Admin/Statuses/Form, Admin/Statuses/Index, Admin/Tickets/Index, Admin/Tickets/Show, Admin/Users/Index, Admin/Webhooks/DeliveryLog, Admin/Webhooks/Form, Admin/Webhooks/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Error, Guest/Create, Guest/Show, Plugin/Page.
+`Escalated/`): Admin/ApiTokens/Index, Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/CannedResponses/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/EscalationRules/Form, Admin/EscalationRules/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/KnowledgeBase/Articles/Form, Admin/KnowledgeBase/Articles/Index, Admin/KnowledgeBase/Categories/Index, Admin/Macros/Index, Admin/Plugins/Index, Admin/Reports, Admin/Reports/AgentDetail, Admin/Reports/AgentMetrics, Admin/Reports/AgentRanking, Admin/Reports/Cohorts, Admin/Reports/Comparison, Admin/Reports/CsatReport, Admin/Reports/Dashboard, Admin/Reports/ResolutionTimes, Admin/Reports/ResponseTimes, Admin/Reports/SlaReport, Admin/Reports/SlaTrends, Admin/Roles/Form, Admin/Roles/Index, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/SlaPolicies/Form, Admin/SlaPolicies/Index, Admin/Statuses/Form, Admin/Statuses/Index, Admin/Users/Index, Admin/Webhooks/DeliveryLog, Admin/Webhooks/Form, Admin/Webhooks/Index, Admin/Workflows/Builder, Admin/Workflows/Logs, Auth/TwoFactorChallenge, Customer/KnowledgeBase/Article, Customer/KnowledgeBase/Index, Error, Guest/Create, Guest/Show, Plugin/Page.
