@@ -56,7 +56,8 @@ public sealed class EscalatedTestHost : IAsyncDisposable
 
     public static async Task<EscalatedTestHost> StartAsync(
         Action<EscalatedOptions>? configureOptions = null,
-        Action<IServiceCollection>? configureServices = null)
+        Action<IServiceCollection>? configureServices = null,
+        Action<WebApplication>? configureApp = null)
     {
         var database = TestDatabase.LeaseDatabase();
 
@@ -96,6 +97,7 @@ public sealed class EscalatedTestHost : IAsyncDisposable
                 database.CreateTables(scope.ServiceProvider.GetRequiredService<EscalatedDbContext>());
             }
 
+            configureApp?.Invoke(app);
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();

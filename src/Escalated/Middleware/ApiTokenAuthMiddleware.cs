@@ -8,6 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Escalated.Middleware;
 
+/// <summary>Whether the host put <see cref="ApiTokenAuthMiddleware"/> in its pipeline.</summary>
+public sealed class ApiTokenAuthState
+{
+    public bool Wired { get; set; }
+}
+
 /// <summary>
 /// Middleware that authenticates requests using Bearer API tokens.
 /// Tokens are stored as SHA-256 hashes for security.
@@ -16,9 +22,15 @@ public class ApiTokenAuthMiddleware
 {
     private readonly RequestDelegate _next;
 
-    public ApiTokenAuthMiddleware(RequestDelegate next)
+    /// <param name="next">The rest of the pipeline.</param>
+    /// <param name="state">
+    /// Recorded as wired, which the API tokens page reports as <c>api_enabled</c>.
+    /// <c>UseMiddleware</c> passes the one <c>AddEscalated</c> registers.
+    /// </param>
+    public ApiTokenAuthMiddleware(RequestDelegate next, ApiTokenAuthState? state = null)
     {
         _next = next;
+        if (state is not null) state.Wired = true;
     }
 
     public async Task InvokeAsync(HttpContext context)
