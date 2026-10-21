@@ -4,7 +4,6 @@ using Escalated.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -14,7 +13,6 @@ namespace Escalated.Migrations.SqlServer
     [DbContext(typeof(EscalatedDbContext))]
     partial class EscalatedDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
@@ -2511,6 +2509,58 @@ namespace Escalated.Migrations.SqlServer
                     b.ToTable("escalated_workflows", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.WorkflowDelayedAction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Cancelled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExecuteAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("execute_at");
+
+                    b.Property<bool>("Executed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RemainingActions")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("remaining_actions");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("int")
+                        .HasColumnName("ticket_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WorkflowId")
+                        .HasColumnType("int")
+                        .HasColumnName("workflow_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex("WorkflowId");
+
+                    b.HasIndex("ExecuteAt", "Executed", "Cancelled");
+
+                    b.ToTable("escalated_delayed_actions", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.WorkflowLog", b =>
                 {
                     b.Property<int>("Id")
@@ -2980,6 +3030,21 @@ namespace Escalated.Migrations.SqlServer
                         .IsRequired();
 
                     b.Navigation("Webhook");
+                });
+
+            modelBuilder.Entity("Escalated.Models.WorkflowDelayedAction", b =>
+                {
+                    b.HasOne("Escalated.Models.Ticket", null)
+                        .WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Escalated.Models.Workflow", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Escalated.Models.WorkflowLog", b =>

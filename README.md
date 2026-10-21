@@ -534,6 +534,8 @@ from earlier releases are still read: a webhook subscribed to `ticket.tagged`,
 `ticket.replied`, keeps working and receives the canonical name
 (`EventNames.Legacy`). Creating a webhook stores canonical names.
 
+Workflows are managed under `support/admin/workflows`; see [docs/workflows.md](docs/workflows.md).
+
 Each delivery is a signed `POST` (`X-Escalated-Event`, and `X-Escalated-Signature`
 when the webhook has a secret) with the body
 `{ "event", "payload", "timestamp" }`. `payload.ticket` carries `id`,

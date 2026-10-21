@@ -8,16 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Workflow admin** (`support/admin/workflows`, admin policy): list, options, show, create, update, delete, toggle, reorder and logs, taking the shared builder's body (escalated-developer-context `domain-model/workflow-admin-contract.md`). Validation failures answer 422 with `{message, errors}`. See [docs/workflows.md](docs/workflows.md).
+- Workflow actions `set_type`, `send_webhook` (SSRF-guarded, no redirects) and `delay`. A delay holds the remaining actions in the new `escalated_delayed_actions` table; `WorkflowDelayedActionBackgroundService` runs them when due, after checking the conditions again, and cancels them if the ticket was resolved or closed.
+- Workflow conditions on `tags` (by name, as a list) and `hours_since_created` / `hours_since_updated`. Workflows stored as a flat condition list or as `{match, rules}` are evaluated.
 - Live chat events reach webhooks and Workflows: `chat.started`, `chat.assigned` (an agent accepts, or routing assigns one when the chat starts), `chat.message` (new `ChatMessageEvent`) and `chat.ended`. Payloads carry `chat.session_id`, `ticket_id`, `status`, `agent_id` and `department_id`, never the visitor's token or email.
 - Workflows can be triggered by `ticket.resolved`, `ticket.closed`, `ticket.unassigned`, `ticket.escalated`, `ticket.tag_removed`, `note.created` and the chat events. These were raised but never reached Workflows.
 - `EventNames`: the canonical names, the legacy names, and `EventNames.Canonicalize`.
 
 ### Changed
+- `WorkflowEngine.ActionTypes` lists what the executor runs. `send_notification` is no longer offered (nothing sent it); `insert_canned_reply` is now listed.
+- `add_tag` / `remove_tag` find the tag by name, which is what the builder sends (slug and id still work). `add_note` fills in `{{field}}` placeholders.
+- Tag events are dispatched after the tag is saved, so a Workflow's `tags` condition sees it.
 - **Webhook and trigger names follow the shared event vocabulary** (escalated-developer-context ADR 2026-10-21). Internal notes are sent as `note.created` (was `internal_note.added`), tags as `ticket.tag_added` / `ticket.tag_removed` (were `ticket.tagged` / `ticket.untagged`), and the tag trigger is `ticket.tag_added` (was `ticket.tagged`).
 - `WorkflowEngine.TriggerEvents` no longer offers `reply.agent_reply`, which nothing ever raised; a Workflow saved with it never ran.
 
 ### Upgrading
-- Nothing to migrate. Stored webhook subscriptions and Workflows that use a legacy name (`ticket.tagged`, `ticket.untagged`, `tag.added`, `tag.removed`, `internal_note.added`, `internal_note.created`, `ticket.replied`, `chat.session_started`, `chat.session_ended`) are read as the canonical name and keep firing. The payload's `event` field and the `X-Escalated-Event` header carry the canonical name, so a receiver that switches on the old name should accept the new one. Creating a webhook stores canonical names.
+- **New migration `WorkflowDelayedActions`** (all three providers) adds `escalated_delayed_actions`. Run `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`.
+- Event names need no migration. Stored webhook subscriptions and Workflows that use a legacy name (`ticket.tagged`, `ticket.untagged`, `tag.added`, `tag.removed`, `internal_note.added`, `internal_note.created`, `ticket.replied`, `chat.session_started`, `chat.session_ended`) are read as the canonical name and keep firing. The payload's `event` field and the `X-Escalated-Event` header carry the canonical name, so a receiver that switches on the old name should accept the new one. Creating a webhook stores canonical names.
 
 ## [0.2.2] - 2026-10-21
 

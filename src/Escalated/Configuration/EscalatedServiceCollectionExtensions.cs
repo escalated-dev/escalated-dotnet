@@ -154,6 +154,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<WorkflowEngine>();
         services.AddScoped<WorkflowExecutorService>();
         services.AddScoped<WorkflowRunnerService>();
+        services.AddScoped<WorkflowDelayedActionProcessor>();
         services.AddScoped<CapacityService>();
         services.AddScoped<SkillRoutingService>();
         services.AddScoped<BusinessHoursCalculator>();
@@ -224,6 +225,7 @@ public static class EscalatedServiceCollectionExtensions
         // Register the time-based schedulers. Without these, Automations, SLA
         // breach detection, and escalation rules never run.
         services.AddHostedService<AutomationBackgroundService>();
+        services.AddHostedService<WorkflowDelayedActionBackgroundService>();
         services.AddHostedService<SlaMonitorBackgroundService>();
         services.AddHostedService<EscalationBackgroundService>();
 

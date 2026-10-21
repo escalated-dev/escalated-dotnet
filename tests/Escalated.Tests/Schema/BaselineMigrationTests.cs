@@ -88,7 +88,12 @@ public class BaselineMigrationTests
         await connection.OpenAsync();
         await using (var legacy = new EscalatedDbContext(Sqlite(connection)))
         {
-            await legacy.Database.EnsureCreatedAsync();
+            // What EnsureCreated() made before 0.2.2: the baseline's tables and no
+            // migrations history. (EnsureCreated() today would also create tables
+            // added by later migrations, which no such database has.)
+            var baseline = legacy.GetService<IMigrationsAssembly>().Migrations.Keys.Min(StringComparer.Ordinal)!;
+            await legacy.GetService<IMigrator>().MigrateAsync(baseline);
+            await legacy.Database.ExecuteSqlRawAsync("DROP TABLE \"__EFMigrationsHistory\"");
             legacy.Tickets.Add(new Ticket { Reference = "OLD-1", Subject = "Before upgrade" });
             await legacy.SaveChangesAsync();
         }

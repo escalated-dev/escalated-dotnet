@@ -406,6 +406,14 @@ public static class EscalatedModelConfiguration
             e.HasMany(w => w.WorkflowLogs).WithOne(l => l.Workflow).HasForeignKey(l => l.WorkflowId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<WorkflowDelayedAction>(e =>
+        {
+            e.ToTable($"{prefix}delayed_actions");
+            e.HasIndex(d => new { d.ExecuteAt, d.Executed, d.Cancelled });
+            e.HasOne<Workflow>().WithMany().HasForeignKey(d => d.WorkflowId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Ticket>().WithMany().HasForeignKey(d => d.TicketId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<WorkflowLog>(e =>
         {
             e.ToTable($"{prefix}workflow_logs");

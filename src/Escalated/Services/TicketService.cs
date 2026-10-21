@@ -202,20 +202,25 @@ public class TicketService
         CancellationToken ct = default)
     {
         await _db.AssertTicketAccessAsync(ticket.Id, ct);
+        var added = new List<int>();
         foreach (var tagId in tagIds)
         {
             var exists = await _db.TicketTags.AnyAsync(tt => tt.TicketId == ticket.Id && tt.TagId == tagId, ct);
-            if (!exists)
+            if (!exists && !added.Contains(tagId))
             {
                 _db.TicketTags.Add(new TicketTag { TicketId = ticket.Id, TagId = tagId });
                 await LogActivityAsync(ticket, ActivityType.TagAdded, causerId, new Dictionary<string, object>
                 {
                     ["tag_id"] = tagId
                 }, ct);
-                await _events.DispatchAsync(new TagAddedEvent(ticket, tagId, causerId), ct);
+                added.Add(tagId);
             }
         }
         await _db.SaveChangesAsync(ct);
+
+        // After the save, so a Workflow's `tags` condition sees the new tag.
+        foreach (var tagId in added)
+            await _events.DispatchAsync(new TagAddedEvent(ticket, tagId, causerId), ct);
         return ticket;
     }
 
@@ -234,9 +239,11 @@ public class TicketService
             {
                 ["tag_id"] = tt.TagId
             }, ct);
-            await _events.DispatchAsync(new TagRemovedEvent(ticket, tt.TagId, causerId), ct);
         }
         await _db.SaveChangesAsync(ct);
+
+        foreach (var tt in tagsToRemove)
+            await _events.DispatchAsync(new TagRemovedEvent(ticket, tt.TagId, causerId), ct);
         return ticket;
     }
 
