@@ -7,6 +7,10 @@ public class ImportJob
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    /// <summary>The admin who started the import, as escalated-laravel records it.</summary>
+    [MaxLength(255)]
+    public string? UserId { get; set; }
+
     [Required]
     [MaxLength(50)]
     public string Platform { get; set; } = string.Empty;
@@ -15,7 +19,9 @@ public class ImportJob
     [MaxLength(50)]
     public string Status { get; set; } = "pending";
 
-    public string? Credentials { get; set; } // JSON, encrypted in practice
+    /// <summary>Sealed by <see cref="Escalated.Services.ImportCredentials"/>; never serialised.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string? Credentials { get; set; }
 
     public string? FieldMappings { get; set; } // JSON
 
@@ -40,6 +46,8 @@ public class ImportJob
         ["completed"] = Array.Empty<string>(),
         ["failed"] = new[] { "mapping" },
     };
+
+    public bool IsResumable => Status is "paused" or "failed";
 
     public bool CanTransitionTo(string newStatus)
     {

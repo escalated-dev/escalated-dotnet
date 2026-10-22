@@ -1109,6 +1109,10 @@ namespace Escalated.Migrations.SqlServer
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("UserId")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.HasKey("Id");
 
                     b.ToTable("escalated_import_jobs", (string)null);

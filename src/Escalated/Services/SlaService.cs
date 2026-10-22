@@ -26,6 +26,9 @@ public class SlaService
     /// </summary>
     public async Task AttachDefaultPolicyAsync(Ticket ticket, CancellationToken ct = default)
     {
+        // Import mode (ImportContext): imported history does not fire as if it were new.
+        if (ImportContext.IsImporting) return;
+
         var policies = await _db.SlaPolicies.Where(p => p.IsActive).ToListAsync(ct);
         int Rank(SlaPolicy policy)
         {
@@ -45,6 +48,9 @@ public class SlaService
     /// </summary>
     public async Task AttachPolicyAsync(Ticket ticket, SlaPolicy policy, CancellationToken ct = default)
     {
+        // Import mode (ImportContext): imported history does not fire as if it were new.
+        if (ImportContext.IsImporting) return;
+
         ticket.SlaPolicyId = policy.Id;
         ticket.FirstResponseDueAt = null;
         ticket.ResolutionDueAt = null;
@@ -73,6 +79,9 @@ public class SlaService
     /// </summary>
     public async Task<int> CheckBreachesAsync(CancellationToken ct = default)
     {
+        // Import mode (ImportContext): imported history does not fire as if it were new.
+        if (ImportContext.IsImporting) return 0;
+
         var breached = 0;
         var now = DateTime.UtcNow;
 
@@ -122,6 +131,9 @@ public class SlaService
     /// </summary>
     public async Task<int> CheckWarningsAsync(int warningMinutes = 30, CancellationToken ct = default)
     {
+        // Import mode (ImportContext): imported history does not fire as if it were new.
+        if (ImportContext.IsImporting) return 0;
+
         var warned = 0;
         var now = DateTime.UtcNow;
         var threshold = now.AddMinutes(warningMinutes);
