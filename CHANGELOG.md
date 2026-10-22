@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-10-22
+
+### Upgrading
+- Saving a webhook from the admin form with the secret field left blank (or missing) now keeps the stored signing secret, because the form no longer receives it; it used to clear it. Send `clear_secret: true` to remove it. Any other value replaces it, and create is unchanged.
+- The webhook JSON API (`GET`/`POST support/admin/webhooks`) and the webhook pages no longer return `secret`; read `has_secret` instead. `POST support/admin/webhooks` still accepts `url`, `secret`, `description`, `events` and `active`.
+- API responses that serialize `Ticket` no longer include `guestToken`; the widget still hands a guest its legacy token explicitly when `GuestAccess:LegacyTokens` is on.
+- `AddEscalated()` registers `RetentionPurgeBackgroundService`, which runs the data retention purge once a day. Every period defaults to `never`, so until an admin sets one it only removes expired guest verification codes. Note that it permanently deletes tickets soft-deleted (`DeletedAt`) more than 30 days ago, as Laravel's command does. Remove the hosted service from the container to opt out.
+- Apply the `ImportJobUser` migration (all three providers): a nullable `UserId` on `escalated_import_jobs`.
+- The JSON import API no longer returns a job's `Credentials`.
+- Import adapters that offer attachments must send each file's bytes as `content`; a stored path from the source is refused.
+- Nothing changes until you set `Escalated:Ui:Enabled` to `true`. Then the page routes that share a path with the JSON API (`GET support/agent/tickets`, `GET support/admin/tickets`, `POST support/agent/tickets/bulk`, `GET`/`POST support/admin/settings`, the `support/admin/departments`, `support/admin/tags` and `support/admin/workflows` routes) answer Inertia visits and browser navigations (`Accept: text/html`) with the page; API clients that send `Accept: application/json` (or no `Accept`) still get JSON. `AddEscalated()` now calls `AddDataProtection()`, which the flash cookie uses.
+- **New migration `AdminPageColumns`** (all three providers): `escalated_escalation_rules` gains `TriggerType` (default `time_based`) and `Order` (default 0), and `escalated_ticket_statuses` gains `Category` (default `open`) and `Description`. Run `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`.
+- The SLA policy, escalation rule, canned response, macro, webhook, users, roles and API token list routes, and their `POST`, `PUT`, `PATCH` and `DELETE` routes the JSON API also answers, now answer Inertia visits and browser navigations with the page; API clients are unchanged.
+- **New migration `CustomFieldsAndObjects`** (all three providers): `escalated_custom_fields` gains `Context` (default `ticket`), `Placeholder` and `Description`, field and custom object names may be 255 characters, and `escalated_custom_field_values` gets a unique index on (`CustomFieldId`, `EntityType`, `EntityId`); the migration first deletes all but the newest of any duplicate values. Existing `TicketId` values are kept, and new ticket values set it too.
+- With the UI on, `GET` and `POST support/admin/custom-fields` answer Inertia visits and browser navigations with the page; API clients are unchanged, except that the JSON create now makes a unique slug instead of failing on a duplicate.
+- A client that read the newsletter screens' nested camelCase props (`fromName`) should read snake_case (`from_name`).
+
 ### Added
 - The admin Import wizard, as escalated-laravel's Admin\ImportController, on its paths and props (UI on): `Escalated/Admin/Import/Index` (`GET support/admin/import`, page requests; the JSON API keeps the rest), `Connect` (`GET support/admin/import/{platform}/connect`, with `POST .../test-connection` answering `{success[, error]}`, 422 when the source throws), `Mapping` (`GET .../mapping`), `Review` (`POST .../review`, which writes nothing), `start` (`POST .../start`) and `Progress` (`GET support/admin/import/progress/{job}`, polled through `GET .../status/{job}`, with `POST support/admin/import/{pause,resume,cancel}/{job}`). Admin only.
   - `IImportAdapter` gains `DisplayName`, `CredentialFields`, `DefaultFieldMappings` and `AvailableSourceFieldsAsync`, each with a default, so existing adapters still compile. Escalated ships no adapter: register yours (a Zendesk or Freshdesk one) as `IImportAdapter`.
@@ -41,21 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The bundled widget is now `@escalated-dev/escalated` 0.12.4. The widget's source did not change in 0.12.4; the bundle is rebuilt with the frontend's newer build tools, so it behaves as before.
 - The newsletter screens render through the Inertia renderer. With the UI off they still answer `{component, props}` JSON, but nested props are now snake_case (`from_name`, `summary_total`, `target_list`), which is what their pages read; they rendered with blank fields before. With the UI on, an Inertia form post answers `303` instead of `{redirect}` JSON.
-
-### Upgrading
-- Saving a webhook from the admin form with the secret field left blank (or missing) now keeps the stored signing secret, because the form no longer receives it; it used to clear it. Send `clear_secret: true` to remove it. Any other value replaces it, and create is unchanged.
-- The webhook JSON API (`GET`/`POST support/admin/webhooks`) and the webhook pages no longer return `secret`; read `has_secret` instead. `POST support/admin/webhooks` still accepts `url`, `secret`, `description`, `events` and `active`.
-- API responses that serialize `Ticket` no longer include `guestToken`; the widget still hands a guest its legacy token explicitly when `GuestAccess:LegacyTokens` is on.
-- `AddEscalated()` registers `RetentionPurgeBackgroundService`, which runs the data retention purge once a day. Every period defaults to `never`, so until an admin sets one it only removes expired guest verification codes. Note that it permanently deletes tickets soft-deleted (`DeletedAt`) more than 30 days ago, as Laravel's command does. Remove the hosted service from the container to opt out.
-- Apply the `ImportJobUser` migration (all three providers): a nullable `UserId` on `escalated_import_jobs`.
-- The JSON import API no longer returns a job's `Credentials`.
-- Import adapters that offer attachments must send each file's bytes as `content`; a stored path from the source is refused.
-- Nothing changes until you set `Escalated:Ui:Enabled` to `true`. Then the page routes that share a path with the JSON API (`GET support/agent/tickets`, `GET support/admin/tickets`, `POST support/agent/tickets/bulk`, `GET`/`POST support/admin/settings`, the `support/admin/departments`, `support/admin/tags` and `support/admin/workflows` routes) answer Inertia visits and browser navigations (`Accept: text/html`) with the page; API clients that send `Accept: application/json` (or no `Accept`) still get JSON. `AddEscalated()` now calls `AddDataProtection()`, which the flash cookie uses.
-- **New migration `AdminPageColumns`** (all three providers): `escalated_escalation_rules` gains `TriggerType` (default `time_based`) and `Order` (default 0), and `escalated_ticket_statuses` gains `Category` (default `open`) and `Description`. Run `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`.
-- The SLA policy, escalation rule, canned response, macro, webhook, users, roles and API token list routes, and their `POST`, `PUT`, `PATCH` and `DELETE` routes the JSON API also answers, now answer Inertia visits and browser navigations with the page; API clients are unchanged.
-- **New migration `CustomFieldsAndObjects`** (all three providers): `escalated_custom_fields` gains `Context` (default `ticket`), `Placeholder` and `Description`, field and custom object names may be 255 characters, and `escalated_custom_field_values` gets a unique index on (`CustomFieldId`, `EntityType`, `EntityId`); the migration first deletes all but the newest of any duplicate values. Existing `TicketId` values are kept, and new ticket values set it too.
-- With the UI on, `GET` and `POST support/admin/custom-fields` answer Inertia visits and browser navigations with the page; API clients are unchanged, except that the JSON create now makes a unique slug instead of failing on a duplicate.
-- A client that read the newsletter screens' nested camelCase props (`fromName`) should read snake_case (`from_name`).
 
 ## [0.2.3] - 2026-10-21
 
