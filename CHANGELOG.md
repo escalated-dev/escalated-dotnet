@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-22
+
 ### Upgrading
 - With `Escalated:Ui:Enabled` on, `GET`/`POST support/admin/automations`, `support/admin/business-hours`, `support/admin/skills` (and `skills/create`, `skills/{id}/edit`, `PUT`/`DELETE skills/{id}`) and `GET support/admin/capacity` answer Inertia visits and browser navigations with the pages; API clients are unchanged. Nothing changes with the UI off.
 
