@@ -3,7 +3,9 @@ using System.Text;
 using System.Text.Json;
 using Escalated.Enums;
 using Escalated.Models;
+using Escalated.Configuration;
 using Escalated.Services;
+using Escalated.Services.Email.Inbound;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -28,8 +30,34 @@ public class ImportPagesTests
     private static readonly Dictionary<string, string> Credentials = new() { ["subdomain"] = "acme", ["api_token"] = Token };
     private static readonly object FieldMappings = new { tickets = new { subject = "title", state = "status" } };
 
+    // A real PDF header and PNG signature.
+    private static readonly byte[] Pdf = Encoding.ASCII.GetBytes("%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n");
+    private static readonly byte[] Png = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0x0D, 0x49, 0x48, 0x44, 0x52 };
+
+    /// <summary>Attachment storage that keeps the bytes it is given.</summary>
+    public sealed class MemoryStorage : IAttachmentStorage
+    {
+        public Dictionary<string, byte[]> Files { get; } = new();
+
+        public string Name => "memory";
+
+        public async Task<string> PutAsync(string filename, Stream content, string contentType, CancellationToken ct = default)
+        {
+            using var buffer = new MemoryStream();
+            await content.CopyToAsync(buffer, ct);
+            var path = $"memory/{Guid.NewGuid():N}/{filename}";
+            lock (Files) Files[path] = buffer.ToArray();
+            return path;
+        }
+    }
+
     public sealed class FakeImportAdapter : IImportAdapter
     {
+        public MemoryStorage Storage { get; } = new();
+
+        /// <summary>Replaces the default records when set.</summary>
+        public Dictionary<string, List<Dictionary<string, object?>>>? Overrides { get; set; }
+
         private static readonly Dictionary<string, List<Dictionary<string, object?>>> Records = new()
         {
             ["contacts"] = new()
@@ -38,6 +66,11 @@ public class ImportPagesTests
                 new() { ["source_id"] = "c2", ["email"] = "bob@customer.test", ["name"] = "Bob Customer" },
             },
             ["tags"] = new() { new() { ["source_id"] = "t1", ["name"] = "Billing" } },
+            ["custom_fields"] = new()
+            {
+                new() { ["source_id"] = "f1", ["name"] = "Plan", ["type"] = "select", ["options"] = new List<object?> { "free", "pro" } },
+                new() { ["source_id"] = "f2", ["name"] = "Seats", ["type"] = "number" },
+            },
             ["tickets"] = new()
             {
                 new()
@@ -45,6 +78,7 @@ public class ImportPagesTests
                     ["source_id"] = "k1", ["title"] = "Refund please", ["description"] = "Charged twice.", ["status"] = "open",
                     ["priority"] = "high", ["requester_source_id"] = "c1", ["tag_source_ids"] = new List<object?> { "t1" },
                     ["created_at"] = "2024-01-02T03:04:05Z",
+                    ["custom_fields"] = new Dictionary<string, object?> { ["f1"] = "pro", ["f2"] = 12 },
                 },
                 new() { ["source_id"] = "k2", ["title"] = "Login broken", ["status"] = "resolved", ["priority"] = "urgent", ["requester_source_id"] = "c2" },
                 new() { ["source_id"] = "k3", ["title"] = "Feature idea", ["status"] = "not-a-status", ["requester_source_id"] = "c1" },
@@ -54,6 +88,19 @@ public class ImportPagesTests
                 new() { ["source_id"] = "r1", ["ticket_source_id"] = "k1", ["body"] = "Looking into it", ["author_source_id"] = "c1" },
                 new() { ["source_id"] = "r2", ["ticket_source_id"] = "k2", ["body"] = "Internal note", ["is_internal_note"] = true },
             },
+            ["attachments"] = new()
+            {
+                new()
+                {
+                    ["source_id"] = "a1", ["parent_type"] = "ticket", ["parent_source_id"] = "k1", ["filename"] = "receipt.pdf",
+                    ["mime_type"] = "application/pdf", ["content"] = Convert.ToBase64String(Pdf),
+                },
+                new() { ["source_id"] = "a2", ["parent_source_id"] = "r1", ["filename"] = "screen.png", ["mime_type"] = "image/png", ["content"] = Png },
+            },
+            ["satisfaction_ratings"] = new()
+            {
+                new() { ["source_id"] = "s1", ["ticket_source_id"] = "k2", ["rating"] = 4, ["comment"] = "Quick fix", ["created_at"] = "2024-02-03T04:05:06Z" },
+            },
         };
 
         public List<(string Type, string? Cursor, bool Importing)> Calls { get; } = new();
@@ -62,7 +109,7 @@ public class ImportPagesTests
 
         public string Name => "fakedesk";
         public string DisplayName => "FakeDesk";
-        public string[] EntityTypes => new[] { "contacts", "tags", "tickets", "replies" };
+        public string[] EntityTypes => new[] { "contacts", "tags", "custom_fields", "tickets", "replies", "attachments", "satisfaction_ratings" };
 
         public IReadOnlyList<IReadOnlyDictionary<string, object?>> CredentialFields => new[]
         {
@@ -99,7 +146,7 @@ public class ImportPagesTests
             lock (Calls) Calls.Add((entityType, cursor, ImportContext.IsImporting));
             if (OnExtract is not null) await OnExtract(entityType, cursor);
 
-            var records = Records[entityType];
+            var records = (Overrides ?? Records).GetValueOrDefault(entityType) ?? new();
             var offset = cursor is null ? 0 : int.Parse(cursor);
             var next = offset + 2;
             return new ImportBatch
@@ -173,15 +220,20 @@ public class ImportPagesTests
         }
     }
 
-    private static async Task<(EscalatedTestHost Host, Browser Browser, FakeImportAdapter Adapter)> StartAsync()
+    private static async Task<(EscalatedTestHost Host, Browser Browser, FakeImportAdapter Adapter)> StartAsync(Action<EscalatedOptions>? configure = null)
     {
         var adapter = new FakeImportAdapter();
         var host = await EscalatedTestHost.StartAsync(
-            options => options.Ui.Enabled = true,
+            options =>
+            {
+                options.Ui.Enabled = true;
+                configure?.Invoke(options);
+            },
             services =>
             {
                 services.AddSingleton<IUserDirectory, Directory>();
                 services.AddSingleton<IImportAdapter>(adapter);
+                services.AddSingleton<IAttachmentStorage>(adapter.Storage);
             });
         await host.GrantRoleAsync(Admin, "escalated-admin");
         return (host, new Browser(host.ClientFor(Admin)), adapter);
@@ -190,13 +242,16 @@ public class ImportPagesTests
     private static Task WaitForImportsAsync(EscalatedTestHost host) =>
         host.Services.GetRequiredService<BackgroundImportDispatcher>().WaitAllAsync();
 
-    private static async Task<ImportJob> StartImportAsync(EscalatedTestHost host, Browser browser)
+    private static Task<ImportJob> StartImportAsync(EscalatedTestHost host, Browser browser) =>
+        StartImportAsync(host, browser, FieldMappings);
+
+    private static async Task<ImportJob> StartImportAsync(EscalatedTestHost host, Browser browser, object fieldMappings)
     {
         var (status, body) = await browser.ConnectAsync(Credentials);
         Assert.Equal(HttpStatusCode.OK, status);
         Assert.True(body.GetProperty("success").GetBoolean());
 
-        var response = await browser.SendAsync(HttpMethod.Post, $"{Base}/fakedesk/start", new { field_mappings = FieldMappings });
+        var response = await browser.SendAsync(HttpMethod.Post, $"{Base}/fakedesk/start", new { field_mappings = fieldMappings });
         Assert.Equal(HttpStatusCode.SeeOther, response.StatusCode);
         var location = response.Headers.Location!.ToString();
         Assert.StartsWith($"{Base}/progress/", location);
@@ -278,7 +333,7 @@ public class ImportPagesTests
         var props = JsonDocument.Parse(text).RootElement.GetProperty("props");
         // Laravel does not send the declared `credentials` either: they stay on the server.
         AssertProps(props, "platform", "display_name", "entity_types", "mappings");
-        Assert.Equal(new[] { "contacts", "tags", "tickets", "replies" }, props.GetProperty("entity_types").EnumerateArray().Select(e => e.GetString()));
+        Assert.Equal(new[] { "contacts", "tags", "custom_fields", "tickets", "replies", "attachments", "satisfaction_ratings" }, props.GetProperty("entity_types").EnumerateArray().Select(e => e.GetString()));
         var tickets = props.GetProperty("mappings").GetProperty("tickets");
         Assert.Equal("title", tickets.GetProperty("defaults").GetProperty("subject").GetString());
         Assert.Equal("state", tickets.GetProperty("source_fields")[1].GetProperty("name").GetString());
@@ -351,6 +406,7 @@ public class ImportPagesTests
         var ids = tickets.Select(t => t.Id).ToList();
         Assert.Equal(2, await host.QueryAsync(db => db.Replies.CountAsync(r => ids.Contains(r.TicketId))));
         Assert.Equal(1, await host.QueryAsync(db => db.Replies.CountAsync(r => ids.Contains(r.TicketId) && r.IsInternalNote)));
+        await AssertImportedRecordsAsync(host, adapter, job, tickets);
 
         // Import mode held only inside the run.
         Assert.NotEmpty(adapter.Calls);
@@ -484,5 +540,152 @@ public class ImportPagesTests
         Assert.Equal(new[] { 0, 0, 0 }, results);
         Assert.Null(ticket.SlaPolicyId);
         Assert.False(ImportContext.IsImporting);
+    }
+
+    private static Task<string?> MappedAsync(EscalatedTestHost host, Guid jobId, string entityType, string sourceId) =>
+        host.QueryAsync(db => db.ImportSourceMaps.Where(m => m.ImportJobId == jobId && m.EntityType == entityType && m.SourceId == sourceId)
+            .Select(m => m.EscalatedId).FirstOrDefaultAsync());
+
+    private static Task<Dictionary<string, string?>> FieldValuesAsync(EscalatedTestHost host, int ticketId) => host.QueryAsync(db =>
+        db.CustomFieldValues.Where(v => v.EntityType == "ticket" && v.EntityId == ticketId)
+            .Join(db.CustomFields, v => v.CustomFieldId, f => f.Id, (v, f) => new { f.Slug, v.Value })
+            .ToDictionaryAsync(x => x.Slug, x => x.Value));
+
+    /// <summary>The job's error log as entity type -> source id -> messages.</summary>
+    private static Dictionary<string, Dictionary<string, string>> ErrorsByType(ImportJob job)
+    {
+        var result = new Dictionary<string, Dictionary<string, string>>();
+        foreach (var e in JsonDocument.Parse(job.Errors ?? "[]").RootElement.EnumerateArray())
+        {
+            var type = e.GetProperty("entity_type").GetString()!;
+            var source = e.GetProperty("source_id").GetString()!;
+            if (!result.TryGetValue(type, out var bySource)) result[type] = bySource = new();
+            bySource[source] = (bySource.GetValueOrDefault(source) is { } prior ? prior + "; " : "") + e.GetProperty("error").GetString();
+        }
+        return result;
+    }
+
+    private static string Progress(ImportJob job, string type)
+    {
+        var p = JsonDocument.Parse(job.Progress!).RootElement.GetProperty(type);
+        return $"{p.GetProperty("processed").GetInt32()} {p.GetProperty("failed").GetInt32()}";
+    }
+
+    /// <summary>What the default fake records leave behind besides tickets and replies.</summary>
+    private static async Task AssertImportedRecordsAsync(EscalatedTestHost host, FakeImportAdapter adapter, ImportJob job, List<Ticket> tickets)
+    {
+        // Definitions, as Laravel's persistCustomField: found or created by slug.
+        Assert.NotNull(await MappedAsync(host, job.Id, "custom_fields", "f1"));
+        var plan = await host.QueryAsync(db => db.CustomFields.AsNoTracking().SingleAsync(f => f.Slug == "plan"));
+        Assert.Equal("select", plan.Type);
+        Assert.Equal(new[] { "free", "pro" }, JsonSerializer.Deserialize<string[]>(plan.Options!));
+        Assert.Equal("number", await host.QueryAsync(db => db.CustomFields.Where(f => f.Slug == "seats").Select(f => f.Type).SingleAsync()));
+
+        // Ticket values, keyed by the field's source id.
+        var values = await FieldValuesAsync(host, tickets[0].Id);
+        Assert.Equal("pro", values["plan"]);
+        Assert.Equal("12", values["seats"]);
+
+        // Attachments: the bytes went through the attachment storage.
+        var a1 = await host.QueryAsync(db => db.Attachments.AsNoTracking().SingleAsync(a => a.Id == int.Parse(MappedSync(db, job.Id, "a1"))));
+        Assert.Equal(("ticket", tickets[0].Id, "receipt.pdf", "application/pdf", (long)Pdf.Length, "memory"), (a1.AttachableType, a1.AttachableId, a1.Filename, a1.MimeType, a1.Size, a1.Disk));
+        Assert.Equal(Pdf, adapter.Storage.Files[a1.Path]);
+        var replyId = int.Parse((await MappedAsync(host, job.Id, "replies", "r1"))!);
+        var a2 = await host.QueryAsync(db => db.Attachments.AsNoTracking().SingleAsync(a => a.Id == int.Parse(MappedSync(db, job.Id, "a2"))));
+        Assert.Equal(("reply", replyId), (a2.AttachableType, a2.AttachableId));
+        Assert.Equal(Png, adapter.Storage.Files[a2.Path]);
+
+        // The rating, on its ticket, at the source's time, with no rater.
+        var rating = await host.QueryAsync(db => db.SatisfactionRatings.AsNoTracking().SingleAsync(r => r.TicketId == tickets[1].Id));
+        Assert.Equal((4, "Quick fix", (string?)null), (rating.Rating, rating.Comment, rating.RaterType));
+        Assert.Equal(new DateTime(2024, 2, 3, 4, 5, 6, DateTimeKind.Utc), DateTime.SpecifyKind(rating.CreatedAt, DateTimeKind.Utc));
+    }
+
+    private static string MappedSync(Escalated.Data.EscalatedDbContext db, Guid jobId, string sourceId) =>
+        db.ImportSourceMaps.Where(m => m.ImportJobId == jobId && m.EntityType == "attachments" && m.SourceId == sourceId).Select(m => m.EscalatedId).Single();
+
+    [Fact]
+    public async Task Imported_records_are_held_to_the_live_rules()
+    {
+        var (host, browser, adapter) = await StartAsync(options => options.Attachments.MaxSizeKb = 1);
+        await using var _host = host;
+        string B64(byte[] bytes) => Convert.ToBase64String(bytes);
+        adapter.Overrides = new()
+        {
+            ["contacts"] = new() { new() { ["source_id"] = "c1", ["email"] = "ada@customer.test" } },
+            ["custom_fields"] = new()
+            {
+                new() { ["source_id"] = "f1", ["name"] = "Plan", ["type"] = "select", ["options"] = new List<object?> { "free", "pro" } },
+                new() { ["source_id"] = "f2", ["name"] = "Seats", ["type"] = "number" },
+                new() { ["source_id"] = "f8", ["name"] = "Hologram", ["type"] = "hologram" },
+                new() { ["source_id"] = "f9", ["name"] = "Broken", ["type"] = "select" },
+            },
+            ["tickets"] = new()
+            {
+                new()
+                {
+                    ["source_id"] = "k1", ["title"] = "One", ["requester_source_id"] = "c1",
+                    ["custom_fields"] = new Dictionary<string, object?> { ["plan_code"] = "pro", ["f2"] = "many", ["skipped_src"] = "x", ["nope"] = "y" },
+                },
+                new() { ["source_id"] = "k2", ["title"] = "Two" },
+            },
+            ["replies"] = new() { new() { ["source_id"] = "r1", ["ticket_source_id"] = "k1", ["body"] = "Hi" } },
+            ["attachments"] = new()
+            {
+                new() { ["source_id"] = "a1", ["parent_type"] = "ticket", ["parent_source_id"] = "k1", ["filename"] = "x.pdf", ["path"] = "/etc/passwd" },
+                new() { ["source_id"] = "a2", ["parent_type"] = "ticket", ["parent_source_id"] = "k1", ["filename"] = "big.pdf", ["content"] = B64(Pdf.Concat(new byte[2000]).ToArray()) },
+                new() { ["source_id"] = "a3", ["parent_type"] = "ticket", ["parent_source_id"] = "k1", ["filename"] = "run.exe", ["content"] = B64(new byte[] { 0x4D, 0x5A }) },
+                new() { ["source_id"] = "a5", ["parent_type"] = "ticket", ["parent_source_id"] = "zz", ["filename"] = "y.pdf", ["content"] = B64(Pdf) },
+                new() { ["source_id"] = "a6", ["parent_type"] = "ticket", ["parent_source_id"] = "k1", ["filename"] = "../../evil.pdf", ["content"] = B64(Pdf) },
+                new() { ["source_id"] = "a7", ["parent_type"] = "ticket", ["parent_source_id"] = "k1", ["filename"] = "z.pdf", ["content"] = "!!not base64!!" },
+            },
+            ["satisfaction_ratings"] = new()
+            {
+                new() { ["source_id"] = "s1", ["ticket_source_id"] = "k1", ["rating"] = 9 },
+                new() { ["source_id"] = "s2", ["ticket_source_id"] = "k1", ["rating"] = "x" },
+                new() { ["source_id"] = "s3", ["ticket_source_id"] = "zz", ["rating"] = 3 },
+                new() { ["source_id"] = "s4", ["ticket_source_id"] = "k2", ["score"] = 5 },
+                new() { ["source_id"] = "s5", ["ticket_source_id"] = "k2", ["rating"] = 3 },
+                new() { ["source_id"] = "s6", ["ticket_source_id"] = "k1", ["rating"] = 2.5 },
+            },
+        };
+
+        var job = await StartImportAsync(host, browser, new { tickets = new Dictionary<string, string> { ["plan_code"] = "custom_fields.plan", ["skipped_src"] = "" } });
+
+        Assert.Equal("completed", job.Status);
+        var errors = ErrorsByType(job);
+
+        // Definitions: an unknown type and an option-less select fail.
+        Assert.Equal("2 2", Progress(job, "custom_fields"));
+        Assert.Contains("hologram", errors["custom_fields"]["f8"]);
+        Assert.Contains("option", errors["custom_fields"]["f9"]);
+
+        // Values: mapped, skipped, invalid and unknown keys; the ticket is kept.
+        Assert.Equal("2 0", Progress(job, "tickets"));
+        var k1 = int.Parse((await MappedAsync(host, job.Id, "tickets", "k1"))!);
+        Assert.Equal(new Dictionary<string, string?> { ["plan"] = "pro" }, await FieldValuesAsync(host, k1));
+        var valueErrors = errors["custom_field_values"]["k1"];
+        Assert.Contains("custom_fields.seats", valueErrors);
+        Assert.Contains("nope", valueErrors);
+        Assert.DoesNotContain("skipped_src", valueErrors);
+
+        // Attachments: only the well-formed one under the limit is stored, under its base name.
+        Assert.Equal("1 5", Progress(job, "attachments"));
+        Assert.Contains("content", errors["attachments"]["a1"]);
+        Assert.Contains("larger than 1 KB", errors["attachments"]["a2"]);
+        Assert.Contains("cannot be attached", errors["attachments"]["a3"]);
+        Assert.Contains("Parent ticket not found", errors["attachments"]["a5"]);
+        Assert.Contains("base64", errors["attachments"]["a7"]);
+        var a6 = await host.QueryAsync(db => db.Attachments.AsNoTracking().SingleAsync(a => a.Id == int.Parse(MappedSync(db, job.Id, "a6"))));
+        Assert.Equal("evil.pdf", a6.Filename);
+        Assert.DoesNotContain("..", a6.Path);
+        Assert.Single(adapter.Storage.Files);
+
+        // Ratings: 1-5 integers on an imported ticket, one per ticket.
+        Assert.Equal("1 5", Progress(job, "satisfaction_ratings"));
+        Assert.All(new[] { "s1", "s2", "s3", "s5", "s6" }, sid => Assert.True(errors["satisfaction_ratings"].ContainsKey(sid), sid));
+        var k2 = int.Parse((await MappedAsync(host, job.Id, "tickets", "k2"))!);
+        Assert.Equal(5, await host.QueryAsync(db => db.SatisfactionRatings.Where(r => r.TicketId == k2).Select(r => r.Rating).SingleAsync()));
+        Assert.Equal(0, await host.QueryAsync(db => db.SatisfactionRatings.CountAsync(r => r.TicketId == k1)));
     }
 }
