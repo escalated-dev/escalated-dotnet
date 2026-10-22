@@ -128,7 +128,6 @@ public class PageNameParityTests
     private static readonly string[] NotYetRendered =
     {
         "Escalated/Admin/Plugins/Index",
-        "Escalated/Admin/Reports/AgentDetail",
         "Escalated/Admin/Settings/Sandbox",
         "Escalated/Admin/Settings/SsoSettings",
         "Escalated/Admin/Settings/TwoFactor",

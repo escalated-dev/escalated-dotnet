@@ -210,6 +210,7 @@ public static class UiRoutes
         ["escalated.admin.reports.response-times"] = "{prefix}/admin/reports/response-times",
         ["escalated.admin.reports.resolution-times"] = "{prefix}/admin/reports/resolution-times",
         ["escalated.admin.reports.agent-ranking"] = "{prefix}/admin/reports/agent-ranking",
+        ["escalated.admin.reports.agent-detail"] = "{prefix}/admin/reports/agent/{id}/detail",
         ["escalated.admin.reports.cohorts"] = "{prefix}/admin/reports/cohorts",
         ["escalated.admin.reports.comparison"] = "{prefix}/admin/reports/comparison",
         ["escalated.admin.workflows.index"] = "{prefix}/admin/workflows",
