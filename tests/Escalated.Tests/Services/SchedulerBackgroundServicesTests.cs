@@ -201,5 +201,6 @@ public class SchedulerBackgroundServicesTests
         Assert.Contains(typeof(AutomationBackgroundService), hosted);
         Assert.Contains(typeof(SlaMonitorBackgroundService), hosted);
         Assert.Contains(typeof(EscalationBackgroundService), hosted);
+        Assert.Contains(typeof(RetentionPurgeBackgroundService), hosted);
     }
 }
