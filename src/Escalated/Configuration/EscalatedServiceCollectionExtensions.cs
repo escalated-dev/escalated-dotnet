@@ -182,6 +182,11 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<SettingsService>();
         services.AddScoped<CustomFieldService>();
         services.AddScoped<ImportService>();
+        // The admin Import wizard: credential sealing, and the in-process run a
+        // host can replace with its own queue by registering IImportDispatcher first.
+        services.TryAddSingleton<ImportCredentials>();
+        services.TryAddSingleton<BackgroundImportDispatcher>();
+        services.TryAddSingleton<IImportDispatcher>(sp => sp.GetRequiredService<BackgroundImportDispatcher>());
         services.AddScoped<KnowledgeBaseService>();
         services.AddScoped<SavedViewService>();
         services.AddScoped<SideConversationService>();

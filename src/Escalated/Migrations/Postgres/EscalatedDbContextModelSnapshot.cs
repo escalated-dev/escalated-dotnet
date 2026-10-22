@@ -1109,6 +1109,10 @@ namespace Escalated.Migrations.Postgres
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("UserId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.HasKey("Id");
 
                     b.ToTable("escalated_import_jobs", (string)null);

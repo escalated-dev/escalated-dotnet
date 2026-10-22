@@ -23,6 +23,9 @@ public class AutomationRunner
     /// </summary>
     public async Task<int> RunAsync(CancellationToken ct = default)
     {
+        // Import mode (ImportContext): imported history does not fire as if it were new.
+        if (ImportContext.IsImporting) return 0;
+
         var automations = await _db.Automations
             .Where(a => a.Active)
             .OrderBy(a => a.Position)

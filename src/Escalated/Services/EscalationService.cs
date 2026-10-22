@@ -28,6 +28,9 @@ public class EscalationService
     /// </summary>
     public async Task<int> EvaluateRulesAsync(CancellationToken ct = default)
     {
+        // Import mode (ImportContext): imported history does not fire as if it were new.
+        if (ImportContext.IsImporting) return 0;
+
         var rules = await _db.EscalationRules
             .Where(r => r.IsActive)
             .OrderBy(r => r.Order).ThenBy(r => r.Id)
