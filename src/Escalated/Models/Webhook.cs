@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Escalated.Events;
 
 namespace Escalated.Models;
@@ -13,8 +15,18 @@ public class Webhook
     [MaxLength(2048)]
     public string Url { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Signs deliveries. Never serialized: pages and API clients see
+    /// <see cref="HasSecret"/> instead.
+    /// </summary>
+    [JsonIgnore]
     [MaxLength(255)]
     public string? Secret { get; set; }
+
+    /// <summary>Whether a signing secret is stored, which is all a page or API client learns of it.</summary>
+    [NotMapped]
+    [JsonPropertyName("has_secret")]
+    public bool HasSecret => !string.IsNullOrEmpty(Secret);
 
     [MaxLength(100)]
     public string? Description { get; set; }

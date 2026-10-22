@@ -35,10 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TicketListFilters.TagIds` and `TicketListFilters.FollowedBy`.
 - Pages not served yet (each still a JSON endpoint or missing; all names under `Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/Plugins/Index, Admin/Reports/AgentDetail, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.
 
+### Security
+- **Stored secrets are no longer sent to admin pages or API clients** (escalated-laravel #258). The webhook edit page received the webhook's signing secret, and the webhook JSON API (`GET support/admin/webhooks`, and the `POST` response) returned it with every webhook. `Webhook.Secret` is now `[JsonIgnore]` and pages and the API see `has_secret` instead. Admin and agent ticket JSON returned a guest ticket's legacy `GuestToken`, which opens the ticket; it is now `[JsonIgnore]`. `ApiToken.TokenHash` is `[JsonIgnore]` too, though no response sent it. The import pages are built from Laravel's explicit field list (`id, platform, status, progress, field_mappings, error_log` (the last 50), `started_at, completed_at, created_at`); they never carried the credentials, which stay sealed and are read server-side by the run.
+
 ### Changed
 - The newsletter screens render through the Inertia renderer. With the UI off they still answer `{component, props}` JSON, but nested props are now snake_case (`from_name`, `summary_total`, `target_list`), which is what their pages read; they rendered with blank fields before. With the UI on, an Inertia form post answers `303` instead of `{redirect}` JSON.
 
 ### Upgrading
+- Saving a webhook from the admin form with the secret field left blank (or missing) now keeps the stored signing secret, because the form no longer receives it; it used to clear it. Send `clear_secret: true` to remove it. Any other value replaces it, and create is unchanged.
+- The webhook JSON API (`GET`/`POST support/admin/webhooks`) and the webhook pages no longer return `secret`; read `has_secret` instead. `POST support/admin/webhooks` still accepts `url`, `secret`, `description`, `events` and `active`.
+- API responses that serialize `Ticket` no longer include `guestToken`; the widget still hands a guest its legacy token explicitly when `GuestAccess:LegacyTokens` is on.
 - `AddEscalated()` registers `RetentionPurgeBackgroundService`, which runs the data retention purge once a day. Every period defaults to `never`, so until an admin sets one it only removes expired guest verification codes. Note that it permanently deletes tickets soft-deleted (`DeletedAt`) more than 30 days ago, as Laravel's command does. Remove the hosted service from the container to opt out.
 - Apply the `ImportJobUser` migration (all three providers): a nullable `UserId` on `escalated_import_jobs`.
 - The JSON import API no longer returns a job's `Credentials`.

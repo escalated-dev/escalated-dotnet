@@ -52,6 +52,11 @@ public class Ticket
     public string? GuestName { get; set; }
     [MaxLength(255)]
     public string? GuestEmail { get; set; }
+    /// <summary>
+    /// The legacy permanent guest token: it opens the ticket, so it is never
+    /// serialized. The widget hands it to its guest explicitly.
+    /// </summary>
+    [JsonIgnore]
     [MaxLength(255)]
     public string? GuestToken { get; set; }
 

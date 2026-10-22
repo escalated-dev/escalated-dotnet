@@ -250,23 +250,26 @@ public class AdminImportPageController : ControllerBase
     }
 
     /// <summary>
-    /// The job as the screens read it. Laravel sends the model as is; its credentials
-    /// are left out here: they are a secret, and no screen reads them.
+    /// The job as the screens read it, from an explicit field list (escalated-laravel's
+    /// <c>ImportJob::toPageProps()</c>), so a column added later is not sent to the
+    /// browser by default. The credentials never are; the run reads them server-side.
     /// </summary>
-    private static Dictionary<string, object?> JobProps(ImportJob job) => new()
+    private static Dictionary<string, object?> JobProps(ImportJob job)
     {
-        ["id"] = job.Id,
-        ["user_id"] = job.UserId,
-        ["platform"] = job.Platform,
-        ["status"] = job.Status,
-        ["field_mappings"] = string.IsNullOrEmpty(job.FieldMappings) ? new Dictionary<string, object?>() : JsonSerializer.Deserialize<JsonElement>(job.FieldMappings),
-        ["progress"] = ImportService.ReadProgress(job),
-        ["error_log"] = ImportService.ReadErrors(job),
-        ["started_at"] = job.StartedAt,
-        ["completed_at"] = job.CompletedAt,
-        ["created_at"] = job.CreatedAt,
-        ["updated_at"] = job.UpdatedAt,
-    };
+        var errors = ImportService.ReadErrors(job);
+        return new()
+        {
+            ["id"] = job.Id,
+            ["platform"] = job.Platform,
+            ["status"] = job.Status,
+            ["progress"] = ImportService.ReadProgress(job),
+            ["field_mappings"] = string.IsNullOrEmpty(job.FieldMappings) ? new Dictionary<string, object?>() : JsonSerializer.Deserialize<JsonElement>(job.FieldMappings),
+            ["error_log"] = errors.Skip(Math.Max(0, errors.Count - 50)).ToList(),
+            ["started_at"] = job.StartedAt,
+            ["completed_at"] = job.CompletedAt,
+            ["created_at"] = job.CreatedAt,
+        };
+    }
 
     private static string CookieName(IImportAdapter adapter) =>
         "escalated_import_" + new string(adapter.Name.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());

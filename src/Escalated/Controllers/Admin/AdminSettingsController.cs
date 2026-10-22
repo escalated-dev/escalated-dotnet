@@ -238,16 +238,24 @@ public class AdminSettingsController : ControllerBase
     }
 
     [HttpPost("webhooks")]
-    public async Task<IActionResult> CreateWebhook([FromBody] Webhook webhook)
+    public async Task<IActionResult> CreateWebhook([FromBody] CreateWebhookRequest request)
     {
-        if (!WebhookDispatcher.IsSafeWebhookUrl(webhook.Url))
+        if (!WebhookDispatcher.IsSafeWebhookUrl(request.Url))
         {
             return BadRequest(new { error = "Webhook URL must be an absolute HTTP(S) URL that does not target a local or private address." });
         }
 
-        webhook.Events = CanonicalWebhookEvents(webhook.Events);
-        webhook.CreatedAt = DateTime.UtcNow;
-        webhook.UpdatedAt = DateTime.UtcNow;
+        // The response carries `has_secret`, never the secret (Webhook.Secret is [JsonIgnore]).
+        var webhook = new Webhook
+        {
+            Url = request.Url,
+            Secret = string.IsNullOrEmpty(request.Secret) ? null : request.Secret,
+            Description = request.Description,
+            Events = CanonicalWebhookEvents(request.Events ?? "[]"),
+            Active = request.Active ?? true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
         _db.Webhooks.Add(webhook);
         await _db.SaveChangesAsync();
         return Ok(webhook);
@@ -590,6 +598,28 @@ public record PublicTicketsSettingsRequest(
     [property: JsonPropertyName("guest_policy_mode")] string? GuestPolicyMode,
     [property: JsonPropertyName("guest_policy_user_id")] string? GuestPolicyUserId,
     [property: JsonPropertyName("guest_policy_signup_url_template")] string? GuestPolicySignupUrlTemplate);
+
+/// <summary>
+/// A webhook as API clients create it. A request type rather than the model, because
+/// the model never reads or writes its <c>Secret</c> as JSON.
+/// </summary>
+public sealed class CreateWebhookRequest
+{
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.MaxLength(2048)]
+    public string Url { get; set; } = string.Empty;
+
+    [System.ComponentModel.DataAnnotations.MaxLength(255)]
+    public string? Secret { get; set; }
+
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public string? Description { get; set; }
+
+    /// <summary>JSON array of event names, as the model stores them.</summary>
+    public string? Events { get; set; }
+
+    public bool? Active { get; set; }
+}
 
 public record CreateApiTokenRequest(string Name, string? Abilities = null, string? TokenableType = null,
     int? TokenableId = null, DateTime? ExpiresAt = null);

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Escalated.Models;
 
@@ -15,6 +16,8 @@ public class ApiToken
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>SHA-256 of the token, for lookups only; never serialized.</summary>
+    [JsonIgnore]
     [Required]
     [MaxLength(64)]
     public string TokenHash { get; set; } = string.Empty;
