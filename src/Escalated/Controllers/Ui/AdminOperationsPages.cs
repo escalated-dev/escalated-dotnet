@@ -250,7 +250,7 @@ public partial class AdminPageController
                 var dateText = rawDate is { Length: >= 10 } ? rawDate[..10] : rawDate;
                 DateTime date = default;
                 if (dateText is null || !IsoDate().IsMatch(dateText)
-                    || !DateTime.TryParseExact(dateText, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                    || !DateTime.TryParseExact(dateText, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out date))
                 {
                     errors[$"holidays.{index}.date"] = "The holiday date must be a valid date.";
                 }

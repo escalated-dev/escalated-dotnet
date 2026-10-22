@@ -215,7 +215,7 @@ public class AdminOperationsPagesTests
                 IsDefault = true,
                 Schedule = """{"monday":{"start":"09:00","end":"17:00"}}""",
             };
-            schedule.Holidays.Add(new Holiday { Name = "Canada Day", Date = new DateTime(2026, 7, 1), Recurring = true });
+            schedule.Holidays.Add(new Holiday { Name = "Canada Day", Date = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc), Recurring = true });
             db.BusinessSchedules.Add(schedule);
             await db.SaveChangesAsync();
             id = schedule.Id;
