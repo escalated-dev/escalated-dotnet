@@ -9,7 +9,7 @@ public class CustomObject
     public int Id { get; set; }
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(255)]
     public string Name { get; set; } = string.Empty;
 
     [Required]

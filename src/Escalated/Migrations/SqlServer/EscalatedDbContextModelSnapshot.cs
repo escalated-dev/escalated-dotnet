@@ -684,16 +684,30 @@ namespace Escalated.Migrations.SqlServer
                     b.Property<string>("Conditions")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Context")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("ticket");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Options")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Placeholder")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("Position")
                         .HasColumnType("int");
@@ -758,11 +772,12 @@ namespace Escalated.Migrations.SqlServer
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomFieldId");
-
                     b.HasIndex("TicketId");
 
                     b.HasIndex("EntityType", "EntityId");
+
+                    b.HasIndex("CustomFieldId", "EntityType", "EntityId")
+                        .IsUnique();
 
                     b.ToTable("escalated_custom_field_values", (string)null);
                 });
@@ -783,8 +798,8 @@ namespace Escalated.Migrations.SqlServer
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Slug")
                         .IsRequired()

@@ -684,16 +684,30 @@ namespace Escalated.Migrations.Postgres
                     b.Property<string>("Conditions")
                         .HasColumnType("text");
 
+                    b.Property<string>("Context")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("ticket");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Options")
                         .HasColumnType("text");
+
+                    b.Property<string>("Placeholder")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<int>("Position")
                         .HasColumnType("integer");
@@ -758,11 +772,12 @@ namespace Escalated.Migrations.Postgres
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomFieldId");
-
                     b.HasIndex("TicketId");
 
                     b.HasIndex("EntityType", "EntityId");
+
+                    b.HasIndex("CustomFieldId", "EntityType", "EntityId")
+                        .IsUnique();
 
                     b.ToTable("escalated_custom_field_values", (string)null);
                 });
@@ -783,8 +798,8 @@ namespace Escalated.Migrations.Postgres
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("Slug")
                         .IsRequired()

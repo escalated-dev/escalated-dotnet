@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
@@ -48,6 +50,18 @@ public class CustomerTicketController : ControllerBase
     {
         if (this.CurrentUserId() is not { } requesterId) return Unauthorized();
 
+        // Custom field values are checked before anything is written.
+        var customFields = new CustomFieldService(_db);
+        var plan = await customFields.ValidateTicketAsync(request.CustomFields, creating: true);
+        if (!plan.IsValid)
+        {
+            return UnprocessableEntity(new
+            {
+                message = plan.Errors.Values.First(),
+                errors = plan.Errors.ToDictionary(e => e.Key, e => new[] { e.Value }),
+            });
+        }
+
         var ticket = await _ticketService.CreateAsync(
             request.Subject,
             request.Description,
@@ -56,6 +70,7 @@ public class CustomerTicketController : ControllerBase
             priority: request.Priority != null ? TicketPriorityExtensions.Parse(request.Priority) : null,
             departmentId: request.DepartmentId,
             ticketType: request.TicketType);
+        await customFields.ApplyTicketAsync(ticket.Id, plan);
 
         return Ok(ticket);
     }
@@ -115,6 +130,7 @@ public class CustomerTicketController : ControllerBase
                 .CountAsync(t => t.GuestEmail == ticket.GuestEmail);
         }
 
+        ticket.CustomFields = await new CustomFieldService(_db).TicketValuesAsync(ticket.Id);
         return Ok(ticket);
     }
 
@@ -163,8 +179,10 @@ public class CustomerTicketController : ControllerBase
     }
 }
 
+/// <param name="CustomFields">Optional custom field values keyed by field slug (<c>custom_fields</c>).</param>
 public record CreateTicketRequest(string Subject, string? Description = null,
     string? RequesterType = null,
-    string? Priority = null, int? DepartmentId = null, string? TicketType = null);
+    string? Priority = null, int? DepartmentId = null, string? TicketType = null,
+    [property: JsonPropertyName("custom_fields")] JsonElement? CustomFields = null);
 
 public record CustomerReplyRequest(string Body);

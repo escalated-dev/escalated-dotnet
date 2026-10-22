@@ -103,6 +103,7 @@ public class CustomerPageController : ControllerBase
         {
             departments = await _present.DepartmentOptionsAsync(ct),
             priorities = Priorities,
+            custom_fields = await new CustomFieldService(_db).TicketDefinitionsAsync(ct),
         });
 
     [HttpPost("")]
@@ -127,6 +128,9 @@ public class CustomerPageController : ControllerBase
         }
         if (ticketType is not null && !Ticket.ValidTypes.Contains(ticketType)) errors["ticket_type"] = "The selected ticket type is invalid.";
         if (UiAttachments.Validate(input.Files, _options.Attachments) is { } attachmentError) errors["attachments"] = attachmentError;
+        var customFields = new CustomFieldService(_db);
+        var plan = await customFields.ValidateTicketAsync(input.Object("custom_fields"), creating: true, ct);
+        foreach (var (key, message) in plan.Errors) errors[key] = message;
         if (errors.Count > 0) return UiResults.Back(HttpContext, $"{Prefix}/create", errors: errors);
 
         var ticket = await _tickets.CreateAsync(subject!, description,
@@ -135,6 +139,7 @@ public class CustomerPageController : ControllerBase
             departmentId: departmentId,
             ticketType: ticketType,
             ct: ct);
+        await customFields.ApplyTicketAsync(ticket.Id, plan, ct);
         await UiAttachments.StoreAsync(_db, _storage, input.Files, "ticket", ticket.Id, ct);
 
         return new UiRedirectResult(ShowUrl(ticket)) { Success = "Ticket created." };
@@ -159,6 +164,7 @@ public class CustomerPageController : ControllerBase
         return UiResults.Render("Escalated/Customer/Show", new
         {
             ticket = await _present.CustomerTicketAsync(ticket, withThread: true, ct),
+            custom_fields = await new CustomFieldService(_db).TicketValuesAsync(ticket.Id, ct),
         });
     }
 

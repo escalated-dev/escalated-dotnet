@@ -10,7 +10,7 @@ public class CustomField
     public int Id { get; set; }
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(255)]
     public string Name { get; set; } = string.Empty;
 
     [Required]
@@ -19,7 +19,17 @@ public class CustomField
 
     [Required]
     [MaxLength(50)]
-    public string Type { get; set; } = "text"; // text, number, select, checkbox, date, textarea
+    public string Type { get; set; } = "text"; // text, textarea, select, multi_select, checkbox, date, number
+
+    /// <summary>What the field describes: <c>ticket</c>, <c>user</c> or <c>organization</c>.</summary>
+    [Required]
+    [MaxLength(50)]
+    public string Context { get; set; } = "ticket";
+
+    [MaxLength(255)]
+    public string? Placeholder { get; set; }
+
+    public string? Description { get; set; }
 
     public string? Options { get; set; } // JSON array for select fields
 

@@ -317,6 +317,7 @@ public static class EscalatedModelConfiguration
         {
             e.ToTable($"{prefix}custom_fields");
             e.HasIndex(f => f.Slug).IsUnique();
+            e.Property(f => f.Context).HasDefaultValue("ticket");
             e.HasMany(f => f.Values).WithOne(v => v.CustomField).HasForeignKey(v => v.CustomFieldId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -324,6 +325,7 @@ public static class EscalatedModelConfiguration
         {
             e.ToTable($"{prefix}custom_field_values");
             e.HasIndex(v => new { v.EntityType, v.EntityId });
+            e.HasIndex(v => new { v.CustomFieldId, v.EntityType, v.EntityId }).IsUnique();
         });
 
         modelBuilder.Entity<CustomObject>(e =>

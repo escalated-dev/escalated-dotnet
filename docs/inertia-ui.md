@@ -277,10 +277,18 @@ makes them 404 and `AllowFeedback` off hides the feedback buttons; with the
 (`POST`, `PUT`, `DELETE`, `toggle`, `reorder`) with a 303 to the list, or back to
 the form with its errors.
 
+Custom fields: `support/admin/custom-fields` (create, edit, update, delete,
+`POST reorder`) and `support/admin/custom-objects` (create, edit, update, delete,
+and `records` with `POST`, `PUT` and `DELETE`). Ticket values go in a
+`custom_fields` object keyed by field slug on `POST support` (customer create),
+`POST support/tickets` (JSON) and `PUT support/{agent|admin}/tickets/{reference}`;
+the ticket pages and JSON detail return `custom_fields` with each active ticket
+field's decoded `value`.
+
 ### Not served yet
 
 `Admin/Workflows/Builder` is not a route in escalated-laravel either: the
 workflow form renders the builder itself.
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/CustomFields/Form, Admin/CustomFields/Index, Admin/CustomObjects/Form, Admin/CustomObjects/Index, Admin/CustomObjects/Records, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports/AgentDetail, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.
+`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports/AgentDetail, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.

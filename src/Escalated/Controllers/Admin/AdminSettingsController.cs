@@ -438,7 +438,7 @@ public class AdminSettingsController : ControllerBase
     [HttpPost("custom-fields")]
     public async Task<IActionResult> CreateCustomField([FromBody] CustomField field)
     {
-        field.Slug = field.Name.ToLower().Replace(" ", "_");
+        field.Slug = await new CustomFieldService(_db).UniqueSlugAsync(field.Name);
         field.CreatedAt = DateTime.UtcNow;
         field.UpdatedAt = DateTime.UtcNow;
         _db.CustomFields.Add(field);

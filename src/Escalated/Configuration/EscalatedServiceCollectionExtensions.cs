@@ -180,6 +180,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<AuditLogService>();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<SettingsService>();
+        services.AddScoped<CustomFieldService>();
         services.AddScoped<ImportService>();
         services.AddScoped<KnowledgeBaseService>();
         services.AddScoped<SavedViewService>();
