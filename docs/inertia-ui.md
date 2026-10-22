@@ -94,7 +94,7 @@ public sealed class MyLayout : IEscalatedUiRootView
 
 Some page routes share a path with a JSON API action: `GET support/agent/tickets`
 (the ticket queue page, and the API's ticket list), `GET support/admin/tickets`
-(likewise), `POST support/agent/tickets/bulk`, `support/admin/settings`, and the departments, tags,
+(likewise), `POST support/agent/tickets/bulk`, `support/admin/settings`, `GET`/`PUT support/admin/settings/public-tickets`, and the departments, tags,
 SLA policy, escalation rule, canned response, macro, webhook, users, roles, API token
 and workflows admin routes. With the UI on, a request reaches the page when it
 is an Inertia visit or a GET whose `Accept` names `text/html`; every other
@@ -162,6 +162,11 @@ throwing. A host that ships Ziggy-compatible routes of its own sets
 | `Escalated/Admin/Tickets/Index` | `GET support/admin/tickets` |
 | `Escalated/Admin/Tickets/Show` | `GET support/admin/tickets/{reference}` |
 | `Escalated/Admin/Settings` | `GET support/admin/settings` |
+| `Escalated/Admin/Settings/CsatSettings` | `GET support/admin/settings/csat` |
+| `Escalated/Admin/Settings/DataRetention` | `GET support/admin/settings/data-retention` |
+| `Escalated/Admin/Settings/DatabaseConnection` | `GET support/admin/settings/database` |
+| `Escalated/Admin/Settings/EmailSettings` | `GET support/admin/settings/email` |
+| `Escalated/Admin/Settings/PublicTickets` | `GET support/admin/settings/public-tickets` |
 | `Escalated/Admin/Departments/Index` | `GET support/admin/departments` |
 | `Escalated/Admin/Departments/Form` | `GET support/admin/departments/create`, `GET support/admin/departments/{id}/edit` |
 | `Escalated/Admin/Tags/Index` | `GET support/admin/tags` |
@@ -228,7 +233,24 @@ Admin form posts: `POST support/admin/settings` saves the keys in
 `widget_enabled`, `widget_color`, `widget_position`, `widget_greeting`,
 `widget_allowed_origins`. The other Settings controls are configuration here
 (`Escalated:AllowCustomerClose`, `Escalated:Attachments`, ...), so the page hides
-them. Departments: `POST support/admin/departments`, `PUT` and `DELETE
+them. The Settings sub-pages save to the settings table under escalated-laravel's
+keys, each with `POST support/admin/settings/<page>` and a `success` flash:
+`csat` (stored only; surveys do not read it yet), `data-retention` (applied daily
+by `RetentionPurgeBackgroundService`, see below), `email` (`email_addresses` and
+`default_reply_address`, stored only; outbound mail does not read them) and
+`public-tickets` (the guest policy keys the widget reads; `POST` or `PUT`, the
+`GET` and `PUT` answering page requests only, as the JSON API keeps them).
+`database` is read-only: Escalated's connection is the one the host registers
+`EscalatedDbContext` with, so the page shows that one connection (`default`),
+`pinnedByConfig` is true, `POST support/admin/settings/database` answers with
+an `error` flash, and `POST .../database/test` returns the connection's
+description as JSON (a 422 for an unknown name; a page visit goes back with a
+flash). Data retention: `DataRetentionService.PurgeExpiredAsync(dryRun, force)`,
+run daily by `RetentionPurgeBackgroundService`, soft-deletes closed tickets past
+`retention_closed_tickets` (deletes them with `force`), deletes tickets
+soft-deleted more than 30 days ago, attachment rows and audit logs past their
+periods, and expired guest verification codes. Every period defaults to
+`never`. Attachment files stay in `IAttachmentStorage`, which has no delete. Departments: `POST support/admin/departments`, `PUT` and `DELETE
 support/admin/departments/{id}`. SLA policies, escalation rules, canned responses,
 macros, statuses and webhooks the same way (`POST support/admin/<name>`, `PUT` and
 `DELETE support/admin/<name>/{id}`), plus `POST
@@ -291,4 +313,4 @@ field's decoded `value`.
 workflow form renders the builder itself.
 
 These pages of the shared frontend have no route here yet (names under
-`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/Import/Connect, Admin/Import/Index, Admin/Import/Mapping, Admin/Import/Progress, Admin/Import/Review, Admin/Plugins/Index, Admin/Reports/AgentDetail, Admin/Settings/CsatSettings, Admin/Settings/DataRetention, Admin/Settings/DatabaseConnection, Admin/Settings/EmailSettings, Admin/Settings/PublicTickets, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.
+`Escalated/`): Admin/AuditLog/Index, Admin/Automations/Form, Admin/Automations/Index, Admin/BusinessHours/Form, Admin/BusinessHours/Index, Admin/Capacity/Index, Admin/Plugins/Index, Admin/Reports/AgentDetail, Admin/Settings/Sandbox, Admin/Settings/SsoSettings, Admin/Settings/TwoFactor, Admin/Skills/Form, Admin/Skills/Index, Admin/Workflows/Builder, Auth/TwoFactorChallenge, Error, Plugin/Page.

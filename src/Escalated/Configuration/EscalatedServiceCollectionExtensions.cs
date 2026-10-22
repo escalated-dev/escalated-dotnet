@@ -180,6 +180,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<AuditLogService>();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<SettingsService>();
+        services.AddScoped<DataRetentionService>();
         services.AddScoped<CustomFieldService>();
         services.AddScoped<ImportService>();
         // The admin Import wizard: credential sealing, and the in-process run a
@@ -252,6 +253,9 @@ public static class EscalatedServiceCollectionExtensions
         services.AddHostedService<WorkflowDelayedActionBackgroundService>();
         services.AddHostedService<SlaMonitorBackgroundService>();
         services.AddHostedService<EscalationBackgroundService>();
+
+        // Applies the data retention periods daily (every period defaults to never).
+        services.AddHostedService<RetentionPurgeBackgroundService>();
 
         return services;
     }
