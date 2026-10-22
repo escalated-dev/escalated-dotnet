@@ -120,6 +120,33 @@ public class PageNameParityTests
         Assert.True(missing.Count == 0, Explain(missing, rendered));
     }
 
+    /// <summary>
+    /// Shipped pages this package does not render yet. Serving one means taking it
+    /// off this list, and a page the frontend adds lands here until a screen serves
+    /// it, so the list is always the exact remaining work.
+    /// </summary>
+    private static readonly string[] NotYetRendered =
+    {
+        "Escalated/Admin/Plugins/Index",
+        "Escalated/Admin/Reports/AgentDetail",
+        "Escalated/Admin/Settings/Sandbox",
+        "Escalated/Admin/Settings/SsoSettings",
+        "Escalated/Admin/Settings/TwoFactor",
+        "Escalated/Admin/Workflows/Builder",
+        "Escalated/Auth/TwoFactorChallenge",
+        "Escalated/Error",
+        "Escalated/Plugin/Page",
+    };
+
+    [Fact]
+    public void ListsExactlyTheShippedPagesNotRenderedYet()
+    {
+        var rendered = RenderedPages();
+        var unrendered = ShippedPages().Where(name => !rendered.ContainsKey(name)).OrderBy(name => name, StringComparer.Ordinal).ToList();
+
+        Assert.Equal(NotYetRendered.OrderBy(name => name, StringComparer.Ordinal).ToList(), unrendered);
+    }
+
     [Fact]
     public void ThePageManifestIsPresentAndLooksLikeOne()
     {

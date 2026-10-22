@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- With `Escalated:Ui:Enabled` on, `GET`/`POST support/admin/automations`, `support/admin/business-hours`, `support/admin/skills` (and `skills/create`, `skills/{id}/edit`, `PUT`/`DELETE skills/{id}`) and `GET support/admin/capacity` answer Inertia visits and browser navigations with the pages; API clients are unchanged. Nothing changes with the UI off.
+
+### Added
+- The admin operations pages, as escalated-laravel's controllers serve them (UI on, admin only): `Escalated/Admin/Automations/Index` and `Form` (`support/admin/automations`, `/create`, `/{id}/edit`; a name and at least one condition and action; new ones go last), `Escalated/Admin/BusinessHours/Index` and `Form` (`support/admin/business-hours`; IANA timezones, holidays saved with the schedule, one default), `Escalated/Admin/Skills/Index` and `Form` (routing tags, departments, and staff with a 1-5 proficiency; unique names), `Escalated/Admin/Capacity/Index` (`support/admin/capacity`, `PUT .../capacity/{id}` with `max_concurrent` 1-999) and `Escalated/Admin/AuditLog/Index` (`support/admin/audit-log`, 50 a page, filtered by user, action, resource type and dates; `workflow.created` shows and filters as `created`).
+- `PageNameParityTests` lists the shipped pages not rendered yet, so the list is always the remaining work (82 of 91 rendered).
+
 ## [0.2.4] - 2026-10-22
 
 ### Upgrading
