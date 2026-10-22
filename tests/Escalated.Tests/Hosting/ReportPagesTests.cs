@@ -381,4 +381,55 @@ public class ReportPagesTests
         Assert.False(response.Headers.Contains("X-Inertia"));
         Assert.Equal(JsonValueKind.Object, JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.ValueKind);
     }
+
+    [Fact]
+    public async Task AgentDetail_ShowsOneAgentAgainstThePreviousPeriod()
+    {
+        var (host, client) = await StartAsync();
+        await using var __ = host;
+        await host.SeedAsync(async db =>
+        {
+            var ticket = await db.Tickets.FirstAsync(t => t.Reference == "ESC-00002");
+            db.Replies.Add(new Reply { TicketId = ticket.Id, Body = "On it", Type = "reply", AuthorId = Avery, CreatedAt = DateTime.UtcNow });
+            await db.SaveChangesAsync();
+        });
+
+        var page = await PageAsync(client, $"/support/admin/reports/agent/{Avery}/detail?days=30");
+        AssertPage(page, "Escalated/Admin/Reports/AgentDetail");
+        var props = page.GetProperty("props");
+        Assert.Equal(30, props.GetProperty("period_days").GetInt32());
+        var agent = Keys(props.GetProperty("agent"), "id", "name", "email");
+        Assert.Equal(Avery, agent.GetProperty("id").GetString());
+        Assert.Equal("Avery Agent", agent.GetProperty("name").GetString());
+        Assert.Equal("avery@example.com", agent.GetProperty("email").GetString());
+        Assert.Equal(2, props.GetProperty("total_tickets").GetInt32());
+        Assert.Equal(1, props.GetProperty("resolved_tickets").GetInt32());
+        Assert.Equal(3, props.GetProperty("avg_frt").GetDouble());
+        Assert.Equal(10, props.GetProperty("avg_resolution").GetDouble());
+        Assert.Equal(5, props.GetProperty("csat_score").GetDouble());
+
+        var percentiles = Keys(props.GetProperty("response_percentiles"), "p50", "p75", "p90", "p95", "p99");
+        Assert.Equal(3, percentiles.GetProperty("p50").GetDouble());
+        Assert.Equal(3.8, percentiles.GetProperty("p90").GetDouble());
+
+        var breakdown = Assert.Single(props.GetProperty("csat_breakdown").EnumerateArray());
+        Assert.Equal("5 stars", Keys(breakdown, "label", "value").GetProperty("label").GetString());
+        Assert.Equal(2, props.GetProperty("workload").EnumerateArray().Sum(w => Keys(w, "label", "value").GetProperty("value").GetInt32()));
+
+        // One reply written and one ticket resolved, per day.
+        var productivity = props.GetProperty("productivity").EnumerateArray().ToList();
+        Assert.Equal(1, productivity.Sum(p => Keys(p, "label", "value", "values").GetProperty("values")[0].GetInt32()));
+        Assert.Equal(1, productivity.Sum(p => p.GetProperty("values")[1].GetInt32()));
+        Assert.All(productivity, p => Assert.Equal(p.GetProperty("values")[0].GetInt32() + p.GetProperty("values")[1].GetInt32(), p.GetProperty("value").GetInt32()));
+
+        Assert.Equal(0, props.GetProperty("prev_total_tickets").GetInt32());
+        Assert.Equal(0, props.GetProperty("prev_resolved_tickets").GetInt32());
+        Assert.Equal(0, props.GetProperty("prev_avg_frt").GetDouble());
+        Assert.Equal(0, props.GetProperty("prev_avg_resolution").GetDouble());
+        Assert.Equal(JsonValueKind.Null, props.GetProperty("prev_csat_score").ValueKind);
+
+        var unknown = await PageAsync(client, "/support/admin/reports/agent/nobody/detail");
+        Assert.Equal("nobody", unknown.GetProperty("props").GetProperty("agent").GetProperty("name").GetString());
+        Assert.Equal(0, unknown.GetProperty("props").GetProperty("total_tickets").GetInt32());
+    }
 }
