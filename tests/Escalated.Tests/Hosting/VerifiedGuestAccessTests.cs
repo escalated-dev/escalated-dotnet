@@ -221,11 +221,48 @@ public class VerifiedGuestAccessTests
         }
         Assert.Equal(HttpStatusCode.UnprocessableEntity, (await host.Client.PostAsJsonAsync("/support/widget/tickets", TicketBody(id, code))).StatusCode);
 
+        Assert.Equal(GuestAccessService.MaxAttempts, await AttemptsAsync(host, id));
+
         var (id2, code2) = await RequestCodeAsync(host, mail, "ticket");
-        await host.SeedAsync(db => db.GuestVerifications.Where(v => v.Id == id2)
-            .ExecuteUpdateAsync(set => set.SetProperty(v => v.ExpiresAt, DateTime.UtcNow.AddSeconds(-1))));
+        await ExpireCodeAsync(host, id2);
         Assert.Equal(HttpStatusCode.UnprocessableEntity, (await host.Client.PostAsJsonAsync("/support/widget/tickets", TicketBody(id2, code2))).StatusCode);
         Assert.Equal(0, await host.QueryAsync(db => db.Tickets.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Proof_ConcurrentGuesses_CountAtMostFive()
+    {
+        // Guesses arriving together must not slip past the limit between a read
+        // and a write: the count is a single conditional UPDATE.
+        var (host, mail) = await StartAsync(o => o.GuestRateLimit.TicketsPerMinute = 50);
+        await using var _h = host;
+
+        var (id, code) = await RequestCodeAsync(host, mail, "ticket");
+        var wrong = code == "00000000" ? "11111111" : "00000000";
+        var responses = await Task.WhenAll(Enumerable.Range(0, 12)
+            .Select(_ => host.Client.PostAsJsonAsync("/support/widget/tickets", TicketBody(id, wrong))));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.UnprocessableEntity, r.StatusCode));
+        Assert.Equal(GuestAccessService.MaxAttempts, await AttemptsAsync(host, id));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await host.Client.PostAsJsonAsync("/support/widget/tickets", TicketBody(id, code))).StatusCode);
+        Assert.Equal(0, await host.QueryAsync(db => db.Tickets.CountAsync()));
+    }
+
+    private static Task<int> AttemptsAsync(EscalatedTestHost host, string id) =>
+        host.QueryAsync(db => db.GuestVerifications.Where(v => v.Id == id).Select(v => v.Attempts).SingleAsync());
+
+    /// <summary>
+    /// Moves the code's expiry a second into the past by the app's clock, which is
+    /// the clock the service compares it with. The instant is computed here, not in
+    /// the query: inside an EF expression <c>DateTime.UtcNow</c> is translated to the
+    /// database server's <c>now()</c>, and a server clock running a second or more
+    /// ahead of the app (a Docker VM's often does) left the code unexpired.
+    /// </summary>
+    private static Task ExpireCodeAsync(EscalatedTestHost host, string id)
+    {
+        var expired = DateTime.UtcNow.AddSeconds(-1);
+        return host.SeedAsync(db => db.GuestVerifications.Where(v => v.Id == id)
+            .ExecuteUpdateAsync(set => set.SetProperty(v => v.ExpiresAt, expired)));
     }
 
     [Fact]
@@ -249,8 +286,10 @@ public class VerifiedGuestAccessTests
         Assert.Equal(HttpStatusCode.NotFound, (await StatusAsync(host, otherReference, token)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await StatusAsync(host, reference, otherToken)).StatusCode);
 
+        // Computed by the app's clock, not translated to the server's now(); see ExpireCodeAsync.
+        var expired = DateTime.UtcNow.AddMinutes(-1);
         await host.SeedAsync(db => db.Tickets.Where(t => t.Reference == reference)
-            .ExecuteUpdateAsync(set => set.SetProperty(t => t.GuestAccessExpiresAt, DateTime.UtcNow.AddMinutes(-1))));
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.GuestAccessExpiresAt, expired)));
         Assert.Equal(HttpStatusCode.NotFound, (await StatusAsync(host, reference, token)).StatusCode);
     }
 
