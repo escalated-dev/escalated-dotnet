@@ -413,7 +413,9 @@ public class AdminConfigPagesTests
         Assert.Contains("chat.ended", events);
 
         var edit = await PageAsync(client, $"/support/admin/webhooks/{seed.WebhookId}/edit");
-        Assert.Equal("s3cret", edit.GetProperty("props").GetProperty("webhook").GetProperty("secret").GetString());
+        var form = edit.GetProperty("props").GetProperty("webhook");
+        Assert.True(form.GetProperty("has_secret").GetBoolean());
+        Assert.False(form.TryGetProperty("secret", out _));
 
         var log = await PageAsync(client, $"/support/admin/webhooks/{seed.WebhookId}/deliveries");
         AssertPage(log, "Escalated/Admin/Webhooks/DeliveryLog");

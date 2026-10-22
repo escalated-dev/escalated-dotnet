@@ -636,9 +636,7 @@ public partial class AdminPageController
         var webhook = await _db.Webhooks.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id, ct);
         if (webhook is null) return NotFound();
 
-        var item = Webhook(webhook);
-        item["secret"] = webhook.Secret;
-        return UiResults.Render("Escalated/Admin/Webhooks/Form", new { webhook = item, availableEvents = EventNames.Canonical });
+        return UiResults.Render("Escalated/Admin/Webhooks/Form", new { webhook = Webhook(webhook), availableEvents = EventNames.Canonical });
     }
 
     [HttpGet("webhooks/{id:int}/deliveries")]
@@ -662,7 +660,10 @@ public partial class AdminPageController
         });
     }
 
-    /// <summary>A webhook without its secret, which only the edit form shows.</summary>
+    /// <summary>
+    /// A webhook as every page sees it: never its signing secret, only whether
+    /// one is stored (escalated-laravel's <c>has_secret</c>).
+    /// </summary>
     private static Dictionary<string, object?> Webhook(Webhook webhook) => new()
     {
         ["id"] = webhook.Id,
@@ -670,6 +671,7 @@ public partial class AdminPageController
         ["description"] = webhook.Description,
         ["events"] = SubscribedEvents(webhook.Events),
         ["active"] = webhook.Active,
+        ["has_secret"] = webhook.HasSecret,
         ["created_at"] = webhook.CreatedAt,
         ["updated_at"] = webhook.UpdatedAt,
     };
@@ -729,7 +731,11 @@ public partial class AdminPageController
 
         webhook.Url = url!;
         webhook.Events = JsonSerializer.Serialize(events.Select(EventNames.Canonicalize).Distinct().ToList());
-        webhook.Secret = secret;
+        // The form never receives the stored secret, so on an update a blank or
+        // missing one means "leave it as it is"; `clear_secret` removes it.
+        if (id is null) webhook.Secret = string.IsNullOrEmpty(secret) ? null : secret;
+        else if (input.Bool("clear_secret")) webhook.Secret = null;
+        else if (!string.IsNullOrEmpty(secret)) webhook.Secret = secret;
         webhook.Active = !input.Has("active") || input.Bool("active");
         webhook.UpdatedAt = DateTime.UtcNow;
         if (id is null) _db.Webhooks.Add(webhook);
