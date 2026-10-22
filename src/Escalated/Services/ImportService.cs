@@ -1,11 +1,14 @@
 using System.Text.Json;
+using Escalated.Configuration;
 using Escalated.Data;
 using Escalated.Enums;
 using Escalated.Models;
+using Escalated.Services.Email.Inbound;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Escalated.Services;
 
@@ -179,7 +182,7 @@ public sealed class BackgroundImportDispatcher : IImportDispatcher
 /// those users; others become Escalated contacts on guest tickets. Agents must
 /// exist.</para>
 /// </summary>
-public class ImportService
+public partial class ImportService
 {
     private const int MaxErrors = 10000;
     private const string ContactPrefix = "contact:";
@@ -189,15 +192,20 @@ public class ImportService
     private readonly IEnumerable<IImportAdapter> _adapters;
     private readonly ImportCredentials _credentials;
     private readonly IUserDirectory? _users;
+    private readonly IAttachmentStorage? _storage;
+    private readonly AttachmentOptions _attachments;
 
     public ImportService(EscalatedDbContext db, ILogger<ImportService> logger,
-        IEnumerable<IImportAdapter> adapters, ImportCredentials credentials, IUserDirectory? users = null)
+        IEnumerable<IImportAdapter> adapters, ImportCredentials credentials, IUserDirectory? users = null,
+        IAttachmentStorage? storage = null, IOptions<EscalatedOptions>? options = null)
     {
         _db = db;
         _logger = logger;
         _adapters = adapters;
         _credentials = credentials;
         _users = users;
+        _storage = storage;
+        _attachments = options?.Value.Attachments ?? new AttachmentOptions();
     }
 
     public IReadOnlyList<IImportAdapter> Adapters => _adapters.ToList();
@@ -375,6 +383,7 @@ public class ImportService
                     continue;
                 }
 
+                _recordErrors.Clear();
                 try
                 {
                     var escalatedId = await PersistRecordAsync(job, entityType, record, ct);
@@ -388,6 +397,19 @@ public class ImportService
                     });
                     await _db.SaveChangesAsync(ct);
                     processed++;
+                    // What the record kept going past (a custom field value that
+                    // failed its check), logged against the record.
+                    foreach (var (type, message) in _recordErrors)
+                    {
+                        if (errors.Count >= MaxErrors) break;
+                        errors.Add(new Dictionary<string, object?>
+                        {
+                            ["entity_type"] = type,
+                            ["source_id"] = sourceId,
+                            ["error"] = message,
+                            ["timestamp"] = DateTime.UtcNow.ToString("o"),
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -491,6 +513,9 @@ public class ImportService
             "departments" => await PersistDepartmentAsync(record, ct),
             "tickets" => await PersistTicketAsync(job, record, ct),
             "replies" => await PersistReplyAsync(job, record, ct),
+            "custom_fields" => await PersistCustomFieldAsync(record, ct),
+            "attachments" => await PersistAttachmentAsync(job, record, ct),
+            "satisfaction_ratings" => await PersistSatisfactionRatingAsync(job, record, ct),
             _ => throw new InvalidOperationException($"Unknown entity type: {entityType}")
         };
     }
@@ -623,6 +648,7 @@ public class ImportService
             }
         }
         await _db.SaveChangesAsync(ct);
+        await ImportFieldValuesAsync(job, ticket.Id, record, ct);
 
         return ticket.Id.ToString();
     }
