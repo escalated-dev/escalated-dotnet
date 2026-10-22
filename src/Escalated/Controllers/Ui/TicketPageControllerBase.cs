@@ -245,6 +245,7 @@ public abstract class TicketPageControllerBase : ControllerBase
             }).ToList(),
             ["is_following"] = await Db.TicketFollowers.AnyAsync(f => f.TicketId == ticket.Id && f.UserId == userId, ct),
             ["followers_count"] = await Db.TicketFollowers.CountAsync(f => f.TicketId == ticket.Id, ct),
+            ["custom_fields"] = await new CustomFieldService(Db).TicketValuesAsync(ticket.Id, ct),
         };
         await AddShowPropsAsync(ticket, page, ct);
         return UiResults.Render(ShowComponent, page);
@@ -293,6 +294,26 @@ public abstract class TicketPageControllerBase : ControllerBase
             : ticket.GuestEmail is not null ? await Db.Tickets.CountAsync(t => t.GuestEmail == ticket.GuestEmail, ct) : 0;
 
         return props;
+    }
+
+    /// <summary>
+    /// <c>PUT tickets/{ticket}</c> (escalated-laravel's <c>tickets.update</c>): saves the
+    /// <c>custom_fields</c> sent, checking only those keys. Omitting it changes nothing.
+    /// </summary>
+    [HttpPut("tickets/" + Reference)]
+    [HttpPatch("tickets/" + Reference)]
+    public async Task<IActionResult> Update(string reference, CancellationToken ct)
+    {
+        var ticket = await FindAsync(reference, ct);
+        if (ticket is null) return NotFound();
+
+        var input = await UiInput.ReadAsync(Request, ct);
+        var customFields = new CustomFieldService(Db);
+        var plan = await customFields.ValidateTicketAsync(input.Object("custom_fields"), creating: false, ct);
+        if (!plan.IsValid) return UiResults.Back(HttpContext, ShowUrl(ticket), errors: plan.Errors);
+
+        await customFields.ApplyTicketAsync(ticket.Id, plan, ct);
+        return UiResults.Back(HttpContext, ShowUrl(ticket), success: "Ticket updated.");
     }
 
     [HttpPost("tickets/" + Reference + "/reply")]

@@ -12,12 +12,15 @@ public sealed class UiInput
 {
     private readonly Dictionary<string, List<string?>> _values;
     private readonly Dictionary<string, JsonElement> _json;
+    private readonly IFormCollection? _form;
 
-    private UiInput(Dictionary<string, List<string?>> values, IFormFileCollection? files, Dictionary<string, JsonElement>? json = null)
+    private UiInput(Dictionary<string, List<string?>> values, IFormFileCollection? files, Dictionary<string, JsonElement>? json = null,
+        IFormCollection? form = null)
     {
         _values = values;
         Files = files;
         _json = json ?? new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        _form = form;
     }
 
     public IFormFileCollection? Files { get; }
@@ -36,7 +39,7 @@ public sealed class UiInput
                 list.AddRange(value.Select(v => (string?)v));
             }
 
-            return new UiInput(values, form.Files);
+            return new UiInput(values, form.Files, form: form);
         }
 
         if (request.ContentLength is 0 || request.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) != true)
@@ -74,6 +77,40 @@ public sealed class UiInput
     /// keyed by priority). Null when the key is absent or the body was a form.
     /// </summary>
     public JsonElement? Json(string key) => _json.TryGetValue(key, out var value) ? value : null;
+
+    /// <summary>
+    /// An object field (<c>custom_fields</c>): the JSON value as sent, or, from form data,
+    /// an object built from <c>key[name]</c> (a string) and <c>key[name][]</c> (an array)
+    /// fields. Null when the key is absent.
+    /// </summary>
+    public JsonElement? Object(string key)
+    {
+        if (_form is null) return Json(key);
+
+        var map = new Dictionary<string, object?>(StringComparer.Ordinal);
+        var prefix = key + "[";
+        foreach (var (name, value) in _form)
+        {
+            if (!name.StartsWith(prefix, StringComparison.Ordinal)) continue;
+            var close = name.IndexOf(']', prefix.Length);
+            if (close < 0) continue;
+            var field = name[prefix.Length..close];
+            var rest = name[(close + 1)..];
+            if (rest.Length > 0)
+            {
+                var list = map.GetValueOrDefault(field) as List<string?> ?? new List<string?>();
+                list.AddRange(value.Select(v => (string?)v));
+                map[field] = list;
+            }
+            else
+            {
+                map[field] = value.ToString();
+            }
+        }
+
+        if (map.Count == 0) return _form.ContainsKey(key) ? JsonSerializer.SerializeToElement(_form[key].ToString()) : null;
+        return JsonSerializer.SerializeToElement(map);
+    }
 
     public string? String(string key)
     {

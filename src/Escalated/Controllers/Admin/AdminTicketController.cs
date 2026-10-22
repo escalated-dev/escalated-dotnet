@@ -100,6 +100,7 @@ public class AdminTicketController : ControllerBase
 
         await _subjectService.PopulateTicketSubjectsAsync(ticket);
 
+        ticket.CustomFields = await new CustomFieldService(_db).TicketValuesAsync(ticket.Id);
         return Ok(ticket);
     }
 

@@ -200,6 +200,14 @@ public class Ticket
     [JsonPropertyName("subjects")]
     public IReadOnlyList<TicketSubjectResponse>? SubjectsPayload { get; set; }
 
+    /// <summary>
+    /// The active ticket custom fields with this ticket's decoded values, set by the
+    /// detail endpoints (<see cref="Services.CustomFieldService.TicketValuesAsync"/>).
+    /// </summary>
+    [NotMapped]
+    [JsonPropertyName("custom_fields")]
+    public IReadOnlyList<Dictionary<string, object?>>? CustomFields { get; set; }
+
     public bool IsOpen() => Status.IsOpen();
 
     public string GenerateReference(string prefix = "ESC")

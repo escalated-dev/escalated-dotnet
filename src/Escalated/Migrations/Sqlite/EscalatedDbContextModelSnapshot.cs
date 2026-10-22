@@ -649,15 +649,29 @@ namespace Escalated.Migrations.Sqlite
                     b.Property<string>("Conditions")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Context")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("ticket");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Options")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Placeholder")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Position")
@@ -721,11 +735,12 @@ namespace Escalated.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomFieldId");
-
                     b.HasIndex("TicketId");
 
                     b.HasIndex("EntityType", "EntityId");
+
+                    b.HasIndex("CustomFieldId", "EntityType", "EntityId")
+                        .IsUnique();
 
                     b.ToTable("escalated_custom_field_values", (string)null);
                 });
@@ -744,7 +759,7 @@ namespace Escalated.Migrations.Sqlite
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Slug")
