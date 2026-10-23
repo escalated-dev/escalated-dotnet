@@ -102,6 +102,16 @@ public class AgentChatController : ControllerBase
     }
 
     /// <summary>
+    /// Transfer a chat to another agent and/or department (escalated-laravel
+    /// <c>escalated.admin.chat.transfer</c>). The body is
+    /// <c>{agent_id, department_id}</c> (either or both); the shared
+    /// ChatActionBar's <c>{type: "agent"|"department", id}</c> is read too.
+    /// </summary>
+    [HttpPost("{sessionId:int}/transfer")]
+    public Task<IActionResult> Transfer(int sessionId, [FromBody] System.Text.Json.JsonElement? body) =>
+        ChatTransferEndpoint.HandleAsync(this, _chatService, sessionId, body);
+
+    /// <summary>
     /// Get a specific chat session.
     /// </summary>
     [HttpGet("{sessionId:int}")]

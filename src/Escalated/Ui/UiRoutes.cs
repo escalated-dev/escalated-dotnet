@@ -78,6 +78,7 @@ public static class UiRoutes
         ["escalated.admin.tickets.snooze"] = "{prefix}/admin/tickets/{ticket}/snooze",
         ["escalated.admin.tickets.unsnooze"] = "{prefix}/admin/tickets/{ticket}/unsnooze",
         ["escalated.admin.chat.end"] = "{prefix}/admin/chat/{session}/end",
+        ["escalated.admin.chat.transfer"] = "{prefix}/admin/chat/{session}/transfer",
         ["escalated.admin.saved-views.index"] = "{prefix}/admin/saved-views",
         ["escalated.admin.saved-views.store"] = "{prefix}/admin/saved-views",
         ["escalated.admin.saved-views.update"] = "{prefix}/admin/saved-views/{savedView}",

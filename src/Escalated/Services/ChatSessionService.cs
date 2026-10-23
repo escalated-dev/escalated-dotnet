@@ -152,6 +152,90 @@ public class ChatSessionService
     }
 
     /// <summary>
+    /// Hand a chat to another agent and/or department, as escalated-laravel's
+    /// <c>ChatSessionService::transferChat</c>. With an agent, the session and
+    /// its ticket are reassigned to that agent. With a department, the ticket
+    /// moves there; without an agent too, the chat goes back to the queue
+    /// (unassigned, waiting) and routing picks an agent for its new
+    /// department. Announces <c>chat.transferred</c> with the previous agent,
+    /// the new agent and the new department.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Unknown session.</exception>
+    /// <exception cref="ChatTransferRefusedException">No target, an ended chat, an unknown
+    /// department, or (under restricted visibility) an agent who is not staff or cannot see the ticket.</exception>
+    public async Task<ChatSession> TransferAsync(int sessionId, string? toAgentId, int? toDepartmentId, CancellationToken ct = default)
+    {
+        var session = await FindByIdAsync(sessionId, ct)
+            ?? throw new InvalidOperationException("Chat session not found.");
+
+        if (session.Status == "ended")
+            throw new ChatTransferRefusedException("Chat session has already ended.");
+        if (string.IsNullOrEmpty(toAgentId) && toDepartmentId is null)
+            throw new ChatTransferRefusedException("Provide an agent_id or department_id.");
+        if (toDepartmentId is { } departmentId && !await _db.Departments.AnyAsync(d => d.Id == departmentId, ct))
+            throw new ChatTransferRefusedException("The selected department_id is invalid.");
+
+        var ticket = await _db.Tickets.FirstOrDefaultAsync(t => t.Id == session.TicketId, ct)
+            ?? throw new InvalidOperationException("Underlying ticket not found.");
+        var fromAgentId = session.AgentId;
+        var previousDepartmentId = ticket.DepartmentId;
+
+        if (toDepartmentId is not null)
+        {
+            ticket.DepartmentId = toDepartmentId;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        // Under restricted visibility the agent must be staff who can see the
+        // ticket in its new department (as AcceptAsync checks).
+        if (!string.IsNullOrEmpty(toAgentId) && _access is not null && !await _access.AgentCanViewAsync(toAgentId, ticket.Id, ct))
+        {
+            if (toDepartmentId is not null)
+            {
+                ticket.DepartmentId = previousDepartmentId;
+                await _db.SaveChangesAsync(ct);
+            }
+            throw new ChatTransferRefusedException("Agent cannot access this ticket.");
+        }
+
+        if (toDepartmentId is not null)
+        {
+            session.DepartmentId = toDepartmentId;
+        }
+        if (!string.IsNullOrEmpty(toAgentId))
+        {
+            session.AgentId = toAgentId;
+            ticket.AssignedTo = toAgentId;
+        }
+        else
+        {
+            session.AgentId = null;
+            session.Status = "waiting";
+            session.AcceptedAt = null;
+            ticket.AssignedTo = null;
+        }
+        session.UpdatedAt = DateTime.UtcNow;
+        ticket.UpdatedAt = DateTime.UtcNow;
+        _db.ChatSessions.Update(session);
+        _db.Tickets.Update(ticket);
+        await _db.SaveChangesAsync(ct);
+
+        await _events.DispatchAsync(new ChatSessionTransferredEvent(session, fromAgentId, string.IsNullOrEmpty(toAgentId) ? null : toAgentId, toDepartmentId), ct);
+
+        if (string.IsNullOrEmpty(toAgentId))
+        {
+            var route = await _routing.ResolveAsync(toDepartmentId, ct);
+            if (!string.IsNullOrEmpty(route.AgentId) && (_access is null || await _access.AgentCanViewAsync(route.AgentId, ticket.Id, ct)))
+            {
+                session = await AcceptAsync(session.Id, route.AgentId, ct);
+            }
+        }
+
+        return session;
+    }
+
+    /// <summary>
     /// Send a message within a chat session. The message is stored as a
     /// reply on the underlying ticket.
     /// </summary>
@@ -270,6 +354,17 @@ public class ChatSessionService
 public record ChatSessionStartedEvent(ChatSession Session);
 public record ChatSessionAcceptedEvent(ChatSession Session, string AgentId);
 public record ChatSessionEndedEvent(ChatSession Session, string? CauserId);
+
+/// <summary>A chat was handed to another agent and/or department (webhook and trigger name <c>chat.transferred</c>).</summary>
+public record ChatSessionTransferredEvent(ChatSession Session, string? FromAgentId, string? ToAgentId, int? ToDepartmentId);
+
+/// <summary>A chat transfer that cannot be made; the agent chat API answers 422.</summary>
+public class ChatTransferRefusedException : Exception
+{
+    public ChatTransferRefusedException(string message) : base(message)
+    {
+    }
+}
 
 /// <summary>A message was posted in a live chat (webhook and trigger name <c>chat.message</c>).</summary>
 public record ChatMessageEvent(ChatSession Session, Reply Reply, string AuthorType);

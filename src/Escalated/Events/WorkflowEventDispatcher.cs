@@ -134,6 +134,7 @@ public class WorkflowEventDispatcher : IEscalatedEventDispatcher
             SlaBreachedEvent e => (EventNames.SlaBreached, e.Ticket.Id),
             ChatSessionStartedEvent e => (EventNames.ChatStarted, e.Session.TicketId),
             ChatSessionAcceptedEvent e => (EventNames.ChatAssigned, e.Session.TicketId),
+            ChatSessionTransferredEvent e => (EventNames.ChatTransferred, e.Session.TicketId),
             ChatMessageEvent e => (EventNames.ChatMessage, e.Session.TicketId),
             ChatSessionEndedEvent e => (EventNames.ChatEnded, e.Session.TicketId),
             _ => null,

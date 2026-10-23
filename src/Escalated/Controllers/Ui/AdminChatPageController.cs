@@ -44,4 +44,12 @@ public class AdminChatPageController : ControllerBase
         await _chats.EndAsync(chat.Id, this.CurrentUserId(), ct);
         return Ok(new { message = "Chat ended." });
     }
+
+    /// <summary>
+    /// Transfers the chat (<c>escalated.admin.chat.transfer</c>), as
+    /// <c>POST support/agent/chat/{sessionId}/transfer</c> does.
+    /// </summary>
+    [HttpPost("{session:int}/transfer")]
+    public Task<IActionResult> Transfer(int session, [FromBody] System.Text.Json.JsonElement? body) =>
+        Escalated.Controllers.Agent.ChatTransferEndpoint.HandleAsync(this, _chats, session, body);
 }
