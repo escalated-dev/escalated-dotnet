@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `POST support/admin/chat/{session}/end`, named `escalated.admin.chat.end` for the shared pages, so the agent ticket page's End Chat button works: it posts `{}` as JSON with the chat session id from the agent's signed-in session (any staff member, as `support/agent/chat/{sessionId}/end`). It answers `200 {message: "Chat ended."}`, `422 {message: "Chat is already ended."}` for a chat that has already ended, as escalated-laravel does, and `404` for an unknown session. Unlike the other routes it follows `Escalated:RoutePrefix`. `POST support/agent/chat/{sessionId}/end` is unchanged (still `400` when already ended).
+
 ## [0.2.5] - 2026-10-22
 
 ### Upgrading

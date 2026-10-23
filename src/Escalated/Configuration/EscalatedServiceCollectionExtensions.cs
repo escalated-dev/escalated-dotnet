@@ -140,6 +140,11 @@ public static class EscalatedServiceCollectionExtensions
         services.TryAddSingleton<Escalated.Middleware.ApiTokenAuthState>();
         services.AddScoped<Escalated.Controllers.Ui.TicketPageServices>();
 
+        // Controllers marked [EscalatedPrefixedRoute] answer under RoutePrefix.
+        services.AddOptions<Microsoft.AspNetCore.Mvc.MvcOptions>()
+            .Configure<IOptions<EscalatedOptions>>((mvc, escalated) =>
+                mvc.Conventions.Add(new EscalatedRoutePrefixConvention(escalated.Value.RoutePrefix)));
+
         // The admin, agent and customer authorization policies the controllers
         // require. A host policy of the same name takes precedence.
         services.AddEscalatedAuthorization();
