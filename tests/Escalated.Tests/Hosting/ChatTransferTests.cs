@@ -88,7 +88,7 @@ public class ChatTransferTests
     [Fact]
     public void TheRouteHasLaravelsName()
     {
-        Assert.Equal("{prefix}/agent/chat/{session}/transfer", UiRoutes.Defaults["escalated.admin.chat.transfer"]);
+        Assert.Equal("{prefix}/admin/chat/{session}/transfer", UiRoutes.Defaults["escalated.admin.chat.transfer"]);
     }
 
     [Fact]
@@ -287,6 +287,30 @@ public class ChatTransferTests
         Assert.Equal("from", (await SessionAsync(host, session.Id)).AgentId);
         Assert.Equal(billing, (await TicketAsync(host, session.TicketId)).DepartmentId);
         Assert.Empty(await DeliveriesAsync(host, "chat.transferred"));
+    }
+
+    [Theory]
+    [InlineData(null, "/support")]
+    [InlineData("helpdesk", "/helpdesk")]
+    public async Task TheNamedRoute_TransfersFromTheTicketPage(string? prefix, string mount)
+    {
+        await using var host = await StartAsync(prefix is null ? null : options => options.RoutePrefix = prefix);
+        var session = await ActiveChatAsync(host);
+
+        using var response = await host.ClientFor("from").PostAsync(
+            $"{mount}/admin/chat/{session.Id}/transfer",
+            new StringContent("{\"agent_id\":\"to\"}", System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("to", (await SessionAsync(host, session.Id)).AgentId);
+        Assert.Single(await DeliveriesAsync(host, "chat.transferred"));
+
+        using var empty = await host.ClientFor("from").PostAsync(
+            $"{mount}/admin/chat/{session.Id}/transfer", new StringContent("{}", System.Text.Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, empty.StatusCode);
+        using var customer = await host.ClientFor("customer-9").PostAsync(
+            $"{mount}/admin/chat/{session.Id}/transfer", new StringContent("{\"agent_id\":\"from\"}", System.Text.Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.Forbidden, customer.StatusCode);
     }
 
     [Fact]
