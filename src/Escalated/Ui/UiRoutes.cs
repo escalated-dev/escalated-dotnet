@@ -58,6 +58,9 @@ public static class UiRoutes
         ["escalated.agent.tickets.custom-action"] = "{prefix}/agent/tickets/{ticket}/actions/{action}",
         ["escalated.agent.tickets.pin"] = "{prefix}/agent/tickets/{ticket}/replies/{reply}/pin",
         ["escalated.agent.tickets.presence"] = "{prefix}/agent/tickets/{ticket}/presence",
+        // Live chat transfer from Agent/TicketShow's action bar: Laravel's name,
+        // the agent chat API's endpoint.
+        ["escalated.admin.chat.transfer"] = "{prefix}/agent/chat/{session}/transfer",
 
         // Admin tickets
         ["escalated.admin.tickets.index"] = "{prefix}/admin/tickets",

@@ -23,8 +23,7 @@ public class WorkflowEngine
     /// (ADR 2026-10-21) minus <c>chat.transferred</c>, which this package does not
     /// raise yet. Legacy names are still read from saved Workflows, never offered.
     /// </summary>
-    public static readonly string[] TriggerEvents = Escalated.Events.EventNames.Canonical
-        .Where(name => name != Escalated.Events.EventNames.ChatTransferred).ToArray();
+    public static readonly string[] TriggerEvents = Escalated.Events.EventNames.Canonical.ToArray();
 
     public bool EvaluateConditions(Dictionary<string, object> conditions, Dictionary<string, string> ticket)
     {

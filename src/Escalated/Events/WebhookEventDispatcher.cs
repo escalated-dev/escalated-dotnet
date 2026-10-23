@@ -80,6 +80,7 @@ public class WebhookEventDispatcher : IEscalatedEventDispatcher
         SlaWarningEvent => EventNames.SlaWarning,
         ChatSessionStartedEvent => EventNames.ChatStarted,
         ChatSessionAcceptedEvent => EventNames.ChatAssigned,
+        ChatSessionTransferredEvent => EventNames.ChatTransferred,
         ChatMessageEvent => EventNames.ChatMessage,
         ChatSessionEndedEvent => EventNames.ChatEnded,
         _ => null,
@@ -109,6 +110,12 @@ public class WebhookEventDispatcher : IEscalatedEventDispatcher
                 break;
             case ChatSessionEndedEvent e:
                 AddChat(payload, e.Session);
+                break;
+            case ChatSessionTransferredEvent e:
+                var transferred = AddChat(payload, e.Session);
+                transferred["from_agent_id"] = e.FromAgentId;
+                transferred["to_agent_id"] = e.ToAgentId;
+                transferred["to_department_id"] = e.ToDepartmentId;
                 break;
             case ChatMessageEvent e:
                 var chat = AddChat(payload, e.Session);

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Live chat transfer (escalated-laravel `ChatController::transfer`): `POST /support/agent/chat/{sessionId}/transfer`, behind the agent policy like the rest of the agent chat API, and in `UiRoutes` as `escalated.admin.chat.transfer` (Laravel's name), so the shared `Agent/TicketShow` transfer menu reaches it. The body is `{agent_id, department_id}` (either or both); the shared `ChatActionBar`'s `{type: "agent"|"department", id}` is accepted too. With an agent, the session and ticket are reassigned to them. With only a department, the ticket moves there and the chat goes back to the queue (unassigned, waiting), then chat routing runs again for the new department. A missing or non-integer target, an unknown department, an ended chat, or (under restricted visibility) an agent who cannot see the ticket in its new department is a 422; an unknown session is a 404. New `ChatSessionService.TransferAsync`, `ChatSessionTransferredEvent` and `ChatTransferRefusedException`.
+- `chat.transferred` is sent to outbound webhooks and runs workflows; `WorkflowEngine.TriggerEvents` now offers it (the webhook form already listed it). The webhook `chat` payload adds `from_agent_id`, `to_agent_id` and `to_department_id`, as in Laravel.
+
 ## [0.2.5] - 2026-10-22
 
 ### Upgrading
