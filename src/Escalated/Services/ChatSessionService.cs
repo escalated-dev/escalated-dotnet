@@ -299,25 +299,56 @@ public class ChatSessionService
 
     /// <summary>
     /// Give a chat a new random visitor token (256 bits, base64url) and store
-    /// only its SHA-256. The widget reaches the chat through this token alone.
+    /// only its SHA-256. The widget reaches the chat through this token alone,
+    /// until it expires (<see cref="VisitorTokenLifetime"/> from now), as
+    /// escalated-laravel's chat grant does.
     /// </summary>
     public async Task<string> IssueVisitorTokenAsync(ChatSession session, CancellationToken ct = default)
     {
         var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
             .TrimEnd('=').Replace('+', '-').Replace('/', '_');
         session.VisitorTokenHash = HashVisitorToken(token);
+        session.VisitorTokenExpiresAt = VisitorTokenExpiry();
         session.UpdatedAt = DateTime.UtcNow;
         _db.ChatSessions.Update(session);
         await _db.SaveChangesAsync(ct);
         return token;
     }
 
-    /// <summary>The chat a visitor token belongs to, or null.</summary>
+    /// <summary>
+    /// The chat an unexpired visitor token belongs to, or null (404). A chat
+    /// started before tokens expired has no expiry yet; this request gives it a
+    /// full lifetime, so chats in progress during an upgrade keep working.
+    /// </summary>
     public async Task<ChatSession?> FindByVisitorTokenAsync(string? token, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(token) || token.Length > 128) return null;
         var hash = HashVisitorToken(token);
-        return await _db.ChatSessions.FirstOrDefaultAsync(session => session.VisitorTokenHash == hash, ct);
+        var session = await _db.ChatSessions.FirstOrDefaultAsync(session => session.VisitorTokenHash == hash, ct);
+        if (session == null) return null;
+        if (session.VisitorTokenExpiresAt == null)
+        {
+            session.VisitorTokenExpiresAt = VisitorTokenExpiry();
+            await _db.SaveChangesAsync(ct);
+        }
+        else if (session.VisitorTokenExpiresAt <= DateTime.UtcNow)
+        {
+            return null;
+        }
+
+        return session;
+    }
+
+    /// <summary>
+    /// How long a visitor's chat token works: the guest access grant lifetime
+    /// (<c>Escalated:GuestAccess:TtlMinutes</c>, clamped to 5 minutes..7 days).
+    /// </summary>
+    public TimeSpan VisitorTokenLifetime => TimeSpan.FromMinutes(Math.Clamp(_options.GuestAccess.TtlMinutes, 5, 7 * 24 * 60));
+
+    private DateTime VisitorTokenExpiry()
+    {
+        var now = DateTime.UtcNow;
+        return new DateTime(now.Ticks - now.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc).Add(VisitorTokenLifetime);
     }
 
     public static string HashVisitorToken(string token) =>

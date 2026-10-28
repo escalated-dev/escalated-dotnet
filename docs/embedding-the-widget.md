@@ -151,7 +151,7 @@ or look a ticket up ([verified guest access](guest-access.md)), so
 | `POST /lookup` | `email`, `reference`, `verification_id`, `verification_code` | `{ "data": [{ "reference", "subject", "guest_access_token", "expires_at" }] }` |
 | `GET /tickets/{reference}` | `Authorization: Bearer <guest_access_token>` | `{ "reference", "subject", "status", "status_label", "status_color", "created_at", "department", "replies" }` |
 | `GET /chat/availability` | `department_id?` | `{ "available": true }` |
-| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?`, `verification_id`, `verification_code` | `{ "id": "<token>", "status", "agent" }` |
+| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?`, `verification_id`, `verification_code` | `{ "id": "<token>", "expires_at", "status", "agent" }` |
 | `GET /chat/{id}/messages` | | `{ "messages": [{ "id", "body", "is_agent", "author": { "name" }, "created_at" }], "typing": null, "agent", "ended" }` |
 | `POST /chat/{id}/messages` | `{ "body" }` | the stored message |
 | `POST /chat/{id}/typing` | | sent to agents watching the chat over SignalR |
@@ -165,8 +165,10 @@ Paths are under `/support/widget`, so the CORS above covers them. Both
 
 The chat `id` is a random 256-bit token; only its SHA-256 is stored (the
 `ChatSessionVisitorToken` migration adds `escalated_chat_sessions.VisitorTokenHash`).
-Every chat route resolves the chat by that token and answers 404 for anything
-else, numeric session ids included. Agent names come from your `IUserDirectory`
+It expires `Escalated:GuestAccess:TtlMinutes` after the chat starts
+(`expires_at`, default 24 hours; the `ChatVisitorTokenExpiry` migration adds
+`VisitorTokenExpiresAt`). Every chat route resolves the chat by that token and
+answers 404 for an unknown or expired token, numeric session ids included. Agent names come from your `IUserDirectory`
 and fall back to "Agent".
 
 ### Host parameters

@@ -412,6 +412,69 @@ public class WidgetContractTests
     }
 
     [Fact]
+    public async Task ChatStart_TheTokenExpiresWithTheGuestAccessLifetime()
+    {
+        await using var host = await StartAsync(o => o.GuestAccess.TtlMinutes = 30);
+        var before = DateTime.UtcNow.AddSeconds(-1);
+
+        var response = await PostAsync(host, "/support/widget/chat/start", new { name = "Vee", email = "vee@example.com" });
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var expires = json.RootElement.GetProperty("expires_at").GetDateTime().ToUniversalTime();
+
+        Assert.InRange(expires, before.AddMinutes(30), DateTime.UtcNow.AddMinutes(30));
+        var stored = await host.QueryAsync(db => db.ChatSessions.Select(s => s.VisitorTokenExpiresAt).SingleAsync());
+        Assert.Equal(expires, DateTime.SpecifyKind(stored!.Value, DateTimeKind.Utc));
+    }
+
+    [Fact]
+    public async Task ChatRoutes_RefuseAnExpiredToken()
+    {
+        await using var host = await StartAsync();
+        var token = await StartChatAsync(host);
+        await host.SeedAsync(async db =>
+        {
+            var session = await db.ChatSessions.SingleAsync();
+            session.VisitorTokenExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+            await db.SaveChangesAsync();
+        });
+
+        var read = await host.Client.GetAsync($"/support/widget/chat/{token}/messages");
+        var send = await PostAsync(host, $"/support/widget/chat/{token}/messages", new { body = "Hello?" });
+        var typing = await host.Client.PostAsync($"/support/widget/chat/{token}/typing", null);
+        var end = await host.Client.PostAsync($"/support/widget/chat/{token}/end", null);
+        var rate = await PostAsync(host, $"/support/widget/chat/{token}/rate", new { rating = 5 });
+
+        Assert.Equal(HttpStatusCode.NotFound, read.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, send.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, typing.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, end.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, rate.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChatRoutes_AChatStartedBeforeTokensExpiredKeepsWorking()
+    {
+        await using var host = await StartAsync();
+        var token = await StartChatAsync(host);
+        await host.SeedAsync(async db =>
+        {
+            var session = await db.ChatSessions.SingleAsync();
+            session.VisitorTokenExpiresAt = null;
+            await db.SaveChangesAsync();
+        });
+        var before = DateTime.UtcNow.AddSeconds(-1);
+
+        var read = await host.Client.GetAsync($"/support/widget/chat/{token}/messages");
+        var send = await PostAsync(host, $"/support/widget/chat/{token}/messages", new { body = "Still here" });
+
+        Assert.Equal(HttpStatusCode.OK, read.StatusCode);
+        Assert.True(send.IsSuccessStatusCode, await send.Content.ReadAsStringAsync());
+        var stored = await host.QueryAsync(db => db.ChatSessions.Select(s => s.VisitorTokenExpiresAt).SingleAsync());
+        Assert.NotNull(stored);
+        Assert.True(DateTime.SpecifyKind(stored!.Value, DateTimeKind.Utc) >= before.AddMinutes(1440), stored.ToString());
+    }
+
+    [Fact]
     public async Task ChatRoutes_RefuseTheNumericSessionId()
     {
         await using var host = await StartAsync();

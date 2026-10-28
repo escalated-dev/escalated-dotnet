@@ -605,6 +605,9 @@ namespace Escalated.Migrations.SqlServer
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<DateTime?>("VisitorTokenExpiresAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("VisitorTokenHash")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");

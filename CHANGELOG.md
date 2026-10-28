@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- **New migration `ChatVisitorTokenExpiry`** (all three providers) adds a
+  nullable `VisitorTokenExpiresAt` to `escalated_chat_sessions`. Run
+  `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`. Chats
+  already in progress keep working: the next widget request with their token
+  gives it a full lifetime.
+- Widget chat tokens now expire `Escalated:GuestAccess:TtlMinutes` after the
+  chat starts (default 1440, clamped to 5 minutes .. 7 days), as in
+  escalated-laravel. After that every `support/widget/chat/{token}/...` route
+  answers 404, the SignalR `chat_token` handshake is refused, and the visitor
+  starts a new chat.
+
+### Changed
+- `POST support/widget/chat/start` also returns `expires_at`. Only the token's
+  SHA-256 is stored, as before.
+
 ## [0.2.6] - 2026-10-22
 
 ### Added
