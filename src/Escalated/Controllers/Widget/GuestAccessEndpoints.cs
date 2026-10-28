@@ -143,6 +143,33 @@ internal static class GuestAccessEndpoints
         return controller.Ok(new { data });
     }
 
+    /// <summary>
+    /// A file on <paramref name="ticket"/> or on one of its public replies, for the
+    /// holder of the ticket's grant. Files on internal notes, and on other tickets,
+    /// are a 404.
+    /// </summary>
+    public static async Task<IActionResult> AttachmentAsync(ControllerBase controller, EscalatedDbContext db, Models.Ticket ticket, int id, CancellationToken ct)
+    {
+        var attachment = await db.Attachments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
+        if (attachment is null) return controller.NotFound();
+
+        var belongs = attachment.AttachableType.EndsWith("ticket", StringComparison.OrdinalIgnoreCase)
+            ? attachment.AttachableId == ticket.Id
+            : attachment.AttachableType.EndsWith("reply", StringComparison.OrdinalIgnoreCase)
+              && await db.Replies.AnyAsync(r => r.Id == attachment.AttachableId && r.TicketId == ticket.Id && !r.IsInternalNote, ct);
+        if (!belongs) return controller.NotFound();
+
+        if (attachment.Disk == "local")
+        {
+            if (!System.IO.File.Exists(attachment.Path)) return controller.NotFound();
+            return controller.File(System.IO.File.OpenRead(attachment.Path), attachment.MimeType, attachment.Filename);
+        }
+
+        return Uri.TryCreate(attachment.Path, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+            ? controller.Redirect(attachment.Path)
+            : controller.NotFound();
+    }
+
     /// <summary>Guest answers are private and never cached, nor leak their URL onwards.</summary>
     public static void NoStore(HttpResponse response)
     {

@@ -715,12 +715,14 @@ app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 s
 The public guest endpoints are rate-limited per client IP out of the box, with
 no middleware to add: `POST /support/widget/tickets` allows 5 tickets per IP per
 minute and `POST /support/widget/tickets/{token}/reply` 10 replies, each with its
-own counter. A request over the limit gets `429` with `Retry-After`. Replies are
-counted before the guest token is checked, so wrong-token guesses count too.
+own counter. Every guest route (widget, guest pages and the mobile guest API) also
+shares a per-IP budget of 60 requests a minute. A request over the limit gets `429`
+with `Retry-After`. Replies are counted before the guest token is checked, so
+wrong-token guesses count too.
 
 ```json
 "Escalated": {
-  "GuestRateLimit": { "Enabled": true, "TicketsPerMinute": 5, "RepliesPerMinute": 10 }
+  "GuestRateLimit": { "Enabled": true, "TicketsPerMinute": 5, "RepliesPerMinute": 10, "VerificationsPerMinute": 10, "RequestsPerMinute": 60 }
 }
 ```
 

@@ -59,15 +59,7 @@ public class GuestPageController : ControllerBase
     private Task<bool> EnabledAsync(CancellationToken ct) => GuestSettings.IsOnAsync(_settings, GuestSettings.GuestTicketsEnabled, ct);
 
     /// <summary>The ticket the token's unexpired grant opens, or null.</summary>
-    private async Task<Ticket?> ResolveAsync(string token, CancellationToken ct)
-    {
-        var ticket = await _db.Tickets.Where(_access.Opens(token)).FirstOrDefaultAsync(ct);
-        if (ticket is null) return null;
-        return ticket.GuestAccessHash == GuestAccessService.HashGrant(token)
-               || (_options.GuestAccess.LegacyTokens && ticket.GuestToken == token)
-            ? ticket
-            : null;
-    }
+    private Task<Ticket?> ResolveAsync(string token, CancellationToken ct) => _access.ResolveTicketAsync(token, ct);
 
     [HttpGet("create")]
     public async Task<IActionResult> Create(CancellationToken ct)
@@ -147,6 +139,7 @@ public class GuestPageController : ControllerBase
     }
 
     [HttpGet(Token)]
+    [GuestThrottle(GuestThrottleScope.Request)]
     public async Task<IActionResult> Show(string token, CancellationToken ct)
     {
         GuestAccessEndpoints.NoStore(Response);
@@ -266,29 +259,13 @@ public class GuestPageController : ControllerBase
     /// ticket's grant. Files on internal notes, and on other tickets, are a 404.
     /// </summary>
     [HttpGet(Token + "/attachments/{id:int}")]
+    [GuestThrottle(GuestThrottleScope.Request)]
     public async Task<IActionResult> Attachment(string token, int id, CancellationToken ct)
     {
         GuestAccessEndpoints.NoStore(Response);
         var ticket = await ResolveAsync(token, ct);
         if (ticket is null) return NotFound();
 
-        var attachment = await _db.Attachments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
-        if (attachment is null) return NotFound();
-
-        var belongs = attachment.AttachableType.EndsWith("ticket", StringComparison.OrdinalIgnoreCase)
-            ? attachment.AttachableId == ticket.Id
-            : attachment.AttachableType.EndsWith("reply", StringComparison.OrdinalIgnoreCase)
-              && await _db.Replies.AnyAsync(r => r.Id == attachment.AttachableId && r.TicketId == ticket.Id && !r.IsInternalNote, ct);
-        if (!belongs) return NotFound();
-
-        if (attachment.Disk == "local")
-        {
-            if (!System.IO.File.Exists(attachment.Path)) return NotFound();
-            return File(System.IO.File.OpenRead(attachment.Path), attachment.MimeType, attachment.Filename);
-        }
-
-        return Uri.TryCreate(attachment.Path, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
-            ? Redirect(attachment.Path)
-            : NotFound();
+        return await GuestAccessEndpoints.AttachmentAsync(this, _db, ticket, id, ct);
     }
 }

@@ -123,7 +123,7 @@ public class GuestThrottleTests
         var response = await host.Client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
-        Assert.Equal(new[] { (GuestThrottleScope.Reply, "203.0.113.9") }, shared.Calls);
+        Assert.Equal(new[] { (GuestThrottleScope.Request, "203.0.113.9") }, shared.Calls);
     }
 
     [Fact]

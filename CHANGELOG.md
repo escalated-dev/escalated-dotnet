@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The mobile guest API under `support/api/v1/mobile/guest`, per the canonical
+  contract (escalated-developer-context `domain-model/mobile-guest-api.md`):
+  `POST verification`, `POST lookup`, `POST tickets`, `GET tickets/{token}`,
+  `POST tickets/{token}/replies`, plus `GET tickets/{token}/attachments/{id}` for
+  reply files. Same codes, grants and guest budgets as the widget and the guest
+  pages; see `docs/guest-access.md`.
+- `Escalated:GuestRateLimit:RequestsPerMinute` (default 60): one per-IP budget
+  every guest route shares, on top of each route's own.
+
 ### Upgrading
+- Every guest route (widget, guest pages, mobile guest API) now also counts
+  against `GuestRateLimit:RequestsPerMinute` (60 per IP per minute), including
+  `GET support/widget/tickets/{reference}` and the guest page and its files,
+  which had no limit. A host-registered `IGuestRateLimiter` is now also asked for
+  the new `GuestThrottleScope.Request` scope.
 - `POST support/widget/chat/start` now answers exactly as escalated-laravel:
   **201** (was 200) with `{ id, session_id, expires_at, ticket_reference,
   status, agent_name }`, where `id` and `session_id` are both the chat token,

@@ -25,7 +25,8 @@ This follows escalated-laravel's `docs/guest-access.md`.
 
 ## Email codes
 
-`POST verification` is served on `support/widget` and `support/guest`. It takes
+`POST verification` is served on `support/widget`, `support/guest` and
+`support/api/v1/mobile/guest` (the same handler). It takes
 `{ "email": "gail@example.com", "purpose": "ticket" }`, where `purpose` is one of
 `ticket`, `chat` or `lookup`.
 
@@ -73,9 +74,12 @@ and issuing a new grant (on lookup) revokes the previous one.
 Guest answers carry `Cache-Control: no-store, private` and
 `Referrer-Policy: no-referrer`.
 
+Each guest route also takes a permit from a per-IP budget every guest route
+shares (`Escalated:GuestRateLimit:RequestsPerMinute`, default 60), reads included.
+
 ## Lookup
 
-`POST lookup` (on `support/widget` and `support/guest`) takes `email`, `reference`,
+`POST lookup` (on `support/widget`, `support/guest` and `support/api/v1/mobile/guest`) takes `email`, `reference`,
 `verification_id` and `verification_code` from a `lookup` code. It answers
 `{ "data": [{ "reference", "subject", "guest_access_token", "expires_at" }] }`.
 
@@ -93,6 +97,64 @@ run the same flow in a browser (see [inertia-ui.md](inertia-ui.md)):
 to the private link `GET support/guest/{token}`. That page takes `reply` and
 `rate` posts, and serves the ticket's files (never an internal note's) at
 `support/guest/{token}/attachments/{id}`, all until the grant expires.
+
+## Mobile guest API
+
+The JSON routes a mobile app uses for a guest, under `support/api/v1/mobile/guest`
+(the REST API's `support/api/v1` plus `/mobile`). The canonical contract is
+[mobile-guest-api.md](https://github.com/escalated-dev/escalated-developer-context/blob/main/domain-model/mobile-guest-api.md);
+they run on the same codes, grants and per-IP budgets as the widget and the guest
+pages, so a grant from any of the three surfaces opens the others.
+
+| Method | Path | Guest budget (`Escalated:GuestRateLimit:`) |
+|---|---|---|
+| POST | `verification` | `VerificationsPerMinute` |
+| POST | `lookup` | `VerificationsPerMinute` |
+| POST | `tickets` | `TicketsPerMinute` |
+| GET | `tickets/{token}` | requests only |
+| POST | `tickets/{token}/replies` | `RepliesPerMinute` |
+| GET | `tickets/{token}/attachments/{id}` | requests only |
+
+Every one also takes a permit from `RequestsPerMinute` (default 60), which every
+guest route shares. Over a limit: 429 with `Retry-After`.
+
+- `{token}` is the grant itself. An expired, rotated, malformed, over-long or chat
+  token is a 404 (`{ "message": "Ticket not found." }`).
+- `POST tickets` takes JSON or `multipart/form-data`: `name`, `email`, `subject`,
+  `description` (up to 65535), `verification_id` (a uuid), `verification_code`, and
+  optional `priority` (`low`..`critical`), `department_id` and up to 10
+  `attachments[]` within `Escalated:Attachments`. 403
+  `{ "message": "Guest tickets are not enabled." }` while `guest_tickets_enabled` is
+  off, then 422 for fields, then 422 on `verification_code` for a wrong, spent or
+  other-purpose code (nothing is created). Status, assignee, metadata and external
+  references are never taken from the request. 201
+  `{ "data": <mobile ticket>, "message": "Ticket created." }` with
+  `data.guest_access_token`.
+- `GET tickets/{token}` answers `{ "data": <mobile ticket> }` with the public replies,
+  newest first, and their files at `tickets/{token}/attachments/{id}`.
+- `POST tickets/{token}/replies` takes `{ "email", "body" }` and optional
+  `attachments[]`: 422 `{ "message": "This ticket is closed." }` on a closed ticket,
+  422 for fields, 403 when the email (trimmed, any case) is not the ticket's guest
+  email, else 201 `{ "message": "Reply sent." }` with an authorless public reply.
+- The mobile ticket object is allow-listed (`metadata` is always `{}`, staff appear as
+  `{ "id": 0, "name", "email": "" }`, internal notes never appear).
+- Every answer, errors and 429s included, carries `Cache-Control: private, no-store`
+  and `Referrer-Policy: no-referrer`. Redact the `{token}` segment from access logs.
+
+Where this package differs from the contract:
+
+- There is no REST API on/off switch, so these routes are always mapped, like
+  `support/api/v1/auth`. No API-layer limiter runs unless the host adds
+  `EscalatedRateLimitMiddleware` (its 429 body is `{ "error": "Rate limit exceeded." }`).
+- `lookup` uses the `VerificationsPerMinute` budget (default 10) and replies
+  `RepliesPerMinute` (default 10), where Laravel's defaults are 30.
+- `verification` keeps this package's message
+  (`If the address can receive email, a verification code is on its way.`), and does
+  not refuse `chat` codes, since there is no chat on/off switch.
+- Spending the code and creating the ticket are not one transaction: if the create
+  fails the code is handed back. Tickets have no channel column (`channel` is `web`,
+  or `chat` for a chat's ticket), no verified-email stamp and no guest identity
+  policy.
 
 ## Live chat
 

@@ -361,6 +361,12 @@ public class GuestRateLimitOptions
 
     /// <summary>Verification-code requests and lookups per IP per minute. Default 10.</summary>
     public int VerificationsPerMinute { get; set; } = 10;
+
+    /// <summary>
+    /// Requests per IP per minute across every guest route (widget, guest pages and
+    /// the mobile guest API), counted on top of the route's own budget. Default 60.
+    /// </summary>
+    public int RequestsPerMinute { get; set; } = 60;
 }
 
 /// <summary>
