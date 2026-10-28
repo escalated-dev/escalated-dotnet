@@ -253,6 +253,28 @@ public class WidgetContractTests
     }
 
     [Fact]
+    public async Task ChatStart_AnswersWithTheSameFieldsAsLaravel()
+    {
+        await using var host = await StartAsync();
+
+        var response = await PostAsync(host, "/support/widget/chat/start", new { name = "Vee", email = "vee@example.com", message = "Hi" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = json.RootElement;
+        var reference = await host.QueryAsync(db => db.Tickets.Select(t => t.Reference).SingleAsync());
+        // `id` and `session_id` are both the chat token, as in escalated-laravel.
+        Assert.Equal(root.GetProperty("id").GetString(), root.GetProperty("session_id").GetString());
+        Assert.True(root.GetProperty("expires_at").GetDateTime().ToUniversalTime() > DateTime.UtcNow);
+        Assert.Equal(reference, root.GetProperty("ticket_reference").GetString());
+        Assert.Equal("waiting", root.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("agent_name").ValueKind);
+        // The internal numeric ids the token replaced are not exposed.
+        Assert.False(root.TryGetProperty("ticketId", out _));
+        Assert.False(root.TryGetProperty("ticket_id", out _));
+    }
+
+    [Fact]
     public async Task ChatAvailability_AcceptsTheSnakeCaseDepartment()
     {
         await using var host = await StartAsync();

@@ -388,7 +388,7 @@ public class VerifiedGuestAccessTests
         var (id, code) = await RequestCodeAsync(host, mail, "chat");
         var response = await host.Client.PostAsJsonAsync("/support/widget/chat/start",
             new { name = "Vee", email = Email, message = "Hi", verification_id = id, verification_code = code });
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
     [Fact]

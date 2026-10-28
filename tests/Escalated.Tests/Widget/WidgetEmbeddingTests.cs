@@ -285,7 +285,7 @@ public class WidgetEmbeddingTests
 
         var response = await host.Client.SendAsync(request);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Equal(Shop, Header(response, "Access-Control-Allow-Origin"));
         var stored = await host.QueryAsync(db => db.ChatSessions.Select(s => s.Metadata).SingleAsync());
         using var json = JsonDocument.Parse(stored!);
