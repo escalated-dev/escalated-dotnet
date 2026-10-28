@@ -12,6 +12,13 @@ public enum GuestThrottleScope
 
     /// <summary>Verification-code requests and verified lookups.</summary>
     Verification,
+
+    /// <summary>
+    /// Every guest request. <see cref="Controllers.Widget.GuestThrottleFilter"/> takes a
+    /// permit here before the route's own scope, so one budget per IP covers the
+    /// widget, the guest pages and the mobile guest API.
+    /// </summary>
+    Request,
 }
 
 /// <summary>
@@ -52,6 +59,7 @@ public sealed class MemoryGuestRateLimiter : IGuestRateLimiter, IDisposable
                 {
                     GuestThrottleScope.Ticket => config.TicketsPerMinute,
                     GuestThrottleScope.Verification => config.VerificationsPerMinute,
+                    GuestThrottleScope.Request => config.RequestsPerMinute,
                     _ => config.RepliesPerMinute,
                 }),
                 Window = Window,

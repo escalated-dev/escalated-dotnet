@@ -9,7 +9,8 @@ using Microsoft.Extensions.Options;
 namespace Escalated.Controllers.Widget;
 
 /// <summary>
-/// Rate-limits a guest endpoint per client IP against the
+/// Rate-limits a guest endpoint per client IP against the shared
+/// <see cref="GuestThrottleScope.Request"/> counter and then the
 /// <paramref name="scope"/> counter (see <see cref="GuestRateLimitOptions"/>).
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
@@ -58,8 +59,13 @@ public sealed class GuestThrottleFilter : IAsyncResourceFilter
             address = address.MapToIPv4();
         }
 
-        using (var lease = await _limiter.AcquireAsync(_scope, address?.ToString() ?? "unknown", http.RequestAborted))
+        var ip = address?.ToString() ?? "unknown";
+        var scopes = _scope == GuestThrottleScope.Request
+            ? new[] { GuestThrottleScope.Request }
+            : new[] { GuestThrottleScope.Request, _scope };
+        foreach (var scope in scopes)
         {
+            using var lease = await _limiter.AcquireAsync(scope, ip, http.RequestAborted);
             if (!lease.IsAcquired)
             {
                 var retryAfter = lease.TryGetMetadata(MetadataName.RetryAfter, out var wait)

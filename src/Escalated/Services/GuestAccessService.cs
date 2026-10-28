@@ -244,6 +244,28 @@ public class GuestAccessService
             : t => t.GuestAccessHash == hash && t.GuestAccessExpiresAt > now;
     }
 
+    /// <summary>
+    /// The ticket a guest grant opens, or null: the token must be well formed (at
+    /// most 4096 URL-safe characters) and the ticket's unexpired grant, or, with
+    /// <see cref="GuestAccessOptions.LegacyTokens"/>, its permanent guest token.
+    /// Shared by the guest pages and the mobile guest API; a chat token never
+    /// matches, since chat grants live on the chat session.
+    /// </summary>
+    public async Task<Ticket?> ResolveTicketAsync(string? token, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(token) || token.Length > 4096 || !token.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))
+        {
+            return null;
+        }
+
+        var ticket = await _db.Tickets.Where(Opens(token)).FirstOrDefaultAsync(ct);
+        if (ticket is null) return null;
+        return ticket.GuestAccessHash == HashGrant(token)
+               || (_options.GuestAccess.LegacyTokens && ticket.GuestToken == token)
+            ? ticket
+            : null;
+    }
+
     public static string HashGrant(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
 

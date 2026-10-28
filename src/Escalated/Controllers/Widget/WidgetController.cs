@@ -254,6 +254,7 @@ public class WidgetController : ControllerBase
     /// the segment may instead be a permanent guest token from before.
     /// </summary>
     [HttpGet("tickets/{reference}")]
+    [GuestThrottle(GuestThrottleScope.Request)]
     public async Task<IActionResult> TicketStatus(string reference, [FromServices] GuestAccessService access)
     {
         GuestAccessEndpoints.NoStore(Response);
