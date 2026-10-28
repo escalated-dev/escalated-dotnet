@@ -6,6 +6,7 @@ using Escalated.Models;
 using Escalated.Services;
 using Escalated.Widget;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -95,17 +96,23 @@ public class WidgetChatController : ControllerBase
                 departmentId,
                 metadata: WidgetMetadata.Sanitize(request.Metadata, HttpContext.Items[WidgetOrigins.ItemKey] as string));
             var token = await _chatService.IssueVisitorTokenAsync(session);
+            var reference = await _db.Tickets.Where(t => t.Id == session.TicketId).Select(t => t.Reference).SingleAsync();
+            var agentName = string.IsNullOrEmpty(session.AgentId)
+                ? null
+                : await StaffNameAsync(session.AgentId, new Dictionary<string, string>(), HttpContext.RequestAborted);
 
-            return Ok(new
+            // As in escalated-laravel: 201, and `id` and `session_id` are both
+            // the chat token; the numeric session and ticket ids stay internal.
+            return StatusCode(StatusCodes.Status201Created, new
             {
                 id = token,
+                session_id = token,
                 // The token stops working after this; the visitor starts a new chat.
                 expires_at = session.VisitorTokenExpiresAt,
-                session.TicketId,
-                session.Status,
-                session.VisitorName,
-                session.CreatedAt,
-                agent = await AgentAsync(session),
+                ticket_reference = reference,
+                status = session.Status,
+                agent_name = agentName,
+                agent = agentName is null ? null : new { name = agentName },
             });
         }
         catch (Exception ex)

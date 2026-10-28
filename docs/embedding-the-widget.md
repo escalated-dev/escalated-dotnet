@@ -151,7 +151,7 @@ or look a ticket up ([verified guest access](guest-access.md)), so
 | `POST /lookup` | `email`, `reference`, `verification_id`, `verification_code` | `{ "data": [{ "reference", "subject", "guest_access_token", "expires_at" }] }` |
 | `GET /tickets/{reference}` | `Authorization: Bearer <guest_access_token>` | `{ "reference", "subject", "status", "status_label", "status_color", "created_at", "department", "replies" }` |
 | `GET /chat/availability` | `department_id?` | `{ "available": true }` |
-| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?`, `verification_id`, `verification_code` | `{ "id": "<token>", "expires_at", "status", "agent" }` |
+| `POST /chat/start` | `name`, `email`, `department_id?`, `message?`, `metadata?`, `verification_id`, `verification_code` | 201 `{ "id": "<token>", "session_id": "<token>", "expires_at", "ticket_reference", "status", "agent_name", "agent" }` |
 | `GET /chat/{id}/messages` | | `{ "messages": [{ "id", "body", "is_agent", "author": { "name" }, "created_at" }], "typing": null, "agent", "ended" }` |
 | `POST /chat/{id}/messages` | `{ "body" }` | the stored message |
 | `POST /chat/{id}/typing` | | sent to agents watching the chat over SignalR |

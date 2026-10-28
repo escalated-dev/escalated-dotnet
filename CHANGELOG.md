@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- `POST support/widget/chat/start` now answers exactly as escalated-laravel:
+  **201** (was 200) with `{ id, session_id, expires_at, ticket_reference,
+  status, agent_name }`, where `id` and `session_id` are both the chat token,
+  plus the widget's `agent`. `ticketId`, `visitorName` and `createdAt` are no
+  longer returned; use `ticket_reference` to name the ticket. Clients that
+  checked for exactly 200 should accept any 2xx.
 - **New migration `ChatVisitorTokenExpiry`** (all three providers) adds a
   nullable `VisitorTokenExpiresAt` to `escalated_chat_sessions`. Run
   `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`. Chats
