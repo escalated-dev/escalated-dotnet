@@ -60,7 +60,10 @@ public class EscalatedHub : Hub
             if (!allowed && chatSessionId is not null && !string.IsNullOrEmpty(chatToken))
             {
                 var hash = ChatSessionService.HashVisitorToken(chatToken);
-                allowed = await TicketAccessScope.WithoutVisibilityAsync(() => db.ChatSessions.AnyAsync(session => session.Id == chatSessionId && session.VisitorTokenHash == hash));
+                var now = DateTime.UtcNow;
+                // An expired chat token opens nothing (escalated-laravel's expiring chat grant).
+                allowed = await TicketAccessScope.WithoutVisibilityAsync(() => db.ChatSessions.AnyAsync(session => session.Id == chatSessionId && session.VisitorTokenHash == hash
+                    && (session.VisitorTokenExpiresAt == null || session.VisitorTokenExpiresAt > now)));
                 if (allowed) token = null;
             }
             if (!allowed) throw new HubException("Access denied.");

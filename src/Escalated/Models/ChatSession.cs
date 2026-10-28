@@ -66,6 +66,14 @@ public class ChatSession
     [MaxLength(64)]
     public string? VisitorTokenHash { get; set; }
 
+    /// <summary>
+    /// When the visitor's chat token stops working (the guest access lifetime
+    /// after the chat starts). Null only for chats started before tokens expired;
+    /// their next widget request gives them a full lifetime.
+    /// </summary>
+    [JsonIgnore]
+    public DateTime? VisitorTokenExpiresAt { get; set; }
+
     // Navigation
     [JsonIgnore]
     [ForeignKey(nameof(TicketId))]

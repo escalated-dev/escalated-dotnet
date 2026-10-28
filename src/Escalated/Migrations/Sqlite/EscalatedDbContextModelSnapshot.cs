@@ -574,6 +574,9 @@ namespace Escalated.Migrations.Sqlite
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("VisitorTokenExpiresAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("VisitorTokenHash")
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");

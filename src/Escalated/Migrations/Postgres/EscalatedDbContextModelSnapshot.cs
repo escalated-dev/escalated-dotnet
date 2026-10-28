@@ -605,6 +605,9 @@ namespace Escalated.Migrations.Postgres
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<DateTime?>("VisitorTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("VisitorTokenHash")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");

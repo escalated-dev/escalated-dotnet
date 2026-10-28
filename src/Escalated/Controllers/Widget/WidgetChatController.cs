@@ -99,6 +99,8 @@ public class WidgetChatController : ControllerBase
             return Ok(new
             {
                 id = token,
+                // The token stops working after this; the visitor starts a new chat.
+                expires_at = session.VisitorTokenExpiresAt,
                 session.TicketId,
                 session.Status,
                 session.VisitorName,

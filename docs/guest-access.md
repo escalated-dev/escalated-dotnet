@@ -98,7 +98,9 @@ to the private link `GET support/guest/{token}`. That page takes `reply` and
 
 `POST support/widget/chat/start` needs `email` and a `chat` code. It is throttled
 per IP like ticket creation. The chat's own visitor token (`id`) then reaches the
-chat routes, as before.
+chat routes. Like Laravel's chat grant it expires `Escalated:GuestAccess:TtlMinutes`
+after the chat starts (`expires_at`) and only its SHA-256 is stored; after that
+every chat route answers 404 and the visitor starts a new chat.
 
 ## Switches
 
