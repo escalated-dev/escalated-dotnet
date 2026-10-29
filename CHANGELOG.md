@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named in `Command`.
 
 ### Added
+- SDK plugin cron schedules run: with the runtime enabled,
+  `PluginCronBackgroundService` sends the due five-field (UTC) schedules of
+  active SDK plugins to the runtime as `cron` every minute, as no user. SDK
+  plugin widgets with a `badge` function carry its answer in
+  `escalated.plugins.dashboardWidgets[].badge`, asked as the viewer within 5 s
+  (`null` when it fails).
 - SDK plugin calls run concurrently and keep their own users: with a plugin
   runtime that stamps `host_call_id` on its `ctx` calls (after 0.2.0) the
   bridge no longer serves one call at a time, and answers each `ctx` call for

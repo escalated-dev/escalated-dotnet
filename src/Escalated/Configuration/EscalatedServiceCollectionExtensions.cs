@@ -275,6 +275,10 @@ public static class EscalatedServiceCollectionExtensions
         // Applies the data retention periods daily (every period defaults to never).
         services.AddHostedService<RetentionPurgeBackgroundService>();
 
+        // Runs active SDK plugins' due cron schedules every minute (inert without the runtime).
+        services.TryAddSingleton<Escalated.Plugins.PluginCronBackgroundService>();
+        services.AddHostedService(sp => sp.GetRequiredService<Escalated.Plugins.PluginCronBackgroundService>());
+
         return services;
     }
 

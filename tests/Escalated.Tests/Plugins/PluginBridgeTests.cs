@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Escalated.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Escalated.Plugins;
 using Xunit;
 using static Escalated.Tests.Hosting.InertiaTestSupport;
 
@@ -71,7 +73,7 @@ public sealed class PluginBridgeTests : IDisposable
         Assert.Equal("composer", sdk.GetProperty("source").GetString());
         Assert.False(sdk.GetProperty("is_active").GetBoolean());
         Assert.Equal(1, sdk.GetProperty("provides").GetProperty("menu_items").GetInt32());
-        Assert.Equal(1, sdk.GetProperty("provides").GetProperty("widgets").GetInt32());
+        Assert.Equal(4, sdk.GetProperty("provides").GetProperty("widgets").GetInt32());
 
         var handshake = Sent("handshake").Single();
         Assert.Equal("1.0", handshake["protocol_version"]!.GetValue<string>());
@@ -192,6 +194,43 @@ public sealed class PluginBridgeTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(PluginHost.Admin, (await PluginHost.JsonAsync(response)).GetProperty("user").GetProperty("id").GetString());
+    }
+
+    [Fact]
+    public async Task DueCronSchedulesOfActiveSdkPluginsRunThroughTheRuntime()
+    {
+        await using var plugins = await StartAsync();
+        var nine = DateTimeOffset.Parse("2026-10-29T09:00:20Z", System.Globalization.CultureInfo.InvariantCulture);
+
+        // Inactive: nothing runs.
+        await plugins.WithRegistryAsync(async r => { await r.RunDueCronAsync(nine); return 0; });
+        Assert.Empty(Sent("cron"));
+
+        await plugins.ActivateAsync(Slug);
+        await plugins.Host.Services.GetRequiredService<PluginCronBackgroundService>().RunOnceAsync(nine, CancellationToken.None);
+        Assert.Equal(new[] { "* * * * *", "0 9 * * *" }, Sent("cron").Select(c => c["schedule"]!.GetValue<string>()).Order());
+        Assert.All(Sent("cron"), c => Assert.Equal(Name, c["plugin"]!.GetValue<string>()));
+        var stored = await plugins.Host.QueryAsync(db => db.PluginStore.Where(r => r.Plugin == Name && r.Collection == "cron").CountAsync());
+        Assert.Equal(2, stored);
+
+        await plugins.WithRegistryAsync(async r => { await r.RunDueCronAsync(nine.AddMinutes(1)); return 0; });
+        Assert.Equal(3, Sent("cron").Count);
+    }
+
+    [Fact]
+    public async Task SdkWidgetBadgesAreAskedAsTheViewer()
+    {
+        await using var plugins = await StartAsync();
+        await plugins.ActivateAsync(Slug);
+
+        var page = await PageAsync(plugins.AdminClient, "/support/admin/plugins");
+        var widgets = page.GetProperty("props").GetProperty("escalated").GetProperty("plugins").GetProperty("dashboardWidgets")
+            .EnumerateArray().ToDictionary(w => w.GetProperty("component").GetString()!);
+
+        Assert.Equal("for " + PluginHost.Admin, widgets["SdkInbox"].GetProperty("badge").GetString());
+        Assert.Equal(7, widgets["SdkCount"].GetProperty("badge").GetInt32());
+        Assert.Equal(JsonValueKind.Null, widgets["SdkBroken"].GetProperty("badge").ValueKind);
+        Assert.False(widgets["SdkWidget"].TryGetProperty("badge", out _));
     }
 
     [Fact]
