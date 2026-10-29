@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named in `Command`.
 
 ### Added
+- SDK plugin calls run concurrently and keep their own users: with a plugin
+  runtime that stamps `host_call_id` on its `ctx` calls (after 0.2.0) the
+  bridge no longer serves one call at a time, and answers each `ctx` call for
+  the plugin and signed-in user of the call it names. With an older runtime it
+  keeps calling one at a time, as before.
 - Plugins, per the shared plugin contract (escalated-developer-context
   `domain-model/plugin-contract.md`), with escalated-nestjs as the reference.
   See `docs/plugins.md`.

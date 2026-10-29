@@ -99,8 +99,14 @@ The bridge follows the contract's "SDK bridge":
   webhook 60 s. A runtime that fails is restarted on next use with exponential
   backoff (5 s doubling, capped at 5 minutes). Meanwhile actions are dropped
   with a warning, filters return their input, endpoints and webhooks answer 503.
-- One call is in flight at a time. A `ctx` handler cannot call the runtime
-  itself; what it causes (events, `ctx.emit`) is delivered afterwards.
+- A runtime that stamps its `ctx` calls with the id of the host call they
+  serve (`host_call_id`; runtimes after 0.2.0 say so in the handshake) is
+  called concurrently: each `ctx` call acts for the plugin and the signed-in
+  user of the call it names, whatever else is in flight, and a `ctx` handler may
+  call the runtime itself. A timeout ends only that call.
+- An older runtime is called one call at a time. A `ctx` handler cannot then
+  call the runtime itself; what it causes (events, `ctx.emit`) is delivered
+  afterwards.
 
 Without Node, or with the runtime off, the host starts and serves requests as
 before; SDK plugins are just not listed.
