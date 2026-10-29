@@ -1,8 +1,8 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Channels;
 using Escalated.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,6 +26,9 @@ public sealed class PluginBridgeException : Exception
 
     public bool PluginError { get; }
     public bool Unavailable { get; }
+
+    /// <summary>The runtime did not answer in time.</summary>
+    public bool TimedOut { get; init; }
 }
 
 /// <summary>Answers the runtime's <c>ctx.*</c> requests for one dispatch.</summary>
@@ -41,11 +44,16 @@ public delegate Task<JsonNode?> PluginCtxHandler(string method, JsonObject param
 /// warning, filters return their input, and endpoints answer 503. A dead runtime is
 /// restarted on next use, with exponential backoff capped at five minutes.</para>
 ///
-/// <para>One call is in flight at a time. While it waits for its answer, the
-/// <c>ctx.*</c> requests the runtime sends are answered through that call's
-/// handler, so they act for the plugin and user that call serves. A ctx handler
-/// cannot itself call the runtime: such a nested call is refused as unavailable
-/// (an action dropped, a filter returning its input).</para>
+/// <para>A runtime that stamps its <c>ctx.*</c> requests with the id of the host
+/// call they serve (<c>host_call_id</c>, runtimes after 0.2.0, which say so in the
+/// handshake) is called concurrently: each <c>ctx.*</c> request is answered through
+/// the handler of the call it names, so it acts for that call's plugin and user
+/// whatever else is in flight, and a ctx handler may itself call the runtime.</para>
+///
+/// <para>An older runtime is called one call at a time. While that call waits for
+/// its answer, the runtime's <c>ctx.*</c> requests are answered through its
+/// handler. A ctx handler cannot then call the runtime: such a nested call is
+/// refused as unavailable (an action dropped, a filter returning its input).</para>
 /// </summary>
 public class PluginBridge : IDisposable
 {
@@ -66,9 +74,10 @@ public class PluginBridge : IDisposable
     private readonly ILogger<PluginBridge> _logger;
     private readonly TimeProvider _time;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly SemaphoreSlim _write = new(1, 1);
 
     private Process? _process;
-    private Channel<string>? _lines;
+    private Connection? _connection;
     private bool _httpContract;
     private IReadOnlyDictionary<string, PluginManifest>? _manifests;
     private int _failures;
@@ -87,12 +96,35 @@ public class PluginBridge : IDisposable
 
     public bool IsEnabled => _options.Enabled;
 
+    /// <summary>A call waiting for its answer: the handler for the ctx requests it causes.</summary>
+    private sealed record Pending(string Method, PluginCtxHandler Ctx, TaskCompletionSource<JsonObject> Answer, CancellationToken Deadline);
+
+    /// <summary>One running runtime: its calls in flight, by id, and what its handshake said.</summary>
+    private sealed class Connection
+    {
+        public ConcurrentDictionary<long, Pending> Pending { get; } = new();
+        public bool HostCallIds { get; set; }
+        public bool Closed { get; set; }
+
+        public void Close(string reason)
+        {
+            Closed = true;
+            foreach (var call in Pending.Values)
+            {
+                call.Answer.TrySetException(new PluginBridgeException(reason));
+            }
+        }
+    }
+
+    /// <summary>Whether the running runtime is called concurrently (it stamps <c>host_call_id</c>).</summary>
+    private bool Concurrent => _connection is { HostCallIds: true, Closed: false };
+
     /// <summary>The SDK plugins the runtime loaded, by name. Empty when off or unreachable.</summary>
     public virtual async Task<IReadOnlyDictionary<string, PluginManifest>> ManifestsAsync(CancellationToken ct = default)
     {
         if (!IsEnabled) return new Dictionary<string, PluginManifest>();
         if (_manifests is { } known) return known;
-        if (InCall.Value) return new Dictionary<string, PluginManifest>();
+        if (InCall.Value && !Concurrent) return new Dictionary<string, PluginManifest>();
 
         await _gate.WaitAsync(ct);
         try
@@ -172,9 +204,10 @@ public class PluginBridge : IDisposable
         CancellationToken ct, bool needsHttpContract = false)
     {
         if (!IsEnabled) throw new PluginBridgeException("The plugin runtime is not enabled.", unavailable: true);
-        if (InCall.Value) throw new PluginBridgeException("The plugin runtime is busy with the call this one came from.", unavailable: true);
+        if (InCall.Value && !Concurrent) throw new PluginBridgeException("The plugin runtime is busy with the call this one came from.", unavailable: true);
 
         await _gate.WaitAsync(ct);
+        var holding = true;
         try
         {
             await EnsureRunningAsync(ct);
@@ -183,21 +216,48 @@ public class PluginBridge : IDisposable
                 throw new PluginBridgeException("Upgrade the plugin runtime to one that supports HTTP contract version 1.", unavailable: true);
             }
 
+            var connection = _connection!;
+            if (connection.HostCallIds)
+            {
+                // The runtime tells its ctx requests apart: other calls may go out
+                // while this one waits.
+                _gate.Release();
+                holding = false;
+            }
+
             try
             {
-                return await CallAsync(method, parameters, timeout, ctx, ct);
+                return await CallAsync(connection, method, parameters, timeout, ctx, ct);
             }
             catch (PluginBridgeException e) when (!e.PluginError)
             {
-                // A timeout or a broken pipe: the runtime is in an unknown state, so
-                // the next call starts a fresh one.
-                Fail();
+                if (holding)
+                {
+                    // A timeout or a broken pipe: the runtime is in an unknown
+                    // state, so the next call starts a fresh one.
+                    Fail();
+                }
+                else if (!e.TimedOut)
+                {
+                    // A broken pipe. A timeout of one concurrent call says nothing
+                    // about the others, so only this ends the runtime.
+                    await _gate.WaitAsync(CancellationToken.None);
+                    try
+                    {
+                        if (_connection == connection) Fail();
+                    }
+                    finally
+                    {
+                        _gate.Release();
+                    }
+                }
+
                 throw;
             }
         }
         finally
         {
-            _gate.Release();
+            if (holding) _gate.Release();
         }
     }
 
@@ -220,8 +280,9 @@ public class PluginBridge : IDisposable
         try
         {
             Spawn();
+            var connection = _connection!;
             PluginCtxHandler refuse = (m, _, _) => throw new InvalidOperationException($"{m} is not available during the handshake.");
-            var answer = await CallAsync("handshake", new JsonObject
+            var answer = await CallAsync(connection, "handshake", new JsonObject
             {
                 ["protocol_version"] = ProtocolVersion,
                 ["host"] = "dotnet",
@@ -234,7 +295,8 @@ public class PluginBridge : IDisposable
 
             _httpContract = hello["http_contract_versions"] is JsonArray versions && versions.Any(v => PluginJson.Number(v) == 1);
 
-            var manifests = await CallAsync("manifest", new JsonObject(), ManifestTimeout, refuse, ct);
+            var manifests = await CallAsync(connection, "manifest", new JsonObject(), ManifestTimeout, refuse, ct);
+            connection.HostCallIds = hello["host_call_ids"] is JsonValue stamps && stamps.GetValueKind() == JsonValueKind.True;
             _manifests = ReadManifests(manifests);
             _failures = 0;
         }
@@ -300,7 +362,7 @@ public class PluginBridge : IDisposable
             throw new PluginBridgeException($"Could not start the plugin runtime ({e.Message}).", unavailable: true);
         }
 
-        var lines = Channel.CreateUnbounded<string>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        var connection = new Connection();
         _ = Task.Run(async () =>
         {
             try
@@ -313,7 +375,7 @@ public class PluginBridge : IDisposable
                         break;
                     }
 
-                    await lines.Writer.WriteAsync(line);
+                    Receive(connection, line);
                 }
             }
             catch (Exception)
@@ -322,7 +384,7 @@ public class PluginBridge : IDisposable
             }
             finally
             {
-                lines.Writer.TryComplete();
+                connection.Close("The plugin runtime went away.");
             }
         });
         _ = Task.Run(async () =>
@@ -341,65 +403,100 @@ public class PluginBridge : IDisposable
         });
 
         _process = process;
-        _lines = lines;
+        _connection = connection;
     }
 
     /// <summary>
-    /// Sends a request and waits for its answer, serving the runtime's own requests
-    /// through <paramref name="ctx"/> meanwhile. Called holding the gate.
+    /// One line from the runtime: an answer goes to the call waiting for it; a
+    /// <c>ctx.*</c> request is served, on its own task, through the handler of the
+    /// call it serves.
     /// </summary>
-    private async Task<JsonNode?> CallAsync(string method, JsonObject parameters, TimeSpan timeout, PluginCtxHandler ctx, CancellationToken ct)
+    private void Receive(Connection connection, string line)
     {
-        var id = Interlocked.Increment(ref _nextId);
-        await WriteAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = method, ["params"] = parameters, ["id"] = id });
+        if (string.IsNullOrWhiteSpace(line)) return;
 
+        JsonObject? message;
+        try
+        {
+            message = JsonNode.Parse(line) as JsonObject;
+        }
+        catch (JsonException)
+        {
+            message = null;
+        }
+
+        if (message is null || PluginJson.String(message["jsonrpc"]) != "2.0")
+        {
+            _logger.LogWarning("[Escalated plugins] the runtime sent something that is not JSON-RPC: {Raw}", line.Length > 200 ? line[..200] : line);
+            return;
+        }
+
+        if (message.ContainsKey("method"))
+        {
+            var call = Serving(connection, message);
+            _ = Task.Run(() => ServeAsync(message, call));
+            return;
+        }
+
+        if (PluginJson.Number(message["id"]) is not { } id || !connection.Pending.TryGetValue((long)id, out var waiting))
+        {
+            _logger.LogWarning("[Escalated plugins] the runtime answered a request nobody is waiting for ({Id}).", message["id"]?.ToJsonString());
+            return;
+        }
+
+        waiting.Answer.TrySetResult(message);
+    }
+
+    /// <summary>
+    /// The call a <c>ctx.*</c> request serves: the one its <c>host_call_id</c> names,
+    /// else (an older runtime) the only call in flight. Null when it cannot tell.
+    /// </summary>
+    private static Pending? Serving(Connection connection, JsonObject message)
+    {
+        var parameters = message["params"] as JsonObject;
+        if (parameters?["host_call_id"] is { } stamped)
+        {
+            parameters.Remove("host_call_id");
+            if (PluginJson.Number(stamped) is { } hostCall && connection.Pending.TryGetValue((long)hostCall, out var named))
+            {
+                return named;
+            }
+        }
+
+        var inFlight = connection.Pending.Values.Take(2).ToList();
+        return inFlight.Count == 1 ? inFlight[0] : null;
+    }
+
+    /// <summary>
+    /// Sends a request and waits for its answer; the runtime's <c>ctx.*</c>
+    /// requests for it are served through <paramref name="ctx"/> meanwhile.
+    /// </summary>
+    private async Task<JsonNode?> CallAsync(Connection connection, string method, JsonObject parameters, TimeSpan timeout,
+        PluginCtxHandler ctx, CancellationToken ct)
+    {
+        if (connection.Closed) throw new PluginBridgeException($"The plugin runtime went away before {method}.");
+
+        var id = Interlocked.Increment(ref _nextId);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
         deadline.CancelAfter(timeout);
-        var lines = _lines ?? throw new PluginBridgeException("The plugin runtime is not running.", unavailable: true);
-
-        while (true)
+        var call = new Pending(method, ctx, new TaskCompletionSource<JsonObject>(TaskCreationOptions.RunContinuationsAsynchronously), deadline.Token);
+        connection.Pending[id] = call;
+        try
         {
-            string line;
+            await WriteAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = method, ["params"] = parameters, ["id"] = id });
+
+            JsonObject message;
             try
             {
-                if (!await lines.Reader.WaitToReadAsync(deadline.Token) || !lines.Reader.TryRead(out line!))
-                {
-                    throw new PluginBridgeException($"The plugin runtime went away while answering {method}.");
-                }
+                message = await call.Answer.Task.WaitAsync(deadline.Token);
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                throw new PluginBridgeException($"Timed out after {timeout.TotalSeconds:0} s waiting for the plugin runtime to answer {method}.");
+                throw new PluginBridgeException($"Timed out after {timeout.TotalSeconds:0} s waiting for the plugin runtime to answer {method}.") { TimedOut = true };
             }
-
-            if (string.IsNullOrWhiteSpace(line)) continue;
-
-            JsonObject? message;
-            try
+            catch (PluginBridgeException)
             {
-                message = JsonNode.Parse(line) as JsonObject;
-            }
-            catch (JsonException)
-            {
-                message = null;
-            }
-
-            if (message is null || PluginJson.String(message["jsonrpc"]) != "2.0")
-            {
-                _logger.LogWarning("[Escalated plugins] the runtime sent something that is not JSON-RPC: {Raw}", line.Length > 200 ? line[..200] : line);
-                continue;
-            }
-
-            if (message.ContainsKey("method"))
-            {
-                await ServeAsync(message, ctx, deadline.Token);
-                continue;
-            }
-
-            if (PluginJson.Number(message["id"]) != id)
-            {
-                _logger.LogWarning("[Escalated plugins] the runtime answered a request nobody is waiting for ({Id}).", message["id"]?.ToJsonString());
-                continue;
+                throw new PluginBridgeException($"The plugin runtime went away while answering {method}.");
             }
 
             if (message["error"] is { } error)
@@ -410,9 +507,13 @@ public class PluginBridge : IDisposable
 
             return message["result"]?.DeepClone();
         }
+        finally
+        {
+            connection.Pending.TryRemove(id, out _);
+        }
     }
 
-    private async Task ServeAsync(JsonObject message, PluginCtxHandler ctx, CancellationToken ct)
+    private async Task ServeAsync(JsonObject message, Pending? call)
     {
         var id = message["id"]?.DeepClone();
         var method = PluginJson.String(message["method"]) ?? string.Empty;
@@ -422,10 +523,15 @@ public class PluginBridge : IDisposable
         InCall.Value = true;
         try
         {
-            var result = await ctx(method, (JsonObject)parameters.DeepClone(), ct);
+            if (call is null)
+            {
+                throw new InvalidOperationException($"{method} names no host call in flight.");
+            }
+
+            var result = await call.Ctx(method, (JsonObject)parameters.DeepClone(), call.Deadline);
             reply = new JsonObject { ["jsonrpc"] = "2.0", ["result"] = result, ["id"] = id };
         }
-        catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
+        catch (Exception e) when (e is not OperationCanceledException || call is null || !call.Deadline.IsCancellationRequested)
         {
             _logger.LogWarning("[Escalated plugins] {Method} failed: {Error}", method, e.Message);
             reply = new JsonObject
@@ -435,12 +541,25 @@ public class PluginBridge : IDisposable
                 ["id"] = id,
             };
         }
+        catch (OperationCanceledException)
+        {
+            // The call this served gave up; nobody waits for the answer.
+            return;
+        }
         finally
         {
             InCall.Value = false;
         }
 
-        if (id is not null) await WriteAsync(reply);
+        if (id is null) return;
+        try
+        {
+            await WriteAsync(reply);
+        }
+        catch (PluginBridgeException e)
+        {
+            _logger.LogDebug("[Escalated plugins] answering {Method} failed: {Error}", method, e.Message);
+        }
     }
 
     private async Task WriteAsync(JsonObject message)
@@ -449,6 +568,7 @@ public class PluginBridge : IDisposable
         if (line.Length > MaxMessageChars) throw new PluginBridgeException("A message to the plugin runtime would be over 10 MB.", pluginError: true);
 
         var process = _process ?? throw new PluginBridgeException("The plugin runtime is not running.", unavailable: true);
+        await _write.WaitAsync();
         try
         {
             await process.StandardInput.WriteAsync(line + "\n");
@@ -457,6 +577,10 @@ public class PluginBridge : IDisposable
         catch (Exception e) when (e is IOException or ObjectDisposedException or InvalidOperationException)
         {
             throw new PluginBridgeException("Could not write to the plugin runtime.");
+        }
+        finally
+        {
+            _write.Release();
         }
     }
 
@@ -471,7 +595,8 @@ public class PluginBridge : IDisposable
     {
         var process = _process;
         _process = null;
-        _lines = null;
+        _connection?.Close("The plugin runtime was stopped.");
+        _connection = null;
         _httpContract = false;
         if (process is null) return;
 
@@ -493,6 +618,7 @@ public class PluginBridge : IDisposable
         _disposed = true;
         Teardown();
         _gate.Dispose();
+        _write.Dispose();
         GC.SuppressFinalize(this);
     }
 }

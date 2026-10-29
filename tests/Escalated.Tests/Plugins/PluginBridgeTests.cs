@@ -165,6 +165,36 @@ public sealed class PluginBridgeTests : IDisposable
     }
 
     [Fact]
+    public async Task CallsInFlightAtOnceEachActAsTheirOwnRequestsUser()
+    {
+        await using var plugins = await StartAsync();
+        await plugins.ActivateAsync(Slug);
+        await plugins.Host.GrantRoleAsync("admin-2", "escalated-admin");
+        var second = plugins.Host.ClientFor("admin-2");
+
+        // /together answers only once both calls are at the runtime at once.
+        var both = await Task.WhenAll(
+            plugins.AdminClient.SendAsync(PluginHost.Script(HttpMethod.Get, $"/support/api/plugins/{Slug}/together")),
+            second.SendAsync(PluginHost.Script(HttpMethod.Get, $"/support/api/plugins/{Slug}/together")));
+
+        Assert.All(both, response => Assert.Equal(HttpStatusCode.OK, response.StatusCode));
+        Assert.Equal(PluginHost.Admin, (await PluginHost.JsonAsync(both[0])).GetProperty("user").GetProperty("id").GetString());
+        Assert.Equal("admin-2", (await PluginHost.JsonAsync(both[1])).GetProperty("user").GetProperty("id").GetString());
+    }
+
+    [Fact]
+    public async Task AnOlderRuntimeIsCalledOneAtATimeAndStillActsForTheRequest()
+    {
+        await using var plugins = await StartAsync("--no-host-call-ids");
+        await plugins.ActivateAsync(Slug);
+
+        var response = await plugins.AdminClient.SendAsync(PluginHost.Script(HttpMethod.Get, $"/support/api/plugins/{Slug}/peek"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(PluginHost.Admin, (await PluginHost.JsonAsync(response)).GetProperty("user").GetProperty("id").GetString());
+    }
+
+    [Fact]
     public async Task AnInactiveSdkPluginIsNeverCalled()
     {
         await using var plugins = await StartAsync();

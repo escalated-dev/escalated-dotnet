@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json.Nodes;
 
@@ -11,8 +12,17 @@ namespace Escalated.Tests.Plugins;
 /// so a test can see exactly what the host sent. The real runtime is tested in its
 /// own repository; this exercises the host's side of the bridge.
 ///
+/// <para>Like the real runtime it serves host calls concurrently, and (as runtimes
+/// after 0.2.0 do) stamps every <c>ctx.*</c> request it makes while handling a host
+/// call with that call's id as <c>host_call_id</c>, answering the handshake with
+/// <c>host_call_ids: true</c>. <c>--no-host-call-ids</c> turns both off, as an older
+/// runtime.</para>
+///
 /// <para><c>--die</c> exits at once, like a runtime that cannot start;
-/// <c>--die-on-endpoint</c> exits when an endpoint or webhook is called.</para>
+/// <c>--die-on-endpoint</c> exits when an endpoint or webhook is called. The
+/// <c>/together</c> endpoint waits for a second <c>/together</c> call (three seconds
+/// at most, then fails with "alone") and answers <c>ctx.currentUser</c>, so two
+/// calls are in flight at once.</para>
 /// </summary>
 public static class FakePluginRuntime
 {
@@ -25,36 +35,60 @@ public static class FakePluginRuntime
         if (args.Contains("--die")) return 1;
 
         var log = args.Length > 1 && !args[1].StartsWith("--", StringComparison.Ordinal) ? args[1] : null;
+        var stamp = !args.Contains("--no-host-call-ids");
         var stdin = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false));
         var stdout = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true, NewLine = "\n" };
-        var nextId = 1;
+        var writeLock = new object();
+        var pending = new ConcurrentDictionary<string, TaskCompletionSource<JsonNode?>>();
+        var nextId = 0;
+        var togetherLock = new object();
+        TaskCompletionSource? together = null;
+        var running = new List<Task>();
 
-        void Send(JsonObject message) => stdout.WriteLine(message.ToJsonString());
-
-        JsonNode? Ask(string method, JsonObject parameters)
+        void Send(JsonObject message)
         {
-            var id = "rt-" + nextId++;
-            Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["method"] = method, ["params"] = parameters });
-            while (stdin.ReadLine() is { } line)
-            {
-                if (JsonNode.Parse(line) is JsonObject answer && answer["id"]?.ToString() == id && !answer.ContainsKey("method"))
-                {
-                    return answer["error"] ?? answer["result"];
-                }
-            }
-
-            return null;
+            lock (writeLock) stdout.WriteLine(message.ToJsonString());
         }
 
-        while (stdin.ReadLine() is { } line)
+        JsonNode? Ask(JsonNode? serving, string method, JsonObject parameters)
         {
-            if (JsonNode.Parse(line) is not JsonObject message || message["method"] is null) continue;
+            var id = "rt-" + Interlocked.Increment(ref nextId);
+            if (stamp && serving is not null) parameters["host_call_id"] = serving.DeepClone();
+            var answer = new TaskCompletionSource<JsonNode?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            pending[id] = answer;
+            Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["method"] = method, ["params"] = parameters });
+            return answer.Task.Wait(TimeSpan.FromSeconds(20)) ? answer.Task.Result : null;
+        }
+
+        bool Meet()
+        {
+            TaskCompletionSource mine;
+            lock (togetherLock)
+            {
+                if (together is { } waiting)
+                {
+                    together = null;
+                    waiting.TrySetResult();
+                    return true;
+                }
+
+                mine = together = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+
+            if (mine.Task.Wait(TimeSpan.FromSeconds(3))) return true;
+            lock (togetherLock)
+            {
+                if (together == mine) together = null;
+            }
+
+            return mine.Task.IsCompleted;
+        }
+
+        void Handle(JsonObject message)
+        {
             var method = message["method"]!.GetValue<string>();
             var p = message["params"] as JsonObject ?? new JsonObject();
-            if (log is not null)
-            {
-                File.AppendAllText(log, new JsonObject { ["method"] = method, ["params"] = p.DeepClone() }.ToJsonString() + "\n");
-            }
+            var serving = message["id"];
 
             JsonNode? result = new JsonObject { ["ok"] = true };
             JsonObject? error = null;
@@ -68,6 +102,7 @@ public static class FakePluginRuntime
                         ["protocol_version"] = "1.0",
                         ["runtime_version"] = "fixture",
                         ["http_contract_versions"] = new JsonArray(1),
+                        ["host_call_ids"] = stamp,
                     };
                     break;
 
@@ -94,6 +129,7 @@ public static class FakePluginRuntime
                                 new JsonObject { ["method"] = "GET", ["path"] = "/SdkDash" },
                                 new JsonObject { ["method"] = "POST", ["path"] = "/items/:id" },
                                 new JsonObject { ["method"] = "GET", ["path"] = "/peek" },
+                                new JsonObject { ["method"] = "GET", ["path"] = "/together" },
                                 new JsonObject { ["method"] = "GET", ["path"] = "/boom" }),
                             ["webhooks"] = new JsonArray(new JsonObject { ["method"] = "POST", ["path"] = "/hook" }),
                             ["cronSchedules"] = new JsonArray(),
@@ -103,7 +139,7 @@ public static class FakePluginRuntime
 
                 case "endpoint":
                 case "webhook":
-                    if (args.Contains("--die-on-endpoint")) return 1;
+                    if (args.Contains("--die-on-endpoint")) Environment.Exit(1);
                     var path = p["path"]?.GetValue<string>();
                     if (path == "/SdkDash")
                     {
@@ -113,14 +149,24 @@ public static class FakePluginRuntime
                     {
                         error = new JsonObject { ["code"] = -32000, ["message"] = "kaboom secret" };
                     }
+                    else if (path == "/together")
+                    {
+                        if (!Meet())
+                        {
+                            error = new JsonObject { ["code"] = -32000, ["message"] = "alone" };
+                            break;
+                        }
+
+                        result = new JsonObject { ["user"] = Ask(serving, "ctx.currentUser", new JsonObject { ["plugin"] = Name })?.DeepClone() };
+                    }
                     else if (path == "/peek")
                     {
                         // Names another plugin; the host must keep it to this one.
-                        Ask("ctx.store.set", new JsonObject { ["plugin"] = CrmPlugin.Name, ["collection"] = "notes", ["key"] = "k", ["value"] = "from-sdk" });
+                        Ask(serving, "ctx.store.set", new JsonObject { ["plugin"] = CrmPlugin.Name, ["collection"] = "notes", ["key"] = "k", ["value"] = "from-sdk" });
                         result = new JsonObject
                         {
-                            ["stored"] = Ask("ctx.store.get", new JsonObject { ["plugin"] = Name, ["collection"] = "notes", ["key"] = "k" })?.DeepClone(),
-                            ["user"] = Ask("ctx.currentUser", new JsonObject { ["plugin"] = Name })?.DeepClone(),
+                            ["stored"] = Ask(serving, "ctx.store.get", new JsonObject { ["plugin"] = Name, ["collection"] = "notes", ["key"] = "k" })?.DeepClone(),
+                            ["user"] = Ask(serving, "ctx.currentUser", new JsonObject { ["plugin"] = Name })?.DeepClone(),
                         };
                     }
                     else
@@ -154,7 +200,7 @@ public static class FakePluginRuntime
                 case "action":
                     if (p["hook"]?.GetValue<string>() == "ticket.created")
                     {
-                        Ask("ctx.store.insert", new JsonObject
+                        Ask(serving, "ctx.store.insert", new JsonObject
                         {
                             ["plugin"] = Name,
                             ["collection"] = "seen",
@@ -173,6 +219,32 @@ public static class FakePluginRuntime
             }
         }
 
+        while (stdin.ReadLine() is { } line)
+        {
+            if (JsonNode.Parse(line) is not JsonObject message) continue;
+            if (message["method"] is null)
+            {
+                // An answer to one of our ctx requests.
+                if (message["id"]?.ToString() is { } answered && pending.TryRemove(answered, out var waiting))
+                {
+                    waiting.TrySetResult(message["error"]?.DeepClone() ?? message["result"]?.DeepClone());
+                }
+
+                continue;
+            }
+
+            if (log is not null)
+            {
+                lock (writeLock)
+                {
+                    File.AppendAllText(log, new JsonObject { ["method"] = message["method"]!.DeepClone(), ["params"] = message["params"]?.DeepClone() ?? new JsonObject() }.ToJsonString() + "\n");
+                }
+            }
+
+            running.Add(Task.Run(() => Handle(message)));
+        }
+
+        Task.WaitAll(running.ToArray(), TimeSpan.FromSeconds(5));
         return 0;
     }
 }
