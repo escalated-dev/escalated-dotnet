@@ -229,20 +229,45 @@ Every page shares `escalated.plugins`, built from active plugins: `menuItems`
 (from `pages[].menu`; `admin` items for admins only), `pageComponents`
 (`"{page}.{slot}"` to components) and `dashboardWidgets`. Items with a
 `capability` the viewer lacks are left out. With no active plugin it is `{}`.
-An SDK plugin's widget with a `badge` function also carries `badge`: the
-runtime is asked for it while the page is built, as the viewer, within 5 s;
-`null` when that fails.
+A widget with a badge function also carries `badge`, asked while the page is
+built, as the viewer, within 5 s, and `null` when that fails or answers
+anything but a number or a string. For an SDK plugin that is the widget's
+`badge` function, through the runtime. A native plugin sets `HasBadge = true` on
+the `PluginWidget` and implements `IPluginWidgetBadges`:
+
+```csharp
+public sealed class InboxPlugin : EscalatedPlugin, IPluginWidgetBadges
+{
+    // Manifest: Widgets = new[] { new PluginWidget { Component = "Inbox", HasBadge = true } }
+    public async Task<object?> BadgeAsync(string component, PluginContext ctx, CancellationToken ct) =>
+        (await ctx.StoreQueryAsync("open", ct: ct)).Count;
+}
+```
+
+Widgets without `HasBadge` carry no `badge` key.
 
 ## Cron
 
-An SDK plugin's `cron` keys are five-field cron expressions (`minute hour
-day-of-month month day-of-week`, or `@hourly`, `@daily`, ...), evaluated in
-UTC. With the runtime enabled, `PluginCronBackgroundService` (registered by
-`AddEscalated`) sends each due schedule of each active SDK plugin to the
-runtime as `cron` at the start of every minute, side by side, each in its own
-scope, as no user, within 30 s. A failing or unreadable schedule is logged and
-skipped; inactive plugins' schedules never run. Native plugins schedule their
-own work.
+Cron schedules are five-field cron expressions (`minute hour day-of-month
+month day-of-week`, or `@hourly`, `@daily`, ...), evaluated in UTC: an SDK
+plugin's `cron` keys, or a native plugin's `Manifest.CronSchedules`.
+`PluginCronBackgroundService` (registered by `AddEscalated`) runs each due
+schedule of each active plugin at the start of every minute, side by side, each
+in its own scope, as no user, within 30 s: SDK plugins' through the runtime as
+`cron` (with the runtime enabled), native plugins' by calling
+`IPluginCron.RunCronAsync(schedule, ctx, ct)`. A failing, slow or unreadable
+schedule is logged and never stops the others; inactive plugins' schedules
+never run.
+
+```csharp
+public sealed class DigestPlugin : EscalatedPlugin, IPluginCron
+{
+    public override PluginManifest Manifest { get; } = new() { Name = "acme-digest", CronSchedules = new[] { "0 9 * * mon-fri" } };
+
+    public Task RunCronAsync(string schedule, PluginContext ctx, CancellationToken ct) =>
+        ctx.LogAsync("info", "Sending the morning digest", ct: ct);
+}
+```
 
 ## Tables
 

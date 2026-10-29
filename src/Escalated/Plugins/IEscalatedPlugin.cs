@@ -46,6 +46,33 @@ public interface IEscalatedPlugin
     Task<object?> HandleWebhookAsync(PluginHttpRequest request, PluginContext ctx, CancellationToken ct);
 }
 
+/// <summary>
+/// Optional for a native plugin: its cron schedules, the native form of the SDK's
+/// <c>cron</c> map. The schedules are the manifest's
+/// <see cref="PluginManifest.CronSchedules"/> (five-field expressions, UTC). Once a
+/// minute the host calls <see cref="RunCronAsync"/> with each schedule that is due,
+/// for an active plugin only, as no user, within 30 s. A schedule that throws or
+/// runs over is logged and never stops the others; one the host cannot read is
+/// logged and skipped.
+/// </summary>
+public interface IPluginCron
+{
+    Task RunCronAsync(string schedule, PluginContext ctx, CancellationToken ct);
+}
+
+/// <summary>
+/// Optional for a native plugin: live counts on its dashboard widgets, the native
+/// form of an SDK widget's <c>badge</c> function. For each widget whose
+/// <see cref="PluginWidget.HasBadge"/> is set, while <c>dashboardWidgets</c> is built
+/// for a viewer, the host calls <see cref="BadgeAsync"/> with the widget's component,
+/// as that viewer, within 5 s. Return a number, a string or null; anything else, a
+/// throw or a timeout is <c>badge: null</c>.
+/// </summary>
+public interface IPluginWidgetBadges
+{
+    Task<object?> BadgeAsync(string component, PluginContext ctx, CancellationToken ct);
+}
+
 /// <summary>A native plugin that does nothing until a member is overridden.</summary>
 public abstract class EscalatedPlugin : IEscalatedPlugin
 {

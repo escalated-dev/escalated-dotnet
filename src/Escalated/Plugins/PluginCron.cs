@@ -112,7 +112,7 @@ public static class PluginCron
 }
 
 /// <summary>
-/// Runs active SDK plugins' due cron schedules at the start of every minute (UTC),
+/// Runs active plugins' due cron schedules (SDK and native) at the start of every minute (UTC),
 /// through <see cref="PluginRegistry.RunDueCronAsync"/>.
 /// </summary>
 public class PluginCronBackgroundService : BackgroundService
@@ -130,7 +130,11 @@ public class PluginCronBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_services.GetRequiredService<Bridge.PluginBridge>().IsEnabled) return;
+        if (!_services.GetRequiredService<Bridge.PluginBridge>().IsEnabled
+            && !_services.GetServices<IEscalatedPlugin>().Any(p => p is IPluginCron))
+        {
+            return;
+        }
         while (!stoppingToken.IsCancellationRequested)
         {
             var now = _time.GetUtcNow();
