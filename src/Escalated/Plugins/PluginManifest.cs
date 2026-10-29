@@ -48,7 +48,7 @@ public sealed class PluginManifest
     /// <summary>The filters the plugin applies, each with its priority (lowest runs first).</summary>
     public IReadOnlyList<PluginFilterHook> FilterHooks { get; init; } = Array.Empty<PluginFilterHook>();
 
-    /// <summary>An SDK plugin's cron schedules: five-field expressions, evaluated in UTC.</summary>
+    /// <summary>Cron schedules: five-field expressions, evaluated in UTC. A native plugin runs them through <see cref="IPluginCron"/>.</summary>
     public IReadOnlyList<string> CronSchedules { get; init; } = Array.Empty<string>();
 
     /// <summary>
@@ -213,7 +213,7 @@ public sealed class PluginWidget
     public int? Order { get; init; }
     public string? Capability { get; init; }
 
-    /// <summary>An SDK widget with a <c>badge</c> function: the runtime is asked for it.</summary>
+    /// <summary>A widget with a <c>badge</c> function: the runtime (SDK) or <see cref="IPluginWidgetBadges"/> (native) is asked for it.</summary>
     public bool HasBadge { get; init; }
 }
 

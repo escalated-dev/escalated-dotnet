@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named in `Command`.
 
 ### Added
+- Native plugins get cron schedules and widget badges, the same as SDK plugins:
+  a native plugin lists five-field (UTC) schedules in
+  `PluginManifest.CronSchedules` and implements `IPluginCron`, and
+  `PluginCronBackgroundService` calls `RunCronAsync` for each due schedule of
+  an active plugin every minute, as no user, within 30 s (now also without the
+  plugin runtime). A native widget with `HasBadge = true` on a plugin that
+  implements `IPluginWidgetBadges` carries `BadgeAsync`'s answer in
+  `escalated.plugins.dashboardWidgets[].badge`, asked as the viewer within
+  5 s (`null` when it fails, times out or answers anything but a number or a
+  string). Both interfaces are optional; existing native plugins are
+  unchanged.
 - SDK plugin cron schedules run: with the runtime enabled,
   `PluginCronBackgroundService` sends the due five-field (UTC) schedules of
   active SDK plugins to the runtime as `cron` every minute, as no user. SDK

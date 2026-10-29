@@ -1,5 +1,6 @@
 using Escalated.Authorization;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Escalated.Configuration;
 using Escalated.Data;
@@ -329,16 +330,17 @@ public sealed class PluginRegistry
     // Cron
 
     /// <summary>
-    /// The cron schedules of active SDK plugins that are due in the minute of
-    /// <paramref name="now"/> (UTC). An unreadable schedule is logged and left out.
+    /// The cron schedules of active plugins that are due in the minute of
+    /// <paramref name="now"/> (UTC): SDK plugins' (when the runtime is enabled) and
+    /// native plugins' that implement <see cref="IPluginCron"/>. An unreadable
+    /// schedule is logged and left out.
     /// </summary>
     public async Task<IReadOnlyList<(string Plugin, string Schedule)>> DueCronAsync(DateTimeOffset now, CancellationToken ct = default)
     {
         var due = new List<(string, string)>();
-        if (!_bridge.IsEnabled) return due;
         foreach (var plugin in await ActivePluginsAsync(ct))
         {
-            if (plugin.IsNative) continue;
+            if (plugin.IsNative ? plugin.Native is not IPluginCron : !_bridge.IsEnabled) continue;
             foreach (var schedule in plugin.Manifest.CronSchedules)
             {
                 try
@@ -355,9 +357,28 @@ public sealed class PluginRegistry
         return due;
     }
 
-    /// <summary>Runs one cron schedule of an SDK plugin, as no user, within 30 s. A failure is logged.</summary>
-    public Task RunCronAsync(string plugin, string schedule, CancellationToken ct = default) =>
-        _bridge.CronAsync(plugin, schedule, CtxFor(new[] { plugin }, PluginActor.None), ct);
+    /// <summary>Runs one cron schedule of a plugin, as no user, within 30 s. A failure is logged.</summary>
+    public async Task RunCronAsync(string plugin, string schedule, CancellationToken ct = default)
+    {
+        var native = Natives().Values.FirstOrDefault(p => p.Name == plugin);
+        if (native is null)
+        {
+            await _bridge.CronAsync(plugin, schedule, CtxFor(new[] { plugin }, PluginActor.None), ct);
+            return;
+        }
+
+        if (native.Native is not IPluginCron cron) return;
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(PluginBridge.ActionTimeout);
+            await cron.RunCronAsync(schedule, Context(native, PluginActor.None), timeout.Token).WaitAsync(timeout.Token);
+        }
+        catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            _logger.LogError(e, "[Escalated plugins] {Plugin} cron \"{Schedule}\" failed", plugin, schedule);
+        }
+    }
 
     /// <summary>
     /// Runs every due schedule (<see cref="DueCronAsync"/>) one after another in this
@@ -434,11 +455,13 @@ public sealed class PluginRegistry
                     ["position"] = widget.Order ?? 100,
                     ["width"] = widget.Size ?? "half",
                 };
-                if (!plugin.IsNative && widget.HasBadge)
+                if (widget.HasBadge && (!plugin.IsNative || plugin.Native is IPluginWidgetBadges))
                 {
                     // Asked as the viewer.
                     var viewer = new PluginActor(EscalatedUser.ResolveId(user, _options), user);
-                    item["badge"] = await _bridge.BadgeAsync(plugin.Name, widget.Component, CtxFor(new[] { plugin.Name }, viewer), ct);
+                    item["badge"] = plugin.IsNative
+                        ? await NativeBadgeAsync(plugin, widget.Component, viewer, ct)
+                        : await _bridge.BadgeAsync(plugin.Name, widget.Component, CtxFor(new[] { plugin.Name }, viewer), ct);
                 }
 
                 dashboardWidgets.Add(item);
@@ -458,6 +481,24 @@ public sealed class PluginRegistry
 
     public string PageUrl(RegisteredPlugin plugin, string route) =>
         $"/{_options.RoutePrefix.Trim('/')}/admin/plugins/{plugin.Slug}/{route.TrimStart('/')}".Replace("//", "/", StringComparison.Ordinal);
+
+    /// <summary>A native widget's badge, within 5 s: a number or a string, else null.</summary>
+    private async Task<JsonNode?> NativeBadgeAsync(RegisteredPlugin plugin, string component, PluginActor viewer, CancellationToken ct)
+    {
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(PluginBridge.FilterTimeout);
+            var answer = PluginJson.ToNode(await ((IPluginWidgetBadges)plugin.Native!).BadgeAsync(component, Context(plugin, viewer), timeout.Token)
+                .WaitAsync(timeout.Token));
+            return answer is JsonValue value && value.GetValueKind() is JsonValueKind.Number or JsonValueKind.String ? answer : null;
+        }
+        catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            _logger.LogWarning(e, "[Escalated plugins] {Plugin} badge {Component} failed", plugin.Name, component);
+            return null;
+        }
+    }
 
     /// <summary>The <c>ctx</c> a native plugin's handlers get.</summary>
     public PluginContext Context(RegisteredPlugin plugin, PluginActor actor) => new(_contexts, plugin.Name, actor);
