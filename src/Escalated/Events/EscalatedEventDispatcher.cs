@@ -10,6 +10,7 @@ namespace Escalated.Events;
 ///   <item><see cref="WebhookEventDispatcher"/>, which delivers it to subscribed outbound webhooks;</item>
 ///   <item><see cref="WorkflowEventDispatcher"/>, which runs matching Workflows;</item>
 ///   <item><see cref="NotificationEventDispatcher"/>, which sends notifications;</item>
+///   <item><see cref="Plugins.PluginEventDispatcher"/>, which queues it for active plugins;</item>
 ///   <item>every <see cref="IEscalatedEventDispatcher"/> the host registered, in registration order.</item>
 /// </list>
 ///
@@ -31,17 +32,20 @@ public sealed class EscalatedEventDispatcher : IEscalatedEventDispatcher
     private readonly WebhookEventDispatcher _webhooks;
     private readonly WorkflowEventDispatcher _workflows;
     private readonly NotificationEventDispatcher? _notifications;
+    private readonly Plugins.PluginEventDispatcher? _plugins;
     private readonly IServiceProvider _services;
 
     public EscalatedEventDispatcher(
         WebhookEventDispatcher webhooks,
         WorkflowEventDispatcher workflows,
         IServiceProvider services,
-        NotificationEventDispatcher? notifications = null)
+        NotificationEventDispatcher? notifications = null,
+        Plugins.PluginEventDispatcher? plugins = null)
     {
         _webhooks = webhooks;
         _workflows = workflows;
         _notifications = notifications;
+        _plugins = plugins;
         _services = services;
     }
 
@@ -51,6 +55,7 @@ public sealed class EscalatedEventDispatcher : IEscalatedEventDispatcher
         await _webhooks.DispatchAsync(@event, ct);
         await _workflows.DispatchAsync(@event, ct);
         if (_notifications is not null) await _notifications.DispatchAsync(@event, ct);
+        if (_plugins is not null) await _plugins.DispatchAsync(@event, ct);
 
         foreach (var listener in HostDispatchers())
         {
@@ -66,5 +71,6 @@ public sealed class EscalatedEventDispatcher : IEscalatedEventDispatcher
     /// </summary>
     private IEnumerable<IEscalatedEventDispatcher> HostDispatchers() =>
         _services.GetServices<IEscalatedEventDispatcher>()
-            .Where(d => d is not (EscalatedEventDispatcher or WorkflowEventDispatcher or WebhookEventDispatcher or NotificationEventDispatcher));
+            .Where(d => d is not (EscalatedEventDispatcher or WorkflowEventDispatcher or WebhookEventDispatcher or NotificationEventDispatcher
+                or Plugins.PluginEventDispatcher));
 }

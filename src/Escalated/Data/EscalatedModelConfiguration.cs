@@ -313,6 +313,12 @@ public static class EscalatedModelConfiguration
             e.HasIndex(p => p.Slug).IsUnique();
         });
 
+        modelBuilder.Entity<PluginStoreRecord>(e =>
+        {
+            e.ToTable($"{prefix}plugin_store");
+            e.HasIndex(r => new { r.Plugin, r.Collection, r.Key });
+        });
+
         modelBuilder.Entity<CustomField>(e =>
         {
             e.ToTable($"{prefix}custom_fields");

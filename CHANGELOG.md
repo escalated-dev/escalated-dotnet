@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- **New migration `PluginSystem`** (all three providers) widens
+  `escalated_plugins.Slug` to 255 characters and adds `escalated_plugin_store`
+  (`jsonb` data on PostgreSQL). Run `MigrateEscalatedDatabaseAsync()` or
+  `dotnet ef database update`. Existing `escalated_plugins` rows are kept.
+- Every page now shares `escalated.plugins` (`{}` until a plugin is active),
+  from a second registered `IEscalatedUiSharedProps`
+  (`Escalated.Plugins.PluginSharedProps`). Each page render reads the active
+  plugins (one query on `escalated_plugins`).
+- `EscalatedEventDispatcher` gains an optional `PluginEventDispatcher`
+  parameter (last, defaulted); hosts constructing it by hand need no change.
+- SDK plugins are off by default (`Escalated:Plugins:Runtime:Enabled`). With
+  them on, install `@escalated-dev/plugin-runtime` and the plugins with npm in
+  the content root (or set `WorkingDirectory`); Node 20+ must be on the path or
+  named in `Command`.
+
+### Added
+- Plugins, per the shared plugin contract (escalated-developer-context
+  `domain-model/plugin-contract.md`), with escalated-nestjs as the reference.
+  See `docs/plugins.md`.
+  - Native plugins: `IEscalatedPlugin` / `EscalatedPlugin`, registered with
+    `services.AddEscalatedPlugin<T>()`, listed as `registered`. Two plugins with
+    one slug fail the host at startup.
+  - SDK plugins through `@escalated-dev/plugin-runtime`: JSON-RPC 2.0 over
+    stdio, started on first use, handshake and HTTP contract 1, `activate` /
+    `deactivate`, `plugins: [active names]` on actions and filters, `ctx.*`
+    served while the host waits and scoped to the plugin being served, the
+    contract's timeouts, restart with backoff capped at 5 minutes; actions
+    dropped, filters unchanged and endpoints 503 while it is down. Listed as
+    `composer` (npm), so uninstall is refused.
+  - Admin > Plugins (`Escalated/Admin/Plugins/Index`, `can_upload: false`) with
+    `escalated.admin.plugins.index/activate/deactivate/destroy`: 303 and a
+    flash (404 for JSON on an unknown slug), lifecycle in the contract's order
+    with `plugin.activated`, `plugin.deactivated` and `plugin.uninstalling`,
+    idempotent, store rows kept on uninstall. No upload route.
+  - Plugin pages (`Escalated/Plugin/Page`, props from the plugin's
+    `GET /{component}`), endpoints at `{prefix}/api/plugins/{slug}{path}`
+    (admin, capability, page-script header for unsafe methods) and webhooks at
+    `{prefix}/webhooks/plugins/{slug}{path}` (no auth), with `:param` paths,
+    credentials stripped, the `httpResponse()` envelope and generic 500s.
+  - The canonical events delivered to active plugins in the background with the
+    contract's payloads (never legacy names); filters by priority
+    (`PluginRegistry.ApplyFilterAsync`); `ctx.emit`, which cannot impersonate
+    host events.
+  - The full `ctx`: config, store (operators evaluated in .NET, field names
+    validated), tickets and replies through `TicketService` with allow-listed
+    keys and a 500-row cap, contacts, tags, departments, agents, broadcast, log,
+    emit and currentUser; writes act as the signed-in user or nobody.
+  - `escalated.plugins` on every page: `menuItems`, `pageComponents` and
+    `dashboardWidgets` of active plugins, filtered by capability.
+- `Escalated/Admin/Plugins/Index` and `Escalated/Plugin/Page` are rendered, so
+  both are off the page-name parity "not rendered yet" list.
+
 ## [0.2.7] - 2026-10-28
 
 ### Upgrading

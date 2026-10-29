@@ -1578,7 +1578,7 @@ namespace Escalated.Migrations.Sqlite
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(100)
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -1590,6 +1590,42 @@ namespace Escalated.Migrations.Sqlite
                         .IsUnique();
 
                     b.ToTable("escalated_plugins", (string)null);
+                });
+
+            modelBuilder.Entity("Escalated.Models.PluginStoreRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Collection")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Data")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(191)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Plugin")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Plugin", "Collection", "Key");
+
+                    b.ToTable("escalated_plugin_store", (string)null);
                 });
 
             modelBuilder.Entity("Escalated.Models.Reply", b =>
