@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Plugins/FakePluginRuntime.cs: the assembly runs as a stand-in plugin runtime. -->
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject>Escalated.Tests.Plugins.TestProgram</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>

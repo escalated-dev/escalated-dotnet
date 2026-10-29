@@ -135,6 +135,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddOptions<Escalated.Ui.UiRouteOptions>();
         services.TryAddScoped<Escalated.Ui.IEscalatedUiRootView, Escalated.Ui.DefaultEscalatedUiRootView>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Ui.EscalatedUiSharedProps>());
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Plugins.PluginSharedProps>());
         services.AddScoped<Escalated.Ui.UiPresenter>();
         services.TryAddSingleton(sp => new Escalated.Ui.UiPresence(sp.GetService<TimeProvider>()));
         services.TryAddSingleton<Escalated.Middleware.ApiTokenAuthState>();
@@ -157,6 +158,18 @@ public static class EscalatedServiceCollectionExtensions
             .Validate(options => options.Visibility is "all" or "department", "Visibility must be all or department.")
             .Validate(options => !options.Accounts.ScopeAgents || (options.Accounts.Enabled && options.Accounts.Resolver is not null), "Account visibility requires Accounts.Enabled and Accounts.Resolver.")
             .ValidateOnStart();
+
+        // Plugins: native IEscalatedPlugin services and SDK plugins over the runtime
+        // bridge (Escalated:Plugins:Runtime, off by default). See docs/plugins.md.
+        services.TryAddSingleton<Escalated.Plugins.Bridge.PluginBridge>();
+        services.TryAddSingleton<Escalated.Plugins.PluginEventRelay>();
+        services.AddScoped<Escalated.Plugins.PluginStore>();
+        services.AddScoped<Escalated.Plugins.PluginPayloads>();
+        services.AddScoped<Escalated.Plugins.PluginAccess>();
+        services.AddScoped<Escalated.Plugins.PluginContextHandler>();
+        services.AddScoped<Escalated.Plugins.PluginRegistry>();
+        services.AddScoped<Escalated.Plugins.PluginEventDispatcher>();
+        services.AddTransient<IStartupFilter, Escalated.Plugins.PluginStartupCheck>();
 
         // Register services
         services.AddScopedWithEventBus<TicketService>();

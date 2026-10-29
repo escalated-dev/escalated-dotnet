@@ -588,6 +588,17 @@ if (@event is TicketCustomActionTriggeredEvent triggered && triggered.Action == 
 
 For dynamic per-ticket visibility, register your own `ITicketActionRegistry`.
 
+## Plugins
+
+Admin > Plugins (`Escalated/Admin/Plugins/Index`) lists native plugins
+(`IEscalatedPlugin` classes registered with `services.AddEscalatedPlugin<T>()`)
+and, with `Escalated:Plugins:Runtime:Enabled`, SDK plugins (`@escalated-dev/plugin-sdk`)
+run by `@escalated-dev/plugin-runtime` over JSON-RPC on stdio. Active plugins get
+the canonical events, filters, admin pages (`Escalated/Plugin/Page`), endpoints
+under `{prefix}/api/plugins/{slug}`, webhooks under `{prefix}/webhooks/plugins/{slug}`,
+a store and config, and menus, slots and widgets on the shared screens. See
+[docs/plugins.md](docs/plugins.md).
+
 ## API Endpoints
 
 ### Customer

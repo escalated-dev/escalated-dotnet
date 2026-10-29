@@ -88,6 +88,12 @@ public class EscalatedOptions
     public UiOptions Ui { get; set; } = new();
 
     /// <summary>
+    /// Plugins: native plugins registered in the container, and SDK plugins run by
+    /// the plugin runtime (off by default). See <c>docs/plugins.md</c>.
+    /// </summary>
+    public PluginOptions Plugins { get; set; } = new();
+
+    /// <summary>
     /// Newsletter broadcast and tracking configuration.
     /// </summary>
     public NewsletterOptions Newsletters { get; set; } = new();
@@ -287,6 +293,36 @@ public class UiOptions
     /// ships its own helper sets this to false.
     /// </summary>
     public bool RouteHelper { get; set; } = true;
+}
+
+/// <summary>Plugins (configuration section <c>Escalated:Plugins</c>).</summary>
+public class PluginOptions
+{
+    /// <summary>The SDK bridge: <c>@escalated-dev/plugin-runtime</c> run as a subprocess.</summary>
+    public PluginRuntimeOptions Runtime { get; set; } = new();
+}
+
+/// <summary>
+/// How the SDK plugin runtime is started (configuration section
+/// <c>Escalated:Plugins:Runtime</c>). Off by default; the host starts and serves
+/// requests without it, and without Node installed.
+/// </summary>
+public class PluginRuntimeOptions
+{
+    /// <summary>Run SDK plugins through the runtime. Default false.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>The program to start. Default <c>node</c>.</summary>
+    public string Command { get; set; } = "node";
+
+    /// <summary>The default <see cref="Arguments"/>: the runtime's entry point under <c>node_modules</c>.</summary>
+    public const string DefaultEntryPoint = "node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js";
+
+    /// <summary>Its arguments. Null (the default) runs <see cref="DefaultEntryPoint"/>.</summary>
+    public List<string>? Arguments { get; set; }
+
+    /// <summary>The directory it runs in. Default the host's content root.</summary>
+    public string? WorkingDirectory { get; set; }
 }
 
 public class SlaOptions

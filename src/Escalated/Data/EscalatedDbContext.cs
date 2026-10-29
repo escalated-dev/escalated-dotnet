@@ -152,6 +152,7 @@ public class EscalatedDbContext : DbContext
     public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Plugin> Plugins => Set<Plugin>();
+    public DbSet<PluginStoreRecord> PluginStore => Set<PluginStoreRecord>();
     public DbSet<CustomField> CustomFields => Set<CustomField>();
     public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
     public DbSet<CustomObject> CustomObjects => Set<CustomObject>();
@@ -190,6 +191,7 @@ public class EscalatedDbContext : DbContext
         modelBuilder.Entity<Ticket>().Property(t => t.AccountType).UseCollation(collation);
         modelBuilder.Entity<Ticket>().Property(t => t.AccountId).UseCollation(collation);
         modelBuilder.Entity<Ticket>().HasIndex(t => new { t.AccountType, t.AccountId });
+        if (Database.IsNpgsql()) modelBuilder.Entity<PluginStoreRecord>().Property(r => r.Data).HasColumnType("jsonb");
         modelBuilder.Entity<Ticket>().HasQueryFilter(t => t.DeletedAt == null
             && (!RestrictDepartments || DepartmentAgents.Any(a => a.DepartmentId == t.DepartmentId && a.AgentId == AccessUserId))
             && (!RestrictAccounts || (AccessAccountType != null && AccessAccountId != null && t.AccountType == AccessAccountType && t.AccountId == AccessAccountId

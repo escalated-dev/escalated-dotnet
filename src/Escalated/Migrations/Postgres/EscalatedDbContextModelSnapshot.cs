@@ -1649,8 +1649,8 @@ namespace Escalated.Migrations.Postgres
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1661,6 +1661,44 @@ namespace Escalated.Migrations.Postgres
                         .IsUnique();
 
                     b.ToTable("escalated_plugins", (string)null);
+                });
+
+            modelBuilder.Entity("Escalated.Models.PluginStoreRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Collection")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Data")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(191)
+                        .HasColumnType("character varying(191)");
+
+                    b.Property<string>("Plugin")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("character varying(191)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Plugin", "Collection", "Key");
+
+                    b.ToTable("escalated_plugin_store", (string)null);
                 });
 
             modelBuilder.Entity("Escalated.Models.Reply", b =>
