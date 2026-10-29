@@ -167,6 +167,34 @@ public class PluginBridge : IDisposable
         }
     }
 
+    /// <summary>Runs one cron schedule. Fire-and-forget: a failure is logged, never thrown.</summary>
+    public async Task CronAsync(string plugin, string schedule, PluginCtxHandler ctx, CancellationToken ct = default)
+    {
+        try
+        {
+            await RequestAsync("cron", new JsonObject { ["plugin"] = plugin, ["schedule"] = schedule }, ActionTimeout, ctx, ct);
+        }
+        catch (PluginBridgeException e)
+        {
+            _logger.LogWarning("[Escalated plugins] {Plugin} cron \"{Schedule}\" failed: {Error}", plugin, schedule, e.Message);
+        }
+    }
+
+    /// <summary>A widget's badge: a number or a string, or null when the runtime fails or answers anything else.</summary>
+    public async Task<JsonNode?> BadgeAsync(string plugin, string component, PluginCtxHandler ctx, CancellationToken ct = default)
+    {
+        try
+        {
+            var answer = await RequestAsync("badge", new JsonObject { ["plugin"] = plugin, ["component"] = component }, FilterTimeout, ctx, ct);
+            return answer is JsonValue value && value.GetValueKind() is JsonValueKind.Number or JsonValueKind.String ? answer : null;
+        }
+        catch (PluginBridgeException e)
+        {
+            _logger.LogWarning("[Escalated plugins] {Plugin} badge {Component} failed: {Error}", plugin, component, e.Message);
+            return null;
+        }
+    }
+
     /// <summary>The filtered value, or <paramref name="value"/> when the runtime fails.</summary>
     public async Task<JsonNode?> FilterAsync(string hook, JsonNode? value, IReadOnlyList<string> plugins, PluginCtxHandler ctx, CancellationToken ct = default)
     {

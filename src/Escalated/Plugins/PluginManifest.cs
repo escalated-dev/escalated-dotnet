@@ -48,6 +48,9 @@ public sealed class PluginManifest
     /// <summary>The filters the plugin applies, each with its priority (lowest runs first).</summary>
     public IReadOnlyList<PluginFilterHook> FilterHooks { get; init; } = Array.Empty<PluginFilterHook>();
 
+    /// <summary>An SDK plugin's cron schedules: five-field expressions, evaluated in UTC.</summary>
+    public IReadOnlyList<string> CronSchedules { get; init; } = Array.Empty<string>();
+
     /// <summary>
     /// The contract's slug: no leading <c>@</c>, each <c>/</c> as <c>--</c>, anything
     /// else outside <c>[A-Za-z0-9_-]</c> as <c>-</c>. <c>@escalated-dev/plugin-slack</c>
@@ -109,6 +112,7 @@ public sealed class PluginManifest
                     Size = String(w, "size"),
                     Order = Int(w["order"]),
                     Capability = String(w, "capability"),
+                    HasBadge = w["hasBadge"] is JsonValue badge && badge.GetValueKind() == JsonValueKind.True,
                 }).ToList(),
             Endpoints = Routes(manifest, "endpoints"),
             Webhooks = Routes(manifest, "webhooks"),
@@ -123,6 +127,9 @@ public sealed class PluginManifest
                     _ => null,
                 }).OfType<PluginFilterHook>().ToList()
                 : Array.Empty<PluginFilterHook>(),
+            CronSchedules = manifest["cronSchedules"] is JsonArray schedules
+                ? schedules.Select(c => c is JsonValue v && v.TryGetValue<string>(out var s) ? s : null).OfType<string>().ToList()
+                : Array.Empty<string>(),
         };
     }
 
@@ -205,6 +212,9 @@ public sealed class PluginWidget
 
     public int? Order { get; init; }
     public string? Capability { get; init; }
+
+    /// <summary>An SDK widget with a <c>badge</c> function: the runtime is asked for it.</summary>
+    public bool HasBadge { get; init; }
 }
 
 /// <summary>An endpoint or webhook: a method and a path, which may hold <c>:param</c> segments.</summary>

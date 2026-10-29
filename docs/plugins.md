@@ -229,6 +229,20 @@ Every page shares `escalated.plugins`, built from active plugins: `menuItems`
 (from `pages[].menu`; `admin` items for admins only), `pageComponents`
 (`"{page}.{slot}"` to components) and `dashboardWidgets`. Items with a
 `capability` the viewer lacks are left out. With no active plugin it is `{}`.
+An SDK plugin's widget with a `badge` function also carries `badge`: the
+runtime is asked for it while the page is built, as the viewer, within 5 s;
+`null` when that fails.
+
+## Cron
+
+An SDK plugin's `cron` keys are five-field cron expressions (`minute hour
+day-of-month month day-of-week`, or `@hourly`, `@daily`, ...), evaluated in
+UTC. With the runtime enabled, `PluginCronBackgroundService` (registered by
+`AddEscalated`) sends each due schedule of each active SDK plugin to the
+runtime as `cron` at the start of every minute, side by side, each in its own
+scope, as no user, within 30 s. A failing or unreadable schedule is logged and
+skipped; inactive plugins' schedules never run. Native plugins schedule their
+own work.
 
 ## Tables
 

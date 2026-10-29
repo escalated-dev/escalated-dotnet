@@ -1,3 +1,4 @@
+using Escalated.Authorization;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
 using Escalated.Configuration;
@@ -325,6 +326,52 @@ public sealed class PluginRegistry
         return await _bridge.HttpAsync(kind, plugin.Name, request, CtxFor(new[] { plugin.Name }, actor), ct);
     }
 
+    // Cron
+
+    /// <summary>
+    /// The cron schedules of active SDK plugins that are due in the minute of
+    /// <paramref name="now"/> (UTC). An unreadable schedule is logged and left out.
+    /// </summary>
+    public async Task<IReadOnlyList<(string Plugin, string Schedule)>> DueCronAsync(DateTimeOffset now, CancellationToken ct = default)
+    {
+        var due = new List<(string, string)>();
+        if (!_bridge.IsEnabled) return due;
+        foreach (var plugin in await ActivePluginsAsync(ct))
+        {
+            if (plugin.IsNative) continue;
+            foreach (var schedule in plugin.Manifest.CronSchedules)
+            {
+                try
+                {
+                    if (PluginCron.Due(schedule, now)) due.Add((plugin.Name, schedule));
+                }
+                catch (FormatException e)
+                {
+                    _logger.LogWarning("[Escalated plugins] {Plugin} cron \"{Schedule}\" skipped: {Error}", plugin.Name, schedule, e.Message);
+                }
+            }
+        }
+
+        return due;
+    }
+
+    /// <summary>Runs one cron schedule of an SDK plugin, as no user, within 30 s. A failure is logged.</summary>
+    public Task RunCronAsync(string plugin, string schedule, CancellationToken ct = default) =>
+        _bridge.CronAsync(plugin, schedule, CtxFor(new[] { plugin }, PluginActor.None), ct);
+
+    /// <summary>
+    /// Runs every due schedule (<see cref="DueCronAsync"/>) one after another in this
+    /// scope. <see cref="PluginCronBackgroundService"/> runs them side by side, each
+    /// in its own scope.
+    /// </summary>
+    public async Task RunDueCronAsync(DateTimeOffset now, CancellationToken ct = default)
+    {
+        foreach (var (plugin, schedule) in await DueCronAsync(now, ct))
+        {
+            await RunCronAsync(plugin, schedule, ct);
+        }
+    }
+
     // UI extensions
 
     /// <summary>
@@ -378,7 +425,7 @@ public sealed class PluginRegistry
             foreach (var widget in plugin.Manifest.Widgets)
             {
                 if (!await _access.AllowsAsync(user, widget.Capability, ct)) continue;
-                dashboardWidgets.Add(new JsonObject
+                var item = new JsonObject
                 {
                     ["id"] = $"{plugin.Slug}.{widget.Component}",
                     ["title"] = widget.Label ?? widget.Component,
@@ -386,7 +433,15 @@ public sealed class PluginRegistry
                     ["plugin"] = plugin.Slug,
                     ["position"] = widget.Order ?? 100,
                     ["width"] = widget.Size ?? "half",
-                });
+                };
+                if (!plugin.IsNative && widget.HasBadge)
+                {
+                    // Asked as the viewer.
+                    var viewer = new PluginActor(EscalatedUser.ResolveId(user, _options), user);
+                    item["badge"] = await _bridge.BadgeAsync(plugin.Name, widget.Component, CtxFor(new[] { plugin.Name }, viewer), ct);
+                }
+
+                dashboardWidgets.Add(item);
             }
         }
 

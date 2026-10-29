@@ -23,6 +23,10 @@ namespace Escalated.Tests.Plugins;
 /// <c>/together</c> endpoint waits for a second <c>/together</c> call (three seconds
 /// at most, then fails with "alone") and answers <c>ctx.currentUser</c>, so two
 /// calls are in flight at once.</para>
+///
+/// <para><c>cron</c> stores <c>{schedule}</c> in the plugin's <c>cron</c> collection.
+/// <c>badge</c>: <c>SdkInbox</c> answers <c>"for "</c> plus <c>ctx.currentUser</c>'s id
+/// (or <c>nobody</c>), <c>SdkCount</c> answers 7, anything else fails.</para>
 /// </summary>
 public static class FakePluginRuntime
 {
@@ -122,7 +126,11 @@ public static class FakePluginRuntime
                                 ["menu"] = new JsonObject { ["label"] = "SDK", ["section"] = "admin", ["position"] = 1 },
                             }),
                             ["components"] = new JsonArray(),
-                            ["widgets"] = new JsonArray(new JsonObject { ["component"] = "SdkWidget", ["label"] = "SDK", ["size"] = "full" }),
+                            ["widgets"] = new JsonArray(
+                                new JsonObject { ["component"] = "SdkWidget", ["label"] = "SDK", ["size"] = "full", ["hasBadge"] = false },
+                                new JsonObject { ["component"] = "SdkInbox", ["label"] = "Inbox", ["order"] = 101, ["hasBadge"] = true },
+                                new JsonObject { ["component"] = "SdkCount", ["label"] = "Count", ["order"] = 102, ["hasBadge"] = true },
+                                new JsonObject { ["component"] = "SdkBroken", ["label"] = "Broken", ["order"] = 103, ["hasBadge"] = true }),
                             ["actionHooks"] = new JsonArray("ticket.created", "plugin.activated", "plugin.deactivated"),
                             ["filterHooks"] = new JsonArray(new JsonObject { ["hook"] = "demo.value", ["priority"] = 15 }),
                             ["endpoints"] = new JsonArray(
@@ -132,7 +140,7 @@ public static class FakePluginRuntime
                                 new JsonObject { ["method"] = "GET", ["path"] = "/together" },
                                 new JsonObject { ["method"] = "GET", ["path"] = "/boom" }),
                             ["webhooks"] = new JsonArray(new JsonObject { ["method"] = "POST", ["path"] = "/hook" }),
-                            ["cronSchedules"] = new JsonArray(),
+                            ["cronSchedules"] = new JsonArray("* * * * *", "0 9 * * *", "not a schedule"),
                         },
                     };
                     break;
@@ -187,6 +195,32 @@ public static class FakePluginRuntime
                                 ["header_names"] = new JsonArray((p["headers"] as JsonObject ?? new JsonObject()).Select(h => (JsonNode?)h.Key).ToArray()),
                             },
                         };
+                    }
+
+                    break;
+
+                case "cron":
+                    Ask(serving, "ctx.store.insert", new JsonObject
+                    {
+                        ["plugin"] = Name,
+                        ["collection"] = "cron",
+                        ["data"] = new JsonObject { ["schedule"] = p["schedule"]?.DeepClone() },
+                    });
+                    break;
+
+                case "badge":
+                    switch (p["component"]?.GetValue<string>())
+                    {
+                        case "SdkInbox":
+                            var user = Ask(serving, "ctx.currentUser", new JsonObject { ["plugin"] = Name }) as JsonObject;
+                            result = "for " + (user?["id"]?.ToString() ?? "nobody");
+                            break;
+                        case "SdkCount":
+                            result = 7;
+                            break;
+                        default:
+                            error = new JsonObject { ["code"] = -32000, ["message"] = "badge failed" };
+                            break;
                     }
 
                     break;
