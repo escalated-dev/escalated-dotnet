@@ -144,6 +144,13 @@ public class EscalatedOptions
     /// user id lives in another claim.
     /// </summary>
     public Func<ClaimsPrincipal, string?>? UserIdResolver { get; set; }
+
+    /// <summary>
+    /// The install-level access switches (ADR 2026-10-29-configurable-access-features):
+    /// roles &amp; permissions, two-factor and SSO, all off by default. See
+    /// <see cref="Authorization.AccessFeatures"/> and <c>docs/access-control.md</c>.
+    /// </summary>
+    public Authorization.AccessOptions Access { get; set; } = new();
 }
 
 /// <summary>

@@ -32,22 +32,14 @@ public class NewsletterPermissionService
         if (string.IsNullOrWhiteSpace(userId))
             return false;
 
-        var roles = await _db.RoleUsers
-            .Where(ru => ru.UserId == userId)
-            .Select(ru => ru.RoleId)
-            .ToListAsync(ct);
-
-        if (roles.Count == 0)
-            return false;
-
-        // The admin role is the one the admin users page grants and the default admin
-        // policy requires. Any other role holds only the permissions attached to it.
-        if (await _db.Roles.AnyAsync(r => roles.Contains(r.Id) && r.Slug == AdminUsersController.AdminRoleSlug, ct))
+        // Roles & permissions off (the default): the admin gate in front of these routes is
+        // the only authority (ADR 2026-10-29-configurable-access-features). On: the user's
+        // roles must grant the permission; the admin gate grants nothing by itself.
+        var access = httpContext.RequestServices?.GetService<Escalated.Authorization.AccessControl>();
+        if (access is null || !access.Enforced)
             return true;
 
-        return await _db.RolePermissions
-            .Include(rp => rp.Permission)
-            .AnyAsync(rp => roles.Contains(rp.RoleId) && rp.Permission != null && rp.Permission.Slug == permission, ct);
+        return await access.AllowsAsync(userId, new[] { permission }, ct);
     }
 
     public async Task RequireAsync(HttpContext httpContext, string permission, CancellationToken ct = default)

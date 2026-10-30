@@ -48,8 +48,14 @@ public class AdminPeoplePagesTests
 
     private static async Task<(EscalatedTestHost Host, HttpClient Client, Seeded Seed)> StartAsync(bool apiWired = false)
     {
+        // The roles screens exist only with roles and permissions on, so it is on here and the
+        // admin also holds the seeded admin role.
         var host = await EscalatedTestHost.StartAsync(
-            options => options.Ui.Enabled = true,
+            options =>
+            {
+                options.Ui.Enabled = true;
+                options.Access.RolesPermissions = true;
+            },
             services => services.AddSingleton<IUserDirectory, Directory>(),
             apiWired ? app => app.UseWhen(c => c.Request.Path.StartsWithSegments("/api-probe"), b => b.UseMiddleware<ApiTokenAuthMiddleware>()) : null);
         await host.GrantRoleAsync(Admin, "escalated-admin");
@@ -72,6 +78,13 @@ public class AdminPeoplePagesTests
             var system = await db.Roles.SingleAsync(r => r.Slug == "escalated-admin");
             seeded = new Seeded(role.Id, system.Id, view.Id, send.Id, token.Id);
         });
+
+        using (var scope = host.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<Escalated.Authorization.PermissionSeeder>().SeedAsync();
+        }
+
+        await host.GrantRoleAsync(Admin, "admin");
 
         return (host, host.ClientFor(Admin), seeded!);
     }
@@ -159,7 +172,7 @@ public class AdminPeoplePagesTests
         Assert.Equal(JsonValueKind.Null, create.GetProperty("props").GetProperty("role").ValueKind);
         var group = create.GetProperty("props").GetProperty("permissions").GetProperty("Newsletters");
         Keys(group[0], "id", "name", "slug", "group");
-        Assert.Equal(2, group.GetArrayLength());
+        Assert.Equal(3, group.GetArrayLength()); // the two seeded here plus the catalog's newsletters.manage
 
         var edit = await PageAsync(client, $"/support/admin/roles/{seed.RoleId}/edit");
         var role = edit.GetProperty("props").GetProperty("role");

@@ -35,10 +35,14 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
     private readonly IAuthorizationService _authorization;
     private readonly IUserDirectory _users;
     private readonly EscalatedOptions _options;
+    private readonly AccessFeatures _features;
+    private readonly AccessControl _access;
 
     public EscalatedUiSharedProps(EscalatedDbContext db, SettingsService settings, IAuthorizationService authorization,
-        IUserDirectory users, IOptions<EscalatedOptions> options)
+        IUserDirectory users, IOptions<EscalatedOptions> options, AccessFeatures features, AccessControl access)
     {
+        _features = features;
+        _access = access;
         _db = db;
         _settings = settings;
         _authorization = authorization;
@@ -65,8 +69,10 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
             ["broadcasting"] = new Dictionary<string, object?> { ["channel_prefix"] = "escalated" },
             ["is_agent"] = isAgent,
             ["is_admin"] = isAdmin,
-            ["permissions"] = userId is null ? new List<string>() : await PermissionsAsync(userId, ct),
-            ["features"] = new Dictionary<string, object?> { ["newsletters"] = _options.EnableNewsletters },
+            // ADR 2026-10-29-configurable-access-features: the user's slugs while roles and
+            // permissions is on; ['*'] for staff while it is off (the gates decide everything).
+            ["permissions"] = userId is null ? new List<string>() : await _access.SharedAsync(userId, isAdmin || isAgent, ct),
+            ["features"] = Features(),
             ["guest_tickets_enabled"] = await GuestSettings.IsOnAsync(_settings, GuestSettings.GuestTicketsEnabled, ct),
             ["show_powered_by"] = await GuestSettings.IsOnAsync(_settings, "show_powered_by", ct),
             ["knowledge_base_enabled"] = _options.KnowledgeBase.Enabled,
@@ -95,19 +101,14 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
         };
     }
 
-    private async Task<List<string>> PermissionsAsync(string userId, CancellationToken ct)
+    private Dictionary<string, object?> Features()
     {
-        var roleIds = await _db.RoleUsers.AsNoTracking().Where(ru => ru.UserId == userId).Select(ru => ru.RoleId).ToListAsync(ct);
-        if (roleIds.Count == 0)
+        var features = new Dictionary<string, object?> { ["newsletters"] = _options.EnableNewsletters };
+        foreach (var (key, value) in _features.Shared())
         {
-            return new List<string>();
+            features[key] = value;
         }
 
-        return await _db.RolePermissions.AsNoTracking()
-            .Where(rp => roleIds.Contains(rp.RoleId) && rp.Permission != null)
-            .Select(rp => rp.Permission!.Slug)
-            .Distinct()
-            .OrderBy(slug => slug)
-            .ToListAsync(ct);
+        return features;
     }
 }

@@ -80,6 +80,15 @@ public class ApiTokenAuthMiddleware
             await access.ForUserAsync(user, async () => { await _next(context); return true; }, context.RequestAborted);
             return;
         }
+
+        // A token acts as the user who owns it (ADR 2026-10-29-configurable-access-features), so the
+        // admin and agent policies and, with roles and permissions on, the owner's permissions apply.
+        // A request the host already authenticated keeps its own user.
+        if (context.User.Identity?.IsAuthenticated != true && access is not null && apiToken.TokenableId is not null)
+        {
+            context.User = await access.PrincipalAsync(apiToken.TokenableId.Value.ToString());
+        }
+
         await _next(context);
     }
 
