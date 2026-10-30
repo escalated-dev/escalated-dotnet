@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- **Roles and permissions is now an install-level switch,**
+  `Escalated:Access:RolesPermissions` / `ESCALATED_ROLES_PERMISSIONS`, default
+  off (ADR 2026-10-29-configurable-access-features). Off, the roles screens
+  (`{prefix}/admin/roles*`) answer 404 and the admin/agent policies are the
+  only authority; `escalated.permissions` is `['*']` for staff. The newsletter
+  screens no longer check `newsletters.manage` / `newsletters.send` while it
+  is off, so any admin may use them; installs that relied on those
+  permissions to restrict admins must turn the switch on. To turn it on, seed
+  (`PermissionSeeder`, also run at startup while on), give every staff user a
+  role (at least one `admin`, `PermissionSeeder.AssignRoleAsync`), then set
+  the switch. See `docs/access-control.md`.
+- `ApiTokenAuthMiddleware` now signs a token request in as the token's owner
+  when the host's authentication has not identified anyone, so the
+  admin/agent policies apply to the owner.
 - **New migration `PluginSystem`** (all three providers) widens
   `escalated_plugins.Slug` to 255 characters and adds `escalated_plugin_store`
   (`jsonb` data on PostgreSQL). Run `MigrateEscalatedDatabaseAsync()` or
@@ -24,6 +38,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named in `Command`.
 
 ### Added
+- Roles and permissions are enforced while `ESCALATED_ROLES_PERMISSIONS` is
+  on: every admin, agent and staff API route also needs its permission
+  (`Escalated.Authorization.RoutePermissions`, escalated-laravel's map; an
+  unmapped staff route is refused), status changes to resolved/closed/reopened
+  need `ticket.close`, bulk actions check each action, and API tokens are
+  checked against their owner. Every page shares
+  `escalated.features.roles_permissions`, `two_factor` and `sso`.
 - Native plugins get cron schedules and widget badges, the same as SDK plugins:
   a native plugin lists five-field (UTC) schedules in
   `PluginManifest.CronSchedules` and implements `IPluginCron`, and

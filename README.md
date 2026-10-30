@@ -42,7 +42,7 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Activity timeline** -- Full audit log of every action on every ticket
 - **Webhooks** -- HMAC-SHA256 signed with retry logic
 - **API tokens** -- Bearer auth with ability-based scoping
-- **Roles and permissions** -- Fine-grained access control
+- **Roles and permissions** -- Fine-grained access control, enforced behind the install-level `ESCALATED_ROLES_PERMISSIONS` switch ([access control](docs/access-control.md))
 - **Audit logging** -- All mutations tracked with old/new values
 - **Import system** -- Multi-step wizard with pluggable adapters
 - **Side conversations** -- Internal team threads on tickets
@@ -282,11 +282,11 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
-The newsletter admin pages also check a permission: `newsletters.manage`, plus
-`newsletters.send` to send. The `escalated-admin` role holds both. If you replace
-the admin policy, attach them to your own roles in Escalated's `RolePermissions`
-table; `NewsletterPermissionSeeder` creates the two permissions and attaches them
-to `escalated-admin`.
+With roles and permissions on (`ESCALATED_ROLES_PERMISSIONS`, off by default),
+every admin and agent route also needs a permission from the roles the user
+holds, and the newsletter pages check `newsletters.manage` / `newsletters.send`.
+See [access control](docs/access-control.md). With it off, the policies above
+decide everything.
 
 ### Who a request acts as
 
