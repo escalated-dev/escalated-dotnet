@@ -115,6 +115,8 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<WidgetOriginPolicy>();
         services.AddSingleton<IPostConfigureOptions<EscalatedOptions>, WidgetOriginsFromConfiguration>();
         services.AddTransient<IStartupFilter, WidgetCorsStartupFilter>();
+        // An Inertia visit to a UI route that ends in an error gets Escalated/Error (only while the UI is on).
+        services.AddTransient<IStartupFilter, Escalated.Ui.InertiaErrorPageStartupFilter>();
         services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options => options.Filters.Add(new WidgetGuestFilter()));
 
         // Notification emails: the default sender picks recipients as the Laravel
