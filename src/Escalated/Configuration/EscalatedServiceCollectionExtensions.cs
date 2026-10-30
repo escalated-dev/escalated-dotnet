@@ -229,6 +229,19 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<NewsletterPlanner>();
         services.AddScoped<NewsletterDispatcher>();
         services.AddScoped<NewsletterTracker>();
+        // Install-level access switches (ADR 2026-10-29-configurable-access-features).
+        services.TryAddSingleton<AccessFeatures>();
+        services.AddScoped<AccessControl>();
+        services.AddScoped<PermissionSeeder>();
+        services.AddHostedService<PermissionSeederHostedService>();
+        services.AddScoped<EnsureAccessFeaturesFilter>();
+        services.AddScoped<EnforceRoutePermissionsFilter>();
+        services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
+        {
+            // A switched-off feature's routes 404 first; then each staff route's permission.
+            options.Filters.AddService<EnsureAccessFeaturesFilter>(-2000);
+            options.Filters.AddService<EnforceRoutePermissionsFilter>(-1000);
+        });
         services.AddScoped<NewsletterPermissionService>();
         services.AddScoped<NewsletterPermissionSeeder>();
         services.AddScoped<NewsletterEnabledFilter>();

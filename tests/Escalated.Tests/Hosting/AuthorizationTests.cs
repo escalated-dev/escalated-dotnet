@@ -273,10 +273,31 @@ public class AuthorizationTests
 
     private const string SupportLeadClaim = "support-lead";
 
-    /// <summary>Newsletters on, and the admin policy replaced the way the README shows.</summary>
-    private static Task<EscalatedTestHost> StartWithHostAdminPolicyAsync() =>
+    /// <summary>
+    /// With roles and permissions off (the default) the admin policy alone decides, so a host
+    /// admin manages newsletters without any permission (ADR 2026-10-29-configurable-access-features).
+    /// </summary>
+    [Fact]
+    public async Task HostAdmin_ManagesNewslettersWhileRolesAndPermissionsIsOff()
+    {
+        await using var host = await StartWithHostAdminPolicyAsync(rolesPermissions: false);
+
+        var response = await host.ClientFor("lead-1", (SupportLeadClaim, "true")).GetAsync("/admin/newsletters");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Newsletters on, the admin policy replaced the way the README shows, and roles and
+    /// permissions on: the newsletter permissions are enforced only then.
+    /// </summary>
+    private static Task<EscalatedTestHost> StartWithHostAdminPolicyAsync(bool rolesPermissions = true) =>
         EscalatedTestHost.StartAsync(
-            o => o.EnableNewsletters = true,
+            o =>
+            {
+                o.EnableNewsletters = true;
+                o.Access.RolesPermissions = rolesPermissions;
+            },
             services => services.AddAuthorization(options =>
                 options.AddPolicy(Escalated.Authorization.EscalatedPolicies.Admin, p => p.RequireClaim(SupportLeadClaim))));
 
