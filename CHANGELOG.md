@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-10-30
+
 ### Upgrading
 - **An Inertia visit to an Escalated UI route that ends in 403, 404, 419, 429, 500 or 503 now gets the shared `Escalated/Error` page** (props `status` and a generic `message`, as Rails and Laravel send them) instead of the host's or the action's error body, which the Inertia client could only show in a modal. A middleware added at the front of the pipeline (an `IStartupFilter`, so hosts change nothing) does it while `Escalated:Ui:Enabled` is on, so it also covers refusals from the host's authorization middleware and exceptions nothing else handled (logged, then answered with the 500 page). It looks only at Escalated's own UI controllers: the JSON API, widget, inbound email, SSO, plugin HTTP and newsletter tracking/webhook controllers, the host's own routes, unmatched URLs, full page loads, JSON clients (no `X-Inertia`), redirects and responses that are already Inertia pages are untouched. The action's or exception's own text never reaches the page. In the Development environment a 500 is left to the developer exception page.
 
