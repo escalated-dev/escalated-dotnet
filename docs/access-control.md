@@ -177,12 +177,24 @@ answers 404; a provider's routes answer 404 while another is chosen.
   single-use.
 - **Users.** The email comes from `sso_attr_email` (SAML falls back to an
   email-shaped NameID), the name from `sso_attr_name`, the role from
-  `sso_attr_role`. The host user is found by `Sso.FindUserByEmail` (default:
-  the `IUserDirectory` entry with that email, case-insensitive). An unknown
-  email is refused unless `Sso.CreateUsers` is on and `Sso.CreateUser` creates
-  the user (with an unusable password). The user is signed in with
-  `Sso.SignIn` (default: `HttpContext.SignInAsync` on the default sign-in
-  scheme with a `NameIdentifier` claim).
+  `sso_attr_role`. An unknown email is refused unless `Sso.CreateUsers` is on.
+  How the host user is found, created and signed in:
+
+  | Step | Host hook (always wins) | Default with ASP.NET Core Identity | Default otherwise |
+  |---|---|---|---|
+  | Find by email | `Sso.FindUserByEmail` | `UserManager<TUser>.FindByEmailAsync` (normalized, so case-insensitive) | the `IUserDirectory` entry with that email, case-insensitive |
+  | Create (only with `Sso.CreateUsers` on) | `Sso.CreateUser` | `new TUser()` with the email as `UserName` and `Email`, `UserManager.CreateAsync` with **no password** (so no password sign-in until a reset) | refused |
+  | Sign in | `Sso.SignIn` | `SignInManager<TUser>.SignInAsync` (the Identity application cookie) | `HttpContext.SignInAsync` on the default sign-in scheme with a `NameIdentifier` claim |
+
+  "With ASP.NET Core Identity" means the host registered exactly one
+  `UserManager<TUser>` (`AddIdentity`, `AddDefaultIdentity` or
+  `AddIdentityCore`, before or after `AddEscalated`) whose store supports
+  email. Signing in through Identity also needs `SignInManager<TUser>`
+  (`AddIdentity`, `AddDefaultIdentity`, or `.AddSignInManager()` after
+  `AddIdentityCore`); without it the default sign-in scheme is used. Creating
+  needs a `TUser` with a parameterless constructor, and the host's Identity
+  validators (user name, email) apply. With two Identity user types
+  registered, none of these defaults applies; set the hooks.
 - **Roles.** With roles & permissions on and `Sso.SyncRoles` on, a role
   attribute naming an existing Escalated role replaces the user's roles (the
   `escalated-admin` / `escalated-agent` gate roles are kept and never granted).

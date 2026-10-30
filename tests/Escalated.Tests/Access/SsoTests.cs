@@ -11,6 +11,8 @@ using Escalated.Authorization;
 using Escalated.Models;
 using Escalated.Services;
 using Escalated.Tests.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -68,7 +70,7 @@ public class SsoTests
     }
 
     private static async Task<Host> StartAsync(bool on = true, bool createUsers = false, bool roles = false, bool syncRoles = false,
-        bool idpInitiated = false, HttpMessageHandler? oauth = null)
+        bool idpInitiated = false, HttpMessageHandler? oauth = null, bool hooks = true, bool identity = false)
     {
         Host? host = null;
         var server = await EscalatedTestHost.StartAsync(
@@ -80,6 +82,11 @@ public class SsoTests
                 options.Sso.CreateUsers = createUsers;
                 options.Sso.SyncRoles = syncRoles;
                 options.Sso.AllowIdpInitiated = idpInitiated;
+                if (!hooks)
+                {
+                    return;
+                }
+
                 options.Sso.FindUserByEmail = (email, _) => Task.FromResult(host!.Users.GetValueOrDefault(email));
                 options.Sso.CreateUser = (email, _, _) =>
                 {
@@ -97,6 +104,14 @@ public class SsoTests
                 if (oauth is not null)
                 {
                     services.AddHttpClient("escalated-sso").ConfigurePrimaryHttpMessageHandler(() => oauth);
+                }
+
+                if (identity)
+                {
+                    // A host on ASP.NET Core Identity, its users in their own store.
+                    var store = "identity-" + Guid.NewGuid().ToString("N");
+                    services.AddDbContext<IdentityHostDb>(o => o.UseInMemoryDatabase(store));
+                    services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<IdentityHostDb>();
                 }
             });
         host = new Host { Server = server };
@@ -519,5 +534,100 @@ public class SsoTests
         Assert.Equal(HttpStatusCode.NotFound, await PostJwtAsync(host, Token()));
         Assert.Equal(HttpStatusCode.NotFound, (await host.Server.ClientFor("1").SendAsync(Visit(HttpMethod.Get, "/support/admin/settings/sso"))).StatusCode);
         Assert.Empty(host.SignedIn);
+    }
+
+    // --- ASP.NET Core Identity defaults ---
+
+    private sealed class IdentityHostDb(DbContextOptions<IdentityHostDb> options) : IdentityDbContext<IdentityUser>(options);
+
+    private static async Task<string> IdentityUserAsync(Host host, string email)
+    {
+        using var scope = host.Server.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var user = new IdentityUser { UserName = email, Email = email };
+        Assert.True((await users.CreateAsync(user)).Succeeded);
+        return user.Id;
+    }
+
+    private static async Task<IdentityUser?> FindIdentityAsync(Host host, string email)
+    {
+        using var scope = host.Server.Services.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>().FindByEmailAsync(email);
+    }
+
+    private static async Task<HttpResponseMessage> JwtSignInAsync(Host host, string token) =>
+        await host.Server.Client.PostAsync("/support/sso/jwt/callback",
+            new FormUrlEncodedContent(new Dictionary<string, string> { ["jwt"] = token }));
+
+    /// <summary>The cookie SignInManager writes (Identity.Application).</summary>
+    private static bool SetsIdentityCookie(HttpResponseMessage response) =>
+        response.Headers.TryGetValues("Set-Cookie", out var cookies)
+        && cookies.Any(c => c.StartsWith(".AspNetCore.Identity.Application=", StringComparison.Ordinal));
+
+    [Fact]
+    public async Task Identity_WithNoHooksTheUserIsFoundByEmailAndSignedInThroughSignInManager()
+    {
+        var host = await StartAsync(hooks: false, identity: true);
+        await using var _ = host.Server;
+        await JwtAsync(host);
+        await IdentityUserAsync(host, "Known@Example.com");
+
+        using var response = await JwtSignInAsync(host, Token("known@example.com"));
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/support/agent", response.Headers.Location!.ToString());
+        Assert.True(SetsIdentityCookie(response));
+    }
+
+    [Fact]
+    public async Task Identity_AnUnknownEmailIsRefusedUnlessCreateUsersIsOnThenCreatedWithoutAPassword()
+    {
+        var off = await StartAsync(hooks: false, identity: true);
+        await using (off.Server)
+        {
+            await JwtAsync(off);
+            using var refused = await JwtSignInAsync(off, Token("stranger@example.com"));
+            Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+            Assert.Null(await FindIdentityAsync(off, "stranger@example.com"));
+        }
+
+        var on = await StartAsync(hooks: false, identity: true, createUsers: true);
+        await using (on.Server)
+        {
+            await JwtAsync(on);
+            using var created = await JwtSignInAsync(on, Token("stranger@example.com"));
+            Assert.Equal(HttpStatusCode.Redirect, created.StatusCode);
+            Assert.True(SetsIdentityCookie(created));
+            var user = await FindIdentityAsync(on, "stranger@example.com");
+            Assert.NotNull(user);
+            Assert.Equal("stranger@example.com", user!.UserName);
+            Assert.Null(user.PasswordHash);
+        }
+    }
+
+    [Fact]
+    public async Task Identity_HostHooksWinOverTheIdentityDefaults()
+    {
+        var host = await StartAsync(identity: true, createUsers: true);
+        await using var _ = host.Server;
+        await JwtAsync(host);
+        await IdentityUserAsync(host, "known@example.com");
+
+        using var known = await JwtSignInAsync(host, Token("known@example.com"));
+        Assert.Equal(HttpStatusCode.Redirect, known.StatusCode);
+        Assert.False(SetsIdentityCookie(known));
+        using var stranger = await JwtSignInAsync(host, Token("stranger@example.com"));
+        Assert.Equal(HttpStatusCode.Redirect, stranger.StatusCode);
+        Assert.Equal(new[] { "10", "new-stranger@example.com" }, host.SignedIn);
+        Assert.Null(await FindIdentityAsync(host, "stranger@example.com"));
+    }
+
+    [Fact]
+    public async Task WithoutIdentityOrHooksCreateUsersStillRefusesAnUnknownEmail()
+    {
+        var host = await StartAsync(hooks: false, createUsers: true);
+        await using var _ = host.Server;
+        await JwtAsync(host);
+        using var response = await JwtSignInAsync(host, Token("stranger@example.com"));
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }

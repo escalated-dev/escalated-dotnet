@@ -192,17 +192,23 @@ public class SsoOptions
     public string? BaseUrl { get; set; }
 
     /// <summary>
-    /// The host user id for an email, matched case-insensitively. Default: the
+    /// The host user id for an email, matched case-insensitively. Default: with ASP.NET Core
+    /// Identity registered, <c>UserManager.FindByEmailAsync</c>; otherwise the
     /// <see cref="Services.IUserDirectory"/> entry whose email matches.
     /// </summary>
     public Func<string, CancellationToken, Task<string?>>? FindUserByEmail { get; set; }
 
-    /// <summary>Creates a host user (email, name) with an unusable password and returns its id. Unset: never create.</summary>
+    /// <summary>
+    /// Creates a host user (email, name) with an unusable password and returns its id. Default: with
+    /// ASP.NET Core Identity registered, <c>UserManager.CreateAsync</c> with the email as user name and
+    /// no password; otherwise never create.
+    /// </summary>
     public Func<string, string, CancellationToken, Task<string?>>? CreateUser { get; set; }
 
     /// <summary>
-    /// Signs the user in on the host. Default: <c>HttpContext.SignInAsync</c> on the default sign-in
-    /// scheme (for example cookie authentication) with a <c>NameIdentifier</c> claim.
+    /// Signs the user in on the host. Default: with <c>SignInManager</c> registered (ASP.NET Core
+    /// Identity), <c>SignInManager.SignInAsync</c>; otherwise <c>HttpContext.SignInAsync</c> on the
+    /// default sign-in scheme (for example cookie authentication) with a <c>NameIdentifier</c> claim.
     /// </summary>
     public Func<Microsoft.AspNetCore.Http.HttpContext, string, Task>? SignIn { get; set; }
 }

@@ -198,6 +198,9 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<BusinessHoursCalculator>();
         services.AddScoped<TwoFactorService>();
         services.AddScoped<SsoService>();
+        // SSO's defaults on ASP.NET Core Identity: the user type is looked up in this
+        // collection on first use, so AddIdentity may come before or after AddEscalated.
+        services.TryAddSingleton(new SsoIdentityLocator(services));
         services.AddScoped<AuditLogService>();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<SettingsService>();
