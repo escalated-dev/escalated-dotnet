@@ -195,6 +195,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<SkillRoutingService>();
         services.AddScoped<BusinessHoursCalculator>();
         services.AddScoped<TwoFactorService>();
+        services.AddScoped<SsoService>();
         services.AddScoped<AuditLogService>();
         services.AddScoped<AdvancedReportingService>();
         services.AddScoped<SettingsService>();

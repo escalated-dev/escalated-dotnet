@@ -109,6 +109,10 @@ public static class UiRoutes
         ["escalated.admin.two-factor.disable"] = "{prefix}/admin/settings/two-factor/disable",
         ["escalated.two-factor.challenge"] = "{prefix}/two-factor/challenge",
         ["escalated.two-factor.verify"] = "{prefix}/two-factor/challenge",
+        // Single sign-on.
+        ["escalated.admin.settings.sso"] = "{prefix}/admin/settings/sso",
+        ["escalated.admin.settings.sso.update"] = "{prefix}/admin/settings/sso",
+        ["escalated.sso.login"] = "{prefix}/sso/login",
         ["escalated.admin.departments.index"] = "{prefix}/admin/departments",
         ["escalated.admin.departments.create"] = "{prefix}/admin/departments/create",
         ["escalated.admin.departments.store"] = "{prefix}/admin/departments",

@@ -19,6 +19,7 @@ public sealed class EnsureAccessFeaturesFilter : IAsyncResourceFilter
     {
         [AccessFeatures.RolesPermissionsKey] = new[] { "/P/admin/roles", "/P/admin/roles/**" },
         [AccessFeatures.TwoFactorKey] = new[] { "/P/admin/settings/two-factor", "/P/admin/settings/two-factor/**", "/P/two-factor/**" },
+        [AccessFeatures.SsoKey] = new[] { "/P/admin/settings/sso", "/P/admin/settings/sso/**", "/P/sso/**" },
     };
 
     private readonly AccessFeatures _features;
