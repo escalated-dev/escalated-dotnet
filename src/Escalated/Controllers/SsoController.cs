@@ -24,7 +24,8 @@ namespace Escalated.Controllers;
 /// and for any provider other than the one chosen in Admin &gt; Settings &gt; SSO.
 ///
 /// <para>A successful sign-in finds (or, with <c>Sso.CreateUsers</c>, creates) the host user by email,
-/// signs them in through <see cref="SsoOptions.SignIn"/> (default: the default sign-in scheme), clears
+/// signs them in through <see cref="SsoOptions.SignIn"/> (defaults: ASP.NET Core Identity when the host registered it,
+/// else the default sign-in scheme), clears
 /// the two-factor mark (SSO does not skip the challenge), optionally maps the role, and redirects to
 /// <see cref="SsoService.RedirectTo"/>. Every refusal answers a generic 403 and logs the reason.</para>
 /// </summary>
@@ -193,10 +194,20 @@ public class SsoController : ControllerBase
                 throw new SsoException($"SSO refused: no user with email {identity.Email} (CreateUsers is off).");
             }
 
-            userId = _options.Sso.CreateUser is null
-                ? throw new SsoException("SSO refused: this host cannot create users (no Sso.CreateUser).")
-                : await _options.Sso.CreateUser(identity.Email, identity.Name, ct)
+            if (_options.Sso.CreateUser is not null)
+            {
+                userId = await _options.Sso.CreateUser(identity.Email, identity.Name, ct)
                     ?? throw new SsoException("SSO refused: the host did not create the user.");
+            }
+            else if (IdentityUsers is { } identityUsers)
+            {
+                userId = await identityUsers.CreateAsync(HttpContext.RequestServices, identity.Email, identity.Name, ct)
+                    ?? throw new SsoException("SSO refused: ASP.NET Core Identity did not create the user.");
+            }
+            else
+            {
+                throw new SsoException("SSO refused: this host cannot create users (no Sso.CreateUser and no ASP.NET Core Identity).");
+            }
         }
 
         await SyncRoleAsync(userId, identity.Role, ct);
@@ -204,6 +215,10 @@ public class SsoController : ControllerBase
         if (_options.Sso.SignIn is not null)
         {
             await _options.Sso.SignIn(HttpContext, userId);
+        }
+        else if (IdentityUsers is { } identityUsers && await identityUsers.SignInAsync(HttpContext, userId))
+        {
+            // Signed in through SignInManager (the Identity application cookie).
         }
         else
         {
@@ -221,11 +236,19 @@ public class SsoController : ControllerBase
         return Redirect(_sso.RedirectTo);
     }
 
+    /// <summary>The ASP.NET Core Identity defaults, when the host registered Identity.</summary>
+    private ISsoIdentityUsers? IdentityUsers => HttpContext.RequestServices.GetService<SsoIdentityLocator>()?.Users;
+
     private async Task<string?> FindAsync(string email, CancellationToken ct)
     {
         if (_options.Sso.FindUserByEmail is not null)
         {
             return await _options.Sso.FindUserByEmail(email, ct);
+        }
+
+        if (IdentityUsers is { } identityUsers)
+        {
+            return await identityUsers.FindByEmailAsync(HttpContext.RequestServices, email, ct);
         }
 
         var page = await _users.ListAsync(email, 1, 50, ct);

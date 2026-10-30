@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **SSO works out of the box on ASP.NET Core Identity.** When the host
+  registered `UserManager<TUser>` (and `SignInManager<TUser>`), `Escalated:Sso`
+  now finds users with `FindByEmailAsync`, creates them with
+  `UserManager.CreateAsync` and no password (only with `Sso.CreateUsers` on),
+  and signs them in with `SignInManager.SignInAsync`, so no hooks are needed.
+  `Sso.FindUserByEmail`, `Sso.CreateUser` and `Sso.SignIn` still win when set.
+  Hosts without Identity behave as before. See
+  [docs/access-control.md](docs/access-control.md#single-sign-on).
+
+### Upgrading
+- A host on ASP.NET Core Identity that set none of the SSO hooks used to find
+  users through `IUserDirectory` and sign them in on the default sign-in
+  scheme with a bare `NameIdentifier` claim; it now uses Identity's user
+  store and `SignInManager`. Set the hooks to keep the old behaviour.
+
 ## [0.2.9] - 2026-10-30
 
 ### Upgrading
