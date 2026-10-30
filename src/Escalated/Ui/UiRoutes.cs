@@ -102,6 +102,13 @@ public static class UiRoutes
         ["escalated.admin.settings.email.update"] = "{prefix}/admin/settings/email",
         ["escalated.admin.settings.public-tickets"] = "{prefix}/admin/settings/public-tickets",
         ["escalated.admin.settings.public-tickets.update"] = "{prefix}/admin/settings/public-tickets",
+        // Two-factor enrolment and the challenge (ADR 2026-10-29-configurable-access-features).
+        ["escalated.admin.two-factor.index"] = "{prefix}/admin/settings/two-factor",
+        ["escalated.admin.two-factor.setup"] = "{prefix}/admin/settings/two-factor/setup",
+        ["escalated.admin.two-factor.confirm"] = "{prefix}/admin/settings/two-factor/confirm",
+        ["escalated.admin.two-factor.disable"] = "{prefix}/admin/settings/two-factor/disable",
+        ["escalated.two-factor.challenge"] = "{prefix}/two-factor/challenge",
+        ["escalated.two-factor.verify"] = "{prefix}/two-factor/challenge",
         ["escalated.admin.departments.index"] = "{prefix}/admin/departments",
         ["escalated.admin.departments.create"] = "{prefix}/admin/departments/create",
         ["escalated.admin.departments.store"] = "{prefix}/admin/departments",

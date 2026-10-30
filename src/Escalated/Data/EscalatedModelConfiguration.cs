@@ -319,6 +319,13 @@ public static class EscalatedModelConfiguration
             e.HasIndex(r => new { r.Plugin, r.Collection, r.Key });
         });
 
+        modelBuilder.Entity<TwoFactor>(e =>
+        {
+            e.ToTable($"{prefix}two_factors");
+            e.HasIndex(t => t.UserId).IsUnique();
+            e.Ignore(t => t.IsConfirmed);
+        });
+
         modelBuilder.Entity<CustomField>(e =>
         {
             e.ToTable($"{prefix}custom_fields");

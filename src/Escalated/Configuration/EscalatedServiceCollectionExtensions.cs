@@ -236,10 +236,16 @@ public static class EscalatedServiceCollectionExtensions
         services.AddHostedService<PermissionSeederHostedService>();
         services.AddScoped<EnsureAccessFeaturesFilter>();
         services.AddScoped<EnforceRoutePermissionsFilter>();
+        services.AddScoped<RequireTwoFactorFilter>();
+        services.TryAddSingleton<Escalated.Controllers.Ui.TwoFactorThrottle>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<
+            IPostConfigureOptions<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>, TwoFactorCookieEvents>());
         services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
         {
-            // A switched-off feature's routes 404 first; then each staff route's permission.
+            // A switched-off feature's routes 404 first; then the two-factor challenge; then each
+            // staff route's permission.
             options.Filters.AddService<EnsureAccessFeaturesFilter>(-2000);
+            options.Filters.AddService<RequireTwoFactorFilter>(-1500);
             options.Filters.AddService<EnforceRoutePermissionsFilter>(-1000);
         });
         services.AddScoped<NewsletterPermissionService>();

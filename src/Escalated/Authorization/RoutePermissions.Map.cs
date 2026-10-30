@@ -14,7 +14,8 @@ public static partial class RoutePermissions
         var map = new List<Entry>
         {
             // ---- Personal ---------------------------------------------------
-            E("*", A + "/two-factor/**"),
+            E("*", A + "/settings/two-factor"),
+            E("*", A + "/settings/two-factor/**"),
 
             // ---- Tickets (admin and agent pages and JSON) ---------------------
             E("GET", G, View),

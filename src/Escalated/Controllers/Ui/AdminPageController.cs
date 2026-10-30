@@ -43,11 +43,14 @@ public partial class AdminPageController : ControllerBase
         "widget_position",
         "widget_greeting",
         WidgetOriginPolicy.SettingKey,
+        // The two-factor page's "require for all staff" switch posts only this key.
+        "two_factor_required",
     };
 
     private static readonly HashSet<string> BooleanSettings = new()
     {
         GuestSettings.GuestTicketsEnabled, "show_powered_by", "knowledge_base_public", GuestSettings.WidgetEnabled,
+        "two_factor_required",
     };
 
     private readonly EscalatedDbContext _db;
@@ -86,6 +89,7 @@ public partial class AdminPageController : ControllerBase
                 ["widget_position"] = await _settings.GetAsync("widget_position", "bottom-right", ct),
                 ["widget_greeting"] = await _settings.GetAsync("widget_greeting", "Hi there! How can we help?", ct),
                 [WidgetOriginPolicy.SettingKey] = await _settings.GetAsync(WidgetOriginPolicy.SettingKey, string.Empty, ct),
+                ["two_factor_required"] = Authorization.AccessFeatures.Truthy(await _settings.GetAsync("two_factor_required", "0", ct)),
             },
             supported_settings = SupportedSettings,
             departments = await _present.DepartmentOptionsAsync(ct),

@@ -2407,6 +2407,44 @@ namespace Escalated.Migrations.Sqlite
                     b.ToTable("escalated_ticket_tag", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.TwoFactor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("LastUsedStep")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RecoveryCodes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Secret")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_two_factors", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Webhook", b =>
                 {
                     b.Property<int>("Id")

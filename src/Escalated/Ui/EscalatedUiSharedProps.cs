@@ -37,10 +37,13 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
     private readonly EscalatedOptions _options;
     private readonly AccessFeatures _features;
     private readonly AccessControl _access;
+    private readonly TwoFactorService _twoFactor;
 
     public EscalatedUiSharedProps(EscalatedDbContext db, SettingsService settings, IAuthorizationService authorization,
-        IUserDirectory users, IOptions<EscalatedOptions> options, AccessFeatures features, AccessControl access)
+        IUserDirectory users, IOptions<EscalatedOptions> options, AccessFeatures features, AccessControl access,
+        TwoFactorService twoFactor)
     {
+        _twoFactor = twoFactor;
         _features = features;
         _access = access;
         _db = db;
@@ -73,6 +76,7 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
             // permissions is on; ['*'] for staff while it is off (the gates decide everything).
             ["permissions"] = userId is null ? new List<string>() : await _access.SharedAsync(userId, isAdmin || isAgent, ct),
             ["features"] = Features(),
+            ["two_factor_required"] = (isAdmin || isAgent) && await _twoFactor.RequiredAsync(ct),
             ["guest_tickets_enabled"] = await GuestSettings.IsOnAsync(_settings, GuestSettings.GuestTicketsEnabled, ct),
             ["show_powered_by"] = await GuestSettings.IsOnAsync(_settings, "show_powered_by", ct),
             ["knowledge_base_enabled"] = _options.KnowledgeBase.Enabled,

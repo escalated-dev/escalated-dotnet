@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- **Two-factor authentication is an install-level switch,**
+  `Escalated:Access:TwoFactor` / `ESCALATED_TWO_FACTOR`, default off. The new
+  migration `TwoFactor` (all three providers) adds `escalated_two_factors`; run
+  `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`, then set
+  the switch. Set `ESCALATED_TWO_FACTOR_REQUIRED=true` (or the setting) only
+  after telling staff. The old admin-only JSON endpoints
+  `POST support/admin/two-factor/setup` and `.../verify`, which stored nothing,
+  are removed; enrolment is now the `Admin/Settings/TwoFactor` page.
+  `TwoFactorService` was rewritten (Otp.NET, Data Protection) and its earlier
+  stateless methods are gone. Enrolments are encrypted with the host's Data
+  Protection key ring, which must be stable and shared across instances.
 - **Roles and permissions is now an install-level switch,**
   `Escalated:Access:RolesPermissions` / `ESCALATED_ROLES_PERMISSIONS`, default
   off (ADR 2026-10-29-configurable-access-features). Off, the roles screens
@@ -38,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named in `Command`.
 
 ### Added
+- Two-factor authentication is enforced while `ESCALATED_TWO_FACTOR` is on:
+  TOTP enrolment for every staff user (`Admin/Settings/TwoFactor`), a
+  challenge after the host's login on every admin and agent page
+  (`Auth/TwoFactorChallenge`, codes single-use, recovery codes, throttled),
+  and an optional "required" mode (`two_factor_required`). Admin > Settings
+  accepts a post with only `two_factor_required`, as escalated-laravel #275.
 - Roles and permissions are enforced while `ESCALATED_ROLES_PERMISSIONS` is
   on: every admin, agent and staff API route also needs its permission
   (`Escalated.Authorization.RoutePermissions`, escalated-laravel's map; an
