@@ -124,3 +124,63 @@ agent page.
 
 With the switch off nobody is challenged, the enrolment and challenge routes
 answer 404, and stored enrolments are kept.
+
+## Single sign-on
+
+With `ESCALATED_SSO` on (`Escalated:Access:Sso`), users can sign in through the
+provider chosen in Admin > Settings > SSO (`sso_provider`: `none`, `saml`,
+`oauth`, `jwt`). The page (`Admin/Settings/SsoSettings`) shows secrets masked as
+`********` (posting the mask back keeps the stored value) and lists the
+endpoints to give the identity provider. With `none`, `{prefix}/sso/login`
+answers 404; a provider's routes answer 404 while another is chosen.
+
+| Route | Use |
+|---|---|
+| `GET {prefix}/sso/login` | Start sign-in with the configured provider |
+| `GET {prefix}/sso/saml/metadata` | SP metadata XML; its URL is the default SP entity ID |
+| `POST {prefix}/sso/saml/acs` | SAML assertion consumer (HTTP-POST binding) |
+| `GET {prefix}/sso/oauth/callback` | OAuth 2 / OIDC redirect URI |
+| `GET\|POST {prefix}/sso/jwt/callback` | JWT hand-off (`jwt` parameter) |
+
+- **SAML** (`System.Security.Cryptography.Xml`): the IdP certificate
+  (`sso_certificate`) must be configured; the single assertion must carry a
+  signature by it over the whole assertion (a signed Response alone, a key in
+  `KeyInfo`, `EncryptedAssertion` and duplicate IDs are refused); `Issuer` must
+  be `sso_entity_id`; `Audience` must name the SP entity ID; `Destination` and
+  the bearer `Recipient` must be the ACS URL; the validity windows must hold
+  (`Sso.ClockSkew`, default 120 s, at most 300); `InResponseTo` must be an
+  AuthnRequest issued in the last 10 minutes (IdP-initiated responses only with
+  `Sso.AllowIdpInitiated`); the assertion ID is single-use. Issued and used IDs
+  live in `escalated_sso_message_ids` (migration `SsoMessageIds`).
+- **OAuth 2 / OIDC** (Duende.IdentityModel): authorization code with a
+  single-use `state` and a PKCE (`S256`) verifier kept in a data-protected
+  cookie for 10 minutes; the code is exchanged at `sso_oauth_token_url` and
+  the profile read from `sso_oauth_userinfo_url`. `email_verified: false` is
+  refused.
+- **JWT** (Microsoft.IdentityModel.JsonWebTokens): `alg` must be
+  `sso_jwt_algorithm` (HS* with `sso_jwt_secret`, at least 32 bytes for
+  HS256; RS* with the PEM public key or certificate in `sso_jwt_secret`);
+  `exp` is required; `nbf`/`iat` hold within the skew; `aud` must be
+  `Sso.JwtAudience` (default the install's base URL); `jti` is required and
+  single-use.
+- **Users.** The email comes from `sso_attr_email` (SAML falls back to an
+  email-shaped NameID), the name from `sso_attr_name`, the role from
+  `sso_attr_role`. The host user is found by `Sso.FindUserByEmail` (default:
+  the `IUserDirectory` entry with that email, case-insensitive). An unknown
+  email is refused unless `Sso.CreateUsers` is on and `Sso.CreateUser` creates
+  the user (with an unusable password). The user is signed in with
+  `Sso.SignIn` (default: `HttpContext.SignInAsync` on the default sign-in
+  scheme with a `NameIdentifier` claim).
+- **Roles.** With roles & permissions on and `Sso.SyncRoles` on, a role
+  attribute naming an existing Escalated role replaces the user's roles (the
+  `escalated-admin` / `escalated-agent` gate roles are kept and never granted).
+  An unknown value changes nothing.
+- On success the two-factor mark is cleared (SSO does not skip the
+  challenge) and the browser goes to `Sso.RedirectTo` (default
+  `{prefix}/agent`). Every refusal answers a generic 403 and logs the reason.
+- Install-level options (each with an `ESCALATED_SSO_*` env fallback):
+  `SpEntityId`, `AllowIdpInitiated`, `JwtAudience`, `ClockSkew`,
+  `CreateUsers`, `SyncRoles`, `RedirectTo`, `BaseUrl`.
+
+With the switch off every `{prefix}/sso/*` route and the settings page answer
+404. Escalated does not turn off the host's own password login.

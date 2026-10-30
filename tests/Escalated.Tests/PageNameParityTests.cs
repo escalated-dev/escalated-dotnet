@@ -128,7 +128,6 @@ public class PageNameParityTests
     private static readonly string[] NotYetRendered =
     {
         "Escalated/Admin/Settings/Sandbox",
-        "Escalated/Admin/Settings/SsoSettings",
         "Escalated/Admin/Workflows/Builder",
         "Escalated/Error",
     };

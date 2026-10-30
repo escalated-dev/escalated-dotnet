@@ -2118,6 +2118,37 @@ namespace Escalated.Migrations.SqlServer
                     b.ToTable("escalated_sla_policies", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.SsoMessageId", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("ExpiresAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("MessageId")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("nvarchar(191)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("Kind", "MessageId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_sso_message_ids", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Tag", b =>
                 {
                     b.Property<int>("Id")

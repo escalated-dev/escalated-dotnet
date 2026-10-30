@@ -154,6 +154,57 @@ public class EscalatedOptions
 
     /// <summary><c>Escalated:TwoFactor</c>: used while <c>Access.TwoFactor</c> is on.</summary>
     public TwoFactorOptions TwoFactor { get; set; } = new();
+
+    /// <summary><c>Escalated:Sso</c>: the install-level rules around single sign-on, used while <c>Access.Sso</c> is on.</summary>
+    public SsoOptions Sso { get; set; } = new();
+}
+
+/// <summary>
+/// The install-level SSO rules (ADR 2026-10-29-configurable-access-features). The provider and its
+/// fields are chosen in Admin &gt; Settings &gt; SSO. Each unset value falls back to its
+/// <c>ESCALATED_SSO_*</c> environment variable. Escalated owns no users or sessions, so the host
+/// supplies how a user is found, created and signed in (defaults described on each).
+/// </summary>
+public class SsoOptions
+{
+    /// <summary>SAML SP entity ID. Default: the SP metadata URL.</summary>
+    public string? SpEntityId { get; set; }
+
+    /// <summary>Accept IdP-initiated (unsolicited) SAML responses. Default false.</summary>
+    public bool? AllowIdpInitiated { get; set; }
+
+    /// <summary>The <c>aud</c> a JWT must carry. Default: the install's base URL.</summary>
+    public string? JwtAudience { get; set; }
+
+    /// <summary>Allowed clock drift in seconds, at most 300. Default 120.</summary>
+    public int? ClockSkew { get; set; }
+
+    /// <summary>Create a host user for an unknown email (needs <see cref="CreateUser"/>). Default false.</summary>
+    public bool? CreateUsers { get; set; }
+
+    /// <summary>Replace the user's Escalated roles from the role attribute (roles and permissions on). Default false.</summary>
+    public bool? SyncRoles { get; set; }
+
+    /// <summary>Where a successful sign-in goes. Default <c>{prefix}/agent</c>.</summary>
+    public string? RedirectTo { get; set; }
+
+    /// <summary>This install's base URL for the SP endpoints. Default: the request's.</summary>
+    public string? BaseUrl { get; set; }
+
+    /// <summary>
+    /// The host user id for an email, matched case-insensitively. Default: the
+    /// <see cref="Services.IUserDirectory"/> entry whose email matches.
+    /// </summary>
+    public Func<string, CancellationToken, Task<string?>>? FindUserByEmail { get; set; }
+
+    /// <summary>Creates a host user (email, name) with an unusable password and returns its id. Unset: never create.</summary>
+    public Func<string, string, CancellationToken, Task<string?>>? CreateUser { get; set; }
+
+    /// <summary>
+    /// Signs the user in on the host. Default: <c>HttpContext.SignInAsync</c> on the default sign-in
+    /// scheme (for example cookie authentication) with a <c>NameIdentifier</c> claim.
+    /// </summary>
+    public Func<Microsoft.AspNetCore.Http.HttpContext, string, Task>? SignIn { get; set; }
 }
 
 public class TwoFactorOptions

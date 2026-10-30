@@ -2025,6 +2025,35 @@ namespace Escalated.Migrations.Sqlite
                     b.ToTable("escalated_sla_policies", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.SsoMessageId", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ExpiresAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MessageId")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("Kind", "MessageId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_sso_message_ids", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Tag", b =>
                 {
                     b.Property<int>("Id")

@@ -154,6 +154,7 @@ public class EscalatedDbContext : DbContext
     public DbSet<Plugin> Plugins => Set<Plugin>();
     public DbSet<PluginStoreRecord> PluginStore => Set<PluginStoreRecord>();
     public DbSet<TwoFactor> TwoFactors => Set<TwoFactor>();
+    public DbSet<SsoMessageId> SsoMessageIds => Set<SsoMessageId>();
     public DbSet<CustomField> CustomFields => Set<CustomField>();
     public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
     public DbSet<CustomObject> CustomObjects => Set<CustomObject>();

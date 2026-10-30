@@ -326,6 +326,13 @@ public static class EscalatedModelConfiguration
             e.Ignore(t => t.IsConfirmed);
         });
 
+        modelBuilder.Entity<SsoMessageId>(e =>
+        {
+            e.ToTable($"{prefix}sso_message_ids");
+            e.HasIndex(m => new { m.Kind, m.MessageId }).IsUnique();
+            e.HasIndex(m => m.ExpiresAt);
+        });
+
         modelBuilder.Entity<CustomField>(e =>
         {
             e.ToTable($"{prefix}custom_fields");
