@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Escalated.Data;
 using Escalated.Models;
@@ -47,12 +48,21 @@ public class AdminUsersController : ControllerBase
     private readonly EscalatedDbContext _db;
     private readonly IUserDirectory _directory;
     private readonly EscalatedOptions _options;
+    private readonly AccessFeatures _features;
 
-    public AdminUsersController(EscalatedDbContext db, IUserDirectory directory, IOptions<EscalatedOptions>? options = null)
+    /// <summary>
+    /// The gate roles: who reaches the admin and agent areas. They are not Escalated roles
+    /// (they hold no permissions), so the roles picker neither lists nor changes them.
+    /// </summary>
+    private static readonly string[] GateRoleSlugs = { AdminRoleSlug, AgentRoleSlug };
+
+    public AdminUsersController(EscalatedDbContext db, IUserDirectory directory, IOptions<EscalatedOptions>? options = null,
+        AccessFeatures? features = null)
     {
         _db = db;
         _directory = directory;
         _options = options?.Value ?? new EscalatedOptions();
+        _features = features ?? new AccessFeatures(Options.Create(_options));
     }
 
     /// <summary>A request for the page rather than the JSON, with the UI on.</summary>
@@ -119,11 +129,46 @@ public class AdminUsersController : ControllerBase
         if (IsPage)
         {
             var query = new Dictionary<string, string?> { ["search"] = string.IsNullOrEmpty(term) ? null : term };
-            return UiResults.Render("Escalated/Admin/Users/Index", new
+            var pageRows = rows.Cast<object?>().ToList();
+            object? roleOptions = null;
+
+            // Escalated roles, only while roles & permissions is enforced: each user's role
+            // slugs, and the roles an admin can give them (escalated-laravel's UserController).
+            if (_features.RolesPermissions)
             {
-                users = UiPresenter.Paginator(rows.Cast<object?>().ToList(), total, safePage, perPage, Request.Path, query),
-                filters = new Dictionary<string, object?> { ["search"] = term },
-                currentUserId = this.CurrentUserId(),
+                var held = ids.Count == 0
+                    ? new List<RoleAssignment>()
+                    : await _db.RoleUsers.AsNoTracking()
+                        .Where(ru => ids.Contains(ru.UserId) && ru.Role != null && !GateRoleSlugs.Contains(ru.Role.Slug))
+                        .Select(ru => new RoleAssignment(ru.UserId, ru.Role!.Slug))
+                        .ToListAsync(ct);
+                pageRows = rows.Select(row => (object?)new Dictionary<string, object?>
+                {
+                    ["id"] = row.Id,
+                    ["name"] = row.Name,
+                    ["email"] = row.Email,
+                    ["is_admin"] = row.IsAdmin,
+                    ["is_agent"] = row.IsAgent,
+                    ["roles"] = held.Where(h => h.UserId == row.Id).Select(h => h.Slug).Distinct()
+                        .OrderBy(slug => slug, StringComparer.Ordinal).ToList(),
+                }).ToList();
+                roleOptions = (await _db.Roles.AsNoTracking()
+                        .Where(r => !GateRoleSlugs.Contains(r.Slug))
+                        .Select(r => new { r.Id, r.Name, r.Slug })
+                        .ToListAsync(ct))
+                    .OrderBy(r => r.Name, StringComparer.Ordinal).ThenBy(r => r.Id)
+                    .Select(r => new Dictionary<string, object?> { ["id"] = r.Id, ["name"] = r.Name, ["slug"] = r.Slug })
+                    .ToList();
+            }
+
+            return UiResults.Render("Escalated/Admin/Users/Index", new Dictionary<string, object?>
+            {
+                ["users"] = UiPresenter.Paginator(pageRows, total, safePage, perPage, Request.Path, query),
+                ["filters"] = new Dictionary<string, object?> { ["search"] = term },
+                ["currentUserId"] = this.CurrentUserId(),
+                ["notice"] = null,
+                // Null while the switch is off: the screen then shows no roles column.
+                ["roles"] = roleOptions,
             });
         }
 
@@ -228,6 +273,105 @@ public class AdminUsersController : ControllerBase
         await _db.SaveChangesAsync(ct);
 
         return IsPage ? UiResults.Back(HttpContext, IndexUrl, success: "User updated.") : Ok(new { message = "User updated." });
+    }
+
+    /// <summary>
+    /// PUT /support/admin/users/{userId}/roles: replaces the user's Escalated roles with
+    /// <c>role_ids</c>, as escalated-laravel's <c>UserController::updateRoles</c>. Only while
+    /// roles and permissions is on (404 otherwise, <see cref="EnsureAccessFeaturesFilter"/>);
+    /// needs <c>role.manage</c> (<see cref="RoutePermissions"/>). The gate roles
+    /// (<c>escalated-admin</c>, <c>escalated-agent</c>) are kept and cannot be given here.
+    /// </summary>
+    [HttpPut("{userId}/roles")]
+    public async Task<IActionResult> UpdateRoles(string userId, [FromBody] JsonElement body, CancellationToken ct = default)
+    {
+        var (roleIds, errors) = await ValidateRoleIdsAsync(body, ct);
+        if (errors is not null)
+        {
+            return IsPage
+                ? UiResults.Back(HttpContext, IndexUrl, errors: errors)
+                : UnprocessableEntity(new { message = errors.Values.First(), errors });
+        }
+
+        var target = await _directory.FindAsync(userId, ct);
+        if (target is null)
+        {
+            return NotFound(new { error = "User not found." });
+        }
+
+        // Taking away your own role management would leave nobody able to undo it.
+        var currentUserId = this.CurrentUserId();
+        if (!string.IsNullOrEmpty(currentUserId) && currentUserId == target.Id
+            && !await _db.RolePermissions.AnyAsync(rp => roleIds.Contains(rp.RoleId) && rp.Permission != null && rp.Permission.Slug == "role.manage", ct))
+        {
+            const string message = "You cannot remove your own role management.";
+            return IsPage ? UiResults.Back(HttpContext, IndexUrl, error: message) : BadRequest(new { error = message });
+        }
+
+        var held = await _db.RoleUsers
+            .Where(ru => ru.UserId == target.Id && ru.Role != null && !GateRoleSlugs.Contains(ru.Role.Slug))
+            .ToListAsync(ct);
+        _db.RoleUsers.RemoveRange(held);
+        foreach (var roleId in roleIds)
+        {
+            _db.RoleUsers.Add(new RoleUser { UserId = target.Id, RoleId = roleId });
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return IsPage ? UiResults.Back(HttpContext, IndexUrl, success: "User updated.") : Ok(new { message = "User updated." });
+    }
+
+    /// <summary>
+    /// Laravel's rules for <c>role_ids</c>: present, an array, of integers naming roles (here,
+    /// never a gate role). Errors are keyed as Laravel keys them (<c>role_ids</c>, <c>role_ids.N</c>).
+    /// </summary>
+    private async Task<(List<int> Ids, Dictionary<string, string>? Errors)> ValidateRoleIdsAsync(JsonElement body, CancellationToken ct)
+    {
+        static (List<int>, Dictionary<string, string>?) Fail(string key, string message) =>
+            (new List<int>(), new Dictionary<string, string> { [key] = message });
+
+        if (body.ValueKind != JsonValueKind.Object || !body.TryGetProperty("role_ids", out var raw) || raw.ValueKind == JsonValueKind.Null)
+        {
+            return Fail("role_ids", "The role ids field must be present.");
+        }
+
+        if (raw.ValueKind != JsonValueKind.Array)
+        {
+            return Fail("role_ids", "The role ids field must be an array.");
+        }
+
+        var ids = new List<int>();
+        var index = 0;
+        foreach (var item in raw.EnumerateArray())
+        {
+            int id;
+            var ok = item.ValueKind == JsonValueKind.Number
+                ? item.TryGetInt32(out id)
+                : int.TryParse(item.ValueKind == JsonValueKind.String ? item.GetString() : null,
+                    System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out id);
+            if (!ok)
+            {
+                return Fail($"role_ids.{index}", $"The role_ids.{index} field must be an integer.");
+            }
+
+            ids.Add(id);
+            index++;
+        }
+
+        var known = ids.Count == 0
+            ? new List<int>()
+            : await _db.Roles.AsNoTracking()
+                .Where(r => ids.Contains(r.Id) && !GateRoleSlugs.Contains(r.Slug))
+                .Select(r => r.Id)
+                .ToListAsync(ct);
+        var unknown = ids.FindIndex(id => !known.Contains(id));
+        if (unknown >= 0)
+        {
+            return Fail($"role_ids.{unknown}", $"The selected role_ids.{unknown} is invalid.");
+        }
+
+        return (ids.Distinct().ToList(), null);
     }
 
     private async Task<Role> EnsureRoleAsync(string slug, string name, CancellationToken ct)
