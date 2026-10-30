@@ -58,7 +58,8 @@ A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into
 - **Capacity management** -- Per-agent workload limits by channel
 - **Skill-based routing** -- Match agents to tickets by skill tags
 - **CSAT ratings** -- Satisfaction surveys on resolved tickets
-- **2FA** -- TOTP setup and verification with recovery codes
+- **2FA** -- TOTP enrolment for staff, a challenge after sign-in and recovery codes, behind the install-level `ESCALATED_TWO_FACTOR` switch ([access control](docs/access-control.md))
+- **Single sign-on** -- SAML 2, OAuth 2 / OIDC and JWT sign-in behind the install-level `ESCALATED_SSO` switch ([access control](docs/access-control.md))
 - **Guest access** -- Anonymous ticket creation with magic token lookup
 - **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 
