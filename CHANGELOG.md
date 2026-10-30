@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-10-30
+
 ### Upgrading
 - **Single sign-on is an install-level switch,** `Escalated:Access:Sso` /
   `ESCALATED_SSO`, default off. The new migration `SsoMessageIds` (all three
