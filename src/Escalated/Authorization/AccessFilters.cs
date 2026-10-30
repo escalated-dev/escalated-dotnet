@@ -18,6 +18,7 @@ public sealed class EnsureAccessFeaturesFilter : IAsyncResourceFilter
     internal static readonly Dictionary<string, string[]> Routes = new()
     {
         [AccessFeatures.RolesPermissionsKey] = new[] { "/P/admin/roles", "/P/admin/roles/**" },
+        [AccessFeatures.TwoFactorKey] = new[] { "/P/admin/settings/two-factor", "/P/admin/settings/two-factor/**", "/P/two-factor/**" },
     };
 
     private readonly AccessFeatures _features;

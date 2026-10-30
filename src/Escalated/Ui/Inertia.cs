@@ -108,11 +108,17 @@ public sealed class InertiaResult : IActionResult
             await shared.ShareAsync(http, props, ct);
         }
 
-        props["flash"] = new Dictionary<string, object?>
+        var flashProp = new Dictionary<string, object?>
         {
             ["success"] = flash.Flash.GetValueOrDefault("success"),
             ["error"] = flash.Flash.GetValueOrDefault("error"),
         };
+        foreach (var (key, value) in flash.Data)
+        {
+            flashProp[key] = value;
+        }
+
+        props["flash"] = flashProp;
         props["errors"] = flash.Errors;
 
         foreach (var (key, value) in Props)

@@ -151,6 +151,21 @@ public class EscalatedOptions
     /// <see cref="Authorization.AccessFeatures"/> and <c>docs/access-control.md</c>.
     /// </summary>
     public Authorization.AccessOptions Access { get; set; } = new();
+
+    /// <summary><c>Escalated:TwoFactor</c>: used while <c>Access.TwoFactor</c> is on.</summary>
+    public TwoFactorOptions TwoFactor { get; set; } = new();
+}
+
+public class TwoFactorOptions
+{
+    /// <summary>
+    /// Whether every staff user must enrol. Unset: <c>ESCALATED_TWO_FACTOR_REQUIRED</c>, else false.
+    /// The <c>two_factor_required</c> setting wins when an admin has saved it.
+    /// </summary>
+    public bool? Required { get; set; }
+
+    /// <summary>The issuer an authenticator app shows.</summary>
+    public string Issuer { get; set; } = "Escalated";
 }
 
 /// <summary>

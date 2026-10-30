@@ -2514,6 +2514,46 @@ namespace Escalated.Migrations.Postgres
                     b.ToTable("escalated_ticket_tag", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.TwoFactor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("LastUsedStep")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RecoveryCodes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Secret")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_two_factors", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.Webhook", b =>
                 {
                     b.Property<int>("Id")

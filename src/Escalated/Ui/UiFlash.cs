@@ -17,7 +17,10 @@ public sealed class UiFlashData
     public Dictionary<string, string> Flash { get; set; } = new();
     public Dictionary<string, string> Errors { get; set; } = new();
 
-    public bool IsEmpty => Flash.Count == 0 && Errors.Count == 0;
+    /// <summary>Structured flash values (<c>two_factor_setup</c>), shared as <c>flash.&lt;key&gt;</c>.</summary>
+    public Dictionary<string, JsonElement> Data { get; set; } = new();
+
+    public bool IsEmpty => Flash.Count == 0 && Errors.Count == 0 && Data.Count == 0;
 }
 
 public static class UiFlash
@@ -31,6 +34,14 @@ public static class UiFlash
     {
         var data = Pending(context);
         data.Flash[key] = message;
+        Write(context, data);
+    }
+
+    /// <summary>Queues a structured value for the next page, as <c>flash.&lt;key&gt;</c>.</summary>
+    public static void PutData(HttpContext context, string key, object value)
+    {
+        var data = Pending(context);
+        data.Data[key] = JsonSerializer.SerializeToElement(value);
         Write(context, data);
     }
 

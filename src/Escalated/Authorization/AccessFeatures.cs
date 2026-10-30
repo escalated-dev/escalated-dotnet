@@ -27,7 +27,7 @@ public sealed class AccessFeatures
     public const string SsoKey = "sso";
 
     /// <summary>The features this port enforces.</summary>
-    internal static readonly HashSet<string> Enforced = new() { RolesPermissionsKey };
+    internal static readonly HashSet<string> Enforced = new() { RolesPermissionsKey, TwoFactorKey };
 
     private readonly IOptions<EscalatedOptions> _options;
 
