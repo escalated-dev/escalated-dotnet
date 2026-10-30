@@ -17,7 +17,7 @@ public sealed class EnsureAccessFeaturesFilter : IAsyncResourceFilter
     /// <summary>Each feature's route templates, as <see cref="RoutePermissions"/> reads them.</summary>
     internal static readonly Dictionary<string, string[]> Routes = new()
     {
-        [AccessFeatures.RolesPermissionsKey] = new[] { "/P/admin/roles", "/P/admin/roles/**" },
+        [AccessFeatures.RolesPermissionsKey] = new[] { "/P/admin/roles", "/P/admin/roles/**", "/P/admin/users/*/roles" },
         [AccessFeatures.TwoFactorKey] = new[] { "/P/admin/settings/two-factor", "/P/admin/settings/two-factor/**", "/P/two-factor/**" },
         [AccessFeatures.SsoKey] = new[] { "/P/admin/settings/sso", "/P/admin/settings/sso/**", "/P/sso/**" },
     };

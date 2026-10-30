@@ -69,6 +69,18 @@ change is needed). Seeding only adds what is missing.
 | `agent` | `ticket.*`, `reply.*`, `kb.view`, `report.view`, `macro.view`, `macro.create`, `tag.view`, `custom_field.view`, `audit.view` |
 | `light_agent` | `ticket.view`, `reply.create`, `reply.create_internal`, `kb.view`, `macro.view`, `tag.view` |
 
+### Giving users roles from Admin > Users
+
+While the switch is on, **Admin > Users** shows each user's roles and an admin
+with `role.manage` can tick and untick them. The screen saves with
+`PUT C:/Program Files/Git/support/admin/users/{userId}/roles` and `{ "role_ids": [...] }`, which replaces the user's roles with
+exactly that set, as escalated-laravel. The ids must be existing roles (422
+otherwise), and you cannot take away your own `role.manage` ("You cannot remove
+your own role management."). While the switch is off the route answers 404 and
+the screen shows no roles. The gate roles `escalated-admin` and
+`escalated-agent` are not listed, cannot be given there and are kept as they
+are (the Admin and Agent toggles manage them).
+
 ### Turning it on
 
 1. Seed (start the app once with the switch on, or call
