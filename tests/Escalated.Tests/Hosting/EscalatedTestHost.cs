@@ -57,7 +57,8 @@ public sealed class EscalatedTestHost : IAsyncDisposable
     public static async Task<EscalatedTestHost> StartAsync(
         Action<EscalatedOptions>? configureOptions = null,
         Action<IServiceCollection>? configureServices = null,
-        Action<WebApplication>? configureApp = null)
+        Action<WebApplication>? configureApp = null,
+        string environment = "Testing")
     {
         var database = TestDatabase.LeaseDatabase();
 
@@ -66,7 +67,7 @@ public sealed class EscalatedTestHost : IAsyncDisposable
             // Not Development: that environment adds the developer exception page,
             // which turns an unhandled exception into a 500 page instead of letting
             // it reach the test.
-            var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing" });
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environment });
             builder.WebHost.UseTestServer();
             builder.Logging.ClearProviders();
 

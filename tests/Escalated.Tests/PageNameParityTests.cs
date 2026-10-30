@@ -129,7 +129,6 @@ public class PageNameParityTests
     {
         "Escalated/Admin/Settings/Sandbox",
         "Escalated/Admin/Workflows/Builder",
-        "Escalated/Error",
     };
 
     [Fact]
