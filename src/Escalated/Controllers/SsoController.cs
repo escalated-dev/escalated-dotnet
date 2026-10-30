@@ -30,6 +30,7 @@ namespace Escalated.Controllers;
 /// </summary>
 [ApiController]
 [Route("support/sso")]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class SsoController : ControllerBase
 {
     internal const string OAuthCookie = "escalated_sso_oauth";
