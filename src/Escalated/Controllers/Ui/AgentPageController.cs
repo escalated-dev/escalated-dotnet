@@ -119,11 +119,53 @@ public class AgentPageController : TicketPageControllerBase
             return row;
         }).ToList();
 
-        props["agents"] = await AssignableAgentsAsync(ticket, ct);
+        props["agents"] = (await AssignableAgentsAsync(ticket, ct))
+            .Select(agent => new Dictionary<string, object?> { ["id"] = agent.GetValueOrDefault("id"), ["name"] = agent.GetValueOrDefault("name") })
+            .ToList();
+        if (props.GetValueOrDefault("ticket") is Dictionary<string, object?> ticketProps)
+        {
+            ticketProps["requester_tickets"] = await RequesterTicketsAsync(ticket, ct);
+        }
 
         var queue = await _inbox.RecalledAsync(HttpContext, userId, ct);
         props["queue"] = queue.Prop();
         props["inbox"] = await _inbox.InboxAsync(userId, queue, ct);
+    }
+
+    /// <summary>
+    /// The requester's five most recent other tickets the agent may see (the
+    /// ticket visibility filter applies), matched as <c>requester_ticket_count</c>
+    /// is: the requester, or a guest's email. Newest first; none without a requester.
+    /// </summary>
+    private async Task<List<Dictionary<string, object?>>> RequesterTicketsAsync(Ticket ticket, CancellationToken ct)
+    {
+        var others = Db.Tickets.AsNoTracking().Where(t => t.Id != ticket.Id);
+        if (ticket.RequesterId is not null)
+        {
+            others = others.Where(t => t.RequesterType == ticket.RequesterType && t.RequesterId == ticket.RequesterId);
+        }
+        else if (ticket.GuestEmail is not null)
+        {
+            others = others.Where(t => t.GuestEmail == ticket.GuestEmail);
+        }
+        else
+        {
+            return new List<Dictionary<string, object?>>();
+        }
+
+        var rows = await others.OrderByDescending(t => t.CreatedAt).ThenByDescending(t => t.Id).Take(5)
+            .Select(t => new { t.Id, t.Reference, t.Subject, t.Status, t.CreatedAt, t.UpdatedAt })
+            .ToListAsync(ct);
+
+        return rows.Select(t => new Dictionary<string, object?>
+        {
+            ["id"] = t.Id,
+            ["reference"] = t.Reference,
+            ["subject"] = t.Subject,
+            ["status"] = t.Status.ToValue(),
+            ["created_at"] = t.CreatedAt,
+            ["updated_at"] = t.UpdatedAt,
+        }).ToList();
     }
 
     /// <summary>

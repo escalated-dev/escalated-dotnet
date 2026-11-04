@@ -1,7 +1,5 @@
-using System.Globalization;
 using Escalated.Authorization;
 using Escalated.Models;
-using Escalated.Services;
 using Escalated.Ui;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,12 +19,9 @@ namespace Escalated.Controllers.Ui;
 [EscalatedPage]
 public class AdminTicketPageController : TicketPageControllerBase
 {
-    private readonly TicketSnoozeService _snooze;
-
-    public AdminTicketPageController(TicketPageServices services, TicketSnoozeService snooze)
+    public AdminTicketPageController(TicketPageServices services)
         : base(services)
     {
-        _snooze = snooze;
     }
 
     protected override string Area => "admin";
@@ -68,40 +63,4 @@ public class AdminTicketPageController : TicketPageControllerBase
         ["created_at"] = view.CreatedAt,
         ["updated_at"] = view.UpdatedAt,
     };
-
-    /// <summary>Snoozes the ticket until <c>snoozed_until</c>, which must be in the future.</summary>
-    [HttpPost("tickets/" + Reference + "/snooze")]
-    public async Task<IActionResult> Snooze(string reference, CancellationToken ct)
-    {
-        var ticket = await FindAsync(reference, ct);
-        if (ticket is null) return NotFound();
-
-        var input = await UiInput.ReadAsync(Request, ct);
-        if (!DateTime.TryParse(input.String("snoozed_until"), CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var until))
-        {
-            return UiResults.Back(HttpContext, ShowUrl(ticket),
-                errors: new Dictionary<string, string> { ["snoozed_until"] = "The snoozed until field must be a valid date." });
-        }
-
-        if (until <= DateTime.UtcNow)
-        {
-            return UiResults.Back(HttpContext, ShowUrl(ticket),
-                errors: new Dictionary<string, string> { ["snoozed_until"] = "The snoozed until field must be a date after now." });
-        }
-
-        await _snooze.SnoozeAsync(ticket, until, this.CurrentUserId(), ct);
-        return UiResults.Back(HttpContext, ShowUrl(ticket),
-            success: $"Ticket snoozed until {until.ToString("MMM d, yyyy h:mmtt", CultureInfo.InvariantCulture).ToLowerInvariant()} UTC.");
-    }
-
-    [HttpPost("tickets/" + Reference + "/unsnooze")]
-    public async Task<IActionResult> Unsnooze(string reference, CancellationToken ct)
-    {
-        var ticket = await FindAsync(reference, ct);
-        if (ticket is null) return NotFound();
-
-        await _snooze.UnsnoozeAsync(ticket, this.CurrentUserId(), ct);
-        return UiResults.Back(HttpContext, ShowUrl(ticket), success: "Ticket unsnoozed.");
-    }
 }
