@@ -190,8 +190,12 @@ public partial class AdminPageController : ControllerBase
     }
 
     [HttpGet("departments/create")]
-    public IActionResult CreateDepartment() =>
-        UiResults.Render("Escalated/Admin/Departments/Form", new Dictionary<string, object?> { ["department"] = null });
+    public async Task<IActionResult> CreateDepartment(CancellationToken ct) =>
+        UiResults.Render("Escalated/Admin/Departments/Form", new Dictionary<string, object?>
+        {
+            ["department"] = null,
+            ["schedules"] = await _present.ScheduleOptionsAsync(ct),
+        });
 
     [HttpGet("departments/{id:int}/edit")]
     public async Task<IActionResult> EditDepartment(int id, CancellationToken ct)
@@ -207,7 +211,11 @@ public partial class AdminPageController : ControllerBase
         }
         item["agents"] = agents;
 
-        return UiResults.Render("Escalated/Admin/Departments/Form", new { department = item });
+        return UiResults.Render("Escalated/Admin/Departments/Form", new
+        {
+            department = item,
+            schedules = await _present.ScheduleOptionsAsync(ct),
+        });
     }
 
     [HttpPost("departments")]

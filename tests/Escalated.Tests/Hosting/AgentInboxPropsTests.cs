@@ -387,7 +387,7 @@ public class AgentInboxPropsTests
         // TicketShow also carries the ticket's custom field values, which this
         // package has sent there since custom fields shipped.
         var show = (await PropsAsync(client, $"{Index}/{ticket.Reference}")).EnumerateObject().Select(p => p.Name).Except(dashboard).Order();
-        Assert.Equal(["cannedResponses", "customActions", "custom_fields", "departments", "followers_count", "inbox", "is_following", "macros", "queue", "tags", "ticket"],
+        Assert.Equal(["agents", "cannedResponses", "customActions", "custom_fields", "departments", "followers_count", "inbox", "is_following", "macros", "queue", "tags", "ticket"],
             show.Order(StringComparer.Ordinal));
     }
 

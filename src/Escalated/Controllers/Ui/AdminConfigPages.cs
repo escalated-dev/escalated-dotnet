@@ -78,6 +78,7 @@ public partial class AdminPageController
         ["targeted"] = true,
         ["departments"] = await _present.DepartmentOptionsAsync(ct),
         ["ticketTypes"] = Ticket.ValidTypes,
+        ["schedules"] = await _present.ScheduleOptionsAsync(ct),
     };
 
     private static Dictionary<string, object?> SlaPolicy(SlaPolicy policy) => new()
