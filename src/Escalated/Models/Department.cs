@@ -21,6 +21,9 @@ public class Department
 
     public bool IsActive { get; set; } = true;
 
+    /// <summary>The business schedule this department's SLA business hours count against.</summary>
+    public int? BusinessScheduleId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

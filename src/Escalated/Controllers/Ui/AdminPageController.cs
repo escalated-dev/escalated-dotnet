@@ -240,6 +240,10 @@ public partial class AdminPageController : ControllerBase
         else if (name.Length > 255) errors["name"] = "The name may not be greater than 255 characters.";
         if (slug is { Length: > 255 }) errors["slug"] = "The slug may not be greater than 255 characters.";
 
+        // Only changes when sent, so a form without the schedule picker leaves it alone.
+        var sendsSchedule = input.Has("business_schedule_id");
+        var scheduleId = sendsSchedule ? await _present.BusinessScheduleIdAsync(input, errors, ct) : null;
+
         var formUrl = id is null ? $"{Prefix}/admin/departments/create" : $"{Prefix}/admin/departments/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
@@ -253,6 +257,7 @@ public partial class AdminPageController : ControllerBase
         department.Slug = slug;
         department.Description = input.String("description");
         department.IsActive = !input.Has("is_active") || input.Bool("is_active");
+        if (sendsSchedule) department.BusinessScheduleId = scheduleId;
         department.UpdatedAt = DateTime.UtcNow;
         if (id is null) _db.Departments.Add(department);
         await _db.SaveChangesAsync(ct);

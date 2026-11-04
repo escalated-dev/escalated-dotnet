@@ -812,6 +812,9 @@ namespace Escalated.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("BusinessScheduleId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -835,6 +838,8 @@ namespace Escalated.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessScheduleId");
 
                     b.HasIndex("Slug")
                         .IsUnique();
@@ -1985,6 +1990,9 @@ namespace Escalated.Migrations.Sqlite
                     b.Property<bool>("BusinessHoursOnly")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("BusinessScheduleId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -2019,6 +2027,8 @@ namespace Escalated.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessScheduleId");
 
                     b.HasIndex("DepartmentId", "TicketType");
 
@@ -2788,6 +2798,14 @@ namespace Escalated.Migrations.Sqlite
                     b.Navigation("Object");
                 });
 
+            modelBuilder.Entity("Escalated.Models.Department", b =>
+                {
+                    b.HasOne("Escalated.Models.BusinessSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Escalated.Models.DepartmentAgent", b =>
                 {
                     b.HasOne("Escalated.Models.Department", "Department")
@@ -3011,6 +3029,11 @@ namespace Escalated.Migrations.Sqlite
 
             modelBuilder.Entity("Escalated.Models.SlaPolicy", b =>
                 {
+                    b.HasOne("Escalated.Models.BusinessSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Escalated.Models.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")

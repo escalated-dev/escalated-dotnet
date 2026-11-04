@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using Escalated.Data;
 using Escalated.Models;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +20,7 @@ public class BusinessHoursCalculator
     /// </summary>
     public bool IsWithinBusinessHours(DateTime dateTimeUtc, BusinessSchedule schedule)
     {
-        var tz = TimeZoneInfo.FindSystemTimeZoneById(schedule.Timezone);
+        var tz = ZoneOf(schedule);
         var local = TimeZoneInfo.ConvertTimeFromUtc(dateTimeUtc, tz);
 
         if (IsHoliday(local, schedule)) return false;
@@ -36,7 +38,10 @@ public class BusinessHoursCalculator
     /// </summary>
     public DateTime AddBusinessHours(DateTime startUtc, double hours, BusinessSchedule schedule)
     {
-        var tz = TimeZoneInfo.FindSystemTimeZoneById(schedule.Timezone);
+        // A schedule with no open day counts calendar time, as escalated-laravel's calculator.
+        if (!HasOpenDay(schedule)) return startUtc.AddHours(hours);
+
+        var tz = ZoneOf(schedule);
         var current = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tz);
         var remainingMinutes = hours * 60;
         var maxIterations = 365;
@@ -56,8 +61,8 @@ public class BusinessHoursCalculator
                 continue;
             }
 
-            var dayStart = current.Date.Add(TimeSpan.Parse(daySchedule.Value.Start));
-            var dayEnd = current.Date.Add(TimeSpan.Parse(daySchedule.Value.End));
+            var dayStart = current.Date.Add(Clock(daySchedule.Value.Start));
+            var dayEnd = current.Date.Add(Clock(daySchedule.Value.End));
 
             if (current < dayStart)
                 current = dayStart;
@@ -84,23 +89,58 @@ public class BusinessHoursCalculator
         return TimeZoneInfo.ConvertTimeToUtc(current, tz);
     }
 
-    private (string Start, string End)? GetDaySchedule(DateTime local, BusinessSchedule schedule)
+    /// <summary>The schedule's zone; UTC when the zone is unknown, as escalated-laravel.</summary>
+    private static TimeZoneInfo ZoneOf(BusinessSchedule schedule)
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(schedule.Timezone);
+        }
+        catch (Exception e) when (e is TimeZoneNotFoundException or InvalidTimeZoneException or ArgumentException)
+        {
+            return TimeZoneInfo.Utc;
+        }
+    }
+
+    /// <summary>A wall-clock time of day; <c>24:00</c> is the next midnight.</summary>
+    private static TimeSpan Clock(string value) =>
+        value == "24:00" ? TimeSpan.FromDays(1) : TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var time) ? time : TimeSpan.Zero;
+
+    private static bool HasOpenDay(BusinessSchedule schedule) =>
+        Enum.GetValues<DayOfWeek>().Any(day => GetDaySchedule(day, schedule) is not null);
+
+    private static (string Start, string End)? GetDaySchedule(DateTime local, BusinessSchedule schedule) =>
+        GetDaySchedule(local.DayOfWeek, schedule);
+
+    /// <summary>
+    /// A day's hours, or null when it is closed: left out, <c>enabled: false</c>, a missing
+    /// start or end, or a start equal to its end.
+    /// </summary>
+    private static (string Start, string End)? GetDaySchedule(DayOfWeek day, BusinessSchedule schedule)
     {
         if (string.IsNullOrEmpty(schedule.Schedule)) return null;
 
-        var dayName = local.DayOfWeek.ToString().ToLower();
+        var dayName = day.ToString().ToLowerInvariant();
         try
         {
-            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(schedule.Schedule);
-            if (dict != null && dict.TryGetValue(dayName, out var dayData))
+            using var document = JsonDocument.Parse(schedule.Schedule);
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty(dayName, out var hours)
+                || hours.ValueKind != JsonValueKind.Object)
             {
-                if (dayData.TryGetValue("start", out var start) && dayData.TryGetValue("end", out var end))
-                    return (start, end);
+                return null;
             }
-        }
-        catch { }
 
-        return null;
+            if (hours.TryGetProperty("enabled", out var enabled) && enabled.ValueKind == JsonValueKind.False) return null;
+            var start = hours.TryGetProperty("start", out var s) && s.ValueKind == JsonValueKind.String ? s.GetString() : null;
+            var end = hours.TryGetProperty("end", out var e) && e.ValueKind == JsonValueKind.String ? e.GetString() : null;
+            if (string.IsNullOrEmpty(start) || string.IsNullOrEmpty(end) || start == end) return null;
+            return (start, end);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private bool IsHoliday(DateTime local, BusinessSchedule schedule)

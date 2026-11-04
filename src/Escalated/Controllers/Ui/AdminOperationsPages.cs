@@ -299,6 +299,11 @@ public partial class AdminPageController
         var schedule = await _db.BusinessSchedules.Include(s => s.Holidays).FirstOrDefaultAsync(s => s.Id == id, ct);
         if (schedule is null) return NotFound();
 
+        // Cleared here as well as by the foreign key, for databases that do not enforce it.
+        await _db.SlaPolicies.Where(p => p.BusinessScheduleId == id)
+            .ExecuteUpdateAsync(set => set.SetProperty(p => p.BusinessScheduleId, (int?)null), ct);
+        await _db.Departments.Where(d => d.BusinessScheduleId == id)
+            .ExecuteUpdateAsync(set => set.SetProperty(d => d.BusinessScheduleId, (int?)null), ct);
         _db.Holidays.RemoveRange(schedule.Holidays);
         _db.BusinessSchedules.Remove(schedule);
         await _db.SaveChangesAsync(ct);

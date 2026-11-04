@@ -55,6 +55,7 @@ public sealed class UiPresenter
         ["slug"] = department.Slug,
         ["description"] = department.Description,
         ["is_active"] = department.IsActive,
+        ["business_schedule_id"] = department.BusinessScheduleId,
     };
 
     public static Dictionary<string, object?> Tag(Tag tag) => new()
@@ -84,6 +85,29 @@ public sealed class UiPresenter
     /// The business schedules a form's schedule picker offers, as escalated-laravel's
     /// <c>BusinessSchedule::orderBy('name')->get(['id', 'name'])</c>.
     /// </summary>
+    /// <summary>
+    /// The posted <c>business_schedule_id</c>, as escalated-laravel's
+    /// <c>['nullable', 'integer', exists]</c>: blank is null, anything else must name a schedule.
+    /// </summary>
+    public async Task<int?> BusinessScheduleIdAsync(UiInput input, Dictionary<string, string> errors, CancellationToken ct = default)
+    {
+        if (input.String("business_schedule_id") is null) return null;
+        var id = input.Int("business_schedule_id");
+        if (id is null)
+        {
+            errors["business_schedule_id"] = "The business schedule id must be an integer.";
+            return null;
+        }
+
+        if (!await _db.BusinessSchedules.AnyAsync(s => s.Id == id, ct))
+        {
+            errors["business_schedule_id"] = "The selected business schedule id is invalid.";
+            return null;
+        }
+
+        return id;
+    }
+
     public async Task<List<Dictionary<string, object?>>> ScheduleOptionsAsync(CancellationToken ct = default)
     {
         var schedules = await _db.BusinessSchedules.AsNoTracking()

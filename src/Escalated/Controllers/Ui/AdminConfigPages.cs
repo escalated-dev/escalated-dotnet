@@ -91,6 +91,7 @@ public partial class AdminPageController
         ["first_response_hours"] = UiPresenter.ParseJson(policy.FirstResponseHours) ?? new Dictionary<string, object?>(),
         ["resolution_hours"] = UiPresenter.ParseJson(policy.ResolutionHours) ?? new Dictionary<string, object?>(),
         ["business_hours_only"] = policy.BusinessHoursOnly,
+        ["business_schedule_id"] = policy.BusinessScheduleId,
         ["is_default"] = policy.IsDefault,
         ["is_active"] = policy.IsActive,
         ["created_at"] = policy.CreatedAt,
@@ -128,6 +129,10 @@ public partial class AdminPageController
         var ticketType = input.String("ticket_type");
         if (ticketType is not null && !Ticket.ValidTypes.Contains(ticketType)) errors["ticket_type"] = "The selected ticket type is invalid.";
 
+        // Only changes when sent, so a form without the schedule picker leaves it alone.
+        var sendsSchedule = input.Has("business_schedule_id");
+        var scheduleId = sendsSchedule ? await _present.BusinessScheduleIdAsync(input, errors, ct) : null;
+
         var formUrl = id is null ? $"{Prefix}/admin/sla-policies/create" : $"{Prefix}/admin/sla-policies/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
@@ -140,6 +145,7 @@ public partial class AdminPageController
         policy.IsActive = !input.Has("is_active") || input.Bool("is_active");
         policy.DepartmentId = departmentId;
         policy.TicketType = ticketType;
+        if (sendsSchedule) policy.BusinessScheduleId = scheduleId;
         policy.UpdatedAt = DateTime.UtcNow;
         if (id is null) _db.SlaPolicies.Add(policy);
         await _db.SaveChangesAsync(ct);

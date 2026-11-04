@@ -39,6 +39,7 @@ public class AdminSettingsController : ControllerBase
     [HttpPost("departments")]
     public async Task<IActionResult> CreateDepartment([FromBody] Department dept)
     {
+        if (await UnknownScheduleAsync(dept.BusinessScheduleId) is { } refused) return refused;
         dept.Slug = Department.GenerateSlug(dept.Name);
         dept.CreatedAt = DateTime.UtcNow;
         dept.UpdatedAt = DateTime.UtcNow;
@@ -69,6 +70,13 @@ public class AdminSettingsController : ControllerBase
         _db.Departments.Remove(dept);
         await _db.SaveChangesAsync();
         return NoContent();
+    }
+
+    /// <summary>A 422 when a business schedule id names no schedule.</summary>
+    private async Task<IActionResult?> UnknownScheduleAsync(int? scheduleId)
+    {
+        if (scheduleId is null || await _db.BusinessSchedules.AnyAsync(s => s.Id == scheduleId)) return null;
+        return UnprocessableEntity(new { message = "The selected business schedule id is invalid.", errors = new { business_schedule_id = new[] { "invalid" } } });
     }
 
     // --- Tags ---
@@ -113,6 +121,7 @@ public class AdminSettingsController : ControllerBase
     [HttpPost("sla-policies")]
     public async Task<IActionResult> CreateSlaPolicy([FromBody] SlaPolicy policy)
     {
+        if (await UnknownScheduleAsync(policy.BusinessScheduleId) is { } refused) return refused;
         policy.CreatedAt = DateTime.UtcNow;
         policy.UpdatedAt = DateTime.UtcNow;
         _db.SlaPolicies.Add(policy);

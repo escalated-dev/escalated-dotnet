@@ -57,17 +57,18 @@ public class SlaService
 
         var firstResponseHours = policy.GetFirstResponseHoursFor(ticket.Priority);
         var resolutionHours = policy.GetResolutionHoursFor(ticket.Priority);
+        var schedule = policy.BusinessHoursOnly ? await ScheduleForAsync(policy, ticket, ct) : null;
 
         if (firstResponseHours.HasValue)
         {
             ticket.FirstResponseDueAt = CalculateDueDate(
-                ticket.CreatedAt, firstResponseHours.Value, policy.BusinessHoursOnly);
+                ticket.CreatedAt, firstResponseHours.Value, policy.BusinessHoursOnly, schedule);
         }
 
         if (resolutionHours.HasValue)
         {
             ticket.ResolutionDueAt = CalculateDueDate(
-                ticket.CreatedAt, resolutionHours.Value, policy.BusinessHoursOnly);
+                ticket.CreatedAt, resolutionHours.Value, policy.BusinessHoursOnly, schedule);
         }
 
         _db.Tickets.Update(ticket);
@@ -183,10 +184,40 @@ public class SlaService
         await _db.SaveChangesAsync(ct);
     }
 
-    private DateTime CalculateDueDate(DateTime from, double hours, bool businessHoursOnly)
+    /// <summary>
+    /// The business schedule a business-hours policy counts against, as escalated-laravel's
+    /// <c>SlaService::scheduleFor</c>: the policy's schedule, else the ticket department's,
+    /// else the default schedule (lowest id). Null means the configured
+    /// <see cref="SlaOptions.BusinessHours"/> apply.
+    /// </summary>
+    public async Task<BusinessSchedule?> ScheduleForAsync(SlaPolicy policy, Ticket ticket, CancellationToken ct = default)
+    {
+        var ids = new List<int>();
+        if (policy.BusinessScheduleId is { } policyScheduleId) ids.Add(policyScheduleId);
+        if (ticket.DepartmentId is { } departmentId)
+        {
+            var departmentScheduleId = await _db.Departments.AsNoTracking()
+                .Where(d => d.Id == departmentId).Select(d => d.BusinessScheduleId).FirstOrDefaultAsync(ct);
+            if (departmentScheduleId is { } id) ids.Add(id);
+        }
+
+        foreach (var id in ids)
+        {
+            var schedule = await _db.BusinessSchedules.AsNoTracking().Include(s => s.Holidays).FirstOrDefaultAsync(s => s.Id == id, ct);
+            if (schedule is not null) return schedule;
+        }
+
+        return await _db.BusinessSchedules.AsNoTracking().Include(s => s.Holidays)
+            .Where(s => s.IsDefault).OrderBy(s => s.Id).FirstOrDefaultAsync(ct);
+    }
+
+    private DateTime CalculateDueDate(DateTime from, double hours, bool businessHoursOnly, BusinessSchedule? schedule)
     {
         if (!businessHoursOnly)
             return from.AddHours(hours);
+
+        if (schedule is not null)
+            return new BusinessHoursCalculator(_db).AddBusinessHours(from, hours, schedule);
 
         var config = _options.Sla.BusinessHours;
         var startParts = config.Start.Split(':');
