@@ -26,12 +26,15 @@ public class AgentPageController : TicketPageControllerBase
 {
     private readonly ITicketActionRegistry _actions;
     private readonly EscalatedEventDispatcher _events;
+    private readonly AgentInbox _inbox;
+    private AgentQueue? _queue;
 
-    public AgentPageController(TicketPageServices services, ITicketActionRegistry actions, EscalatedEventDispatcher events)
+    public AgentPageController(TicketPageServices services, ITicketActionRegistry actions, EscalatedEventDispatcher events, AgentInbox inbox)
         : base(services)
     {
         _actions = actions;
         _events = events;
+        _inbox = inbox;
     }
 
     protected override string Area => "agent";
@@ -81,7 +84,29 @@ public class AgentPageController : TicketPageControllerBase
         });
     }
 
-    protected override Task AddShowPropsAsync(Ticket ticket, Dictionary<string, object?> props, CancellationToken ct)
+    /// <summary>
+    /// The queue the list shows (<see cref="AgentInbox"/>): <c>assigned=me</c> is
+    /// the agent, <c>view=&lt;id&gt;</c> lists by that view's filters, and the queue
+    /// is remembered for the ticket page.
+    /// </summary>
+    protected override async Task<IReadOnlyDictionary<string, string?>> ListQueryAsync(Dictionary<string, string?> query, CancellationToken ct)
+    {
+        var agentId = this.CurrentUserId();
+        var normalised = AgentInbox.Normalise(query, agentId);
+        _queue = await _inbox.QueueForAsync(normalised, agentId, ct);
+        _inbox.Remember(HttpContext, _queue, Prefix);
+        return AgentInbox.ListQuery(normalised, _queue);
+    }
+
+    /// <summary>The agent panel's <c>queue</c> and <c>inbox</c> props.</summary>
+    protected override async Task AddIndexPropsAsync(Dictionary<string, object?> props, CancellationToken ct)
+    {
+        var queue = _queue ?? await _inbox.RecalledAsync(HttpContext, this.CurrentUserId(), ct);
+        props["queue"] = queue.Prop();
+        props["inbox"] = await _inbox.InboxAsync(this.CurrentUserId(), queue, ct);
+    }
+
+    protected override async Task AddShowPropsAsync(Ticket ticket, Dictionary<string, object?> props, CancellationToken ct)
     {
         var userId = this.CurrentUserId();
         props["customActions"] = _actions.ForTicket(ticket, userId).Select(action =>
@@ -93,7 +118,10 @@ public class AgentPageController : TicketPageControllerBase
             };
             return row;
         }).ToList();
-        return Task.CompletedTask;
+
+        var queue = await _inbox.RecalledAsync(HttpContext, userId, ct);
+        props["queue"] = queue.Prop();
+        props["inbox"] = await _inbox.InboxAsync(userId, queue, ct);
     }
 
     [HttpPost("tickets/" + Reference + "/actions/{action}")]

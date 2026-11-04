@@ -139,6 +139,8 @@ public static class EscalatedServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Ui.EscalatedUiSharedProps>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<Escalated.Ui.IEscalatedUiSharedProps, Escalated.Plugins.PluginSharedProps>());
         services.AddScoped<Escalated.Ui.UiPresenter>();
+        services.AddScoped<Escalated.Ui.AgentInbox>();
+        services.TryAddSingleton(sp => new Escalated.Ui.AgentInboxCache(sp.GetService<TimeProvider>()));
         services.TryAddSingleton(sp => new Escalated.Ui.UiPresence(sp.GetService<TimeProvider>()));
         services.TryAddSingleton<Escalated.Middleware.ApiTokenAuthState>();
         services.AddScoped<Escalated.Controllers.Ui.TicketPageServices>();

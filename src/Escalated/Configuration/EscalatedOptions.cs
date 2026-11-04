@@ -354,6 +354,12 @@ public class UiOptions
     public string Title { get; set; } = "Support";
 
     /// <summary>
+    /// How long the agent panel's <c>inbox</c> counts are kept per agent and queue,
+    /// in this process, in seconds. Default 10; 0 recomputes them on every request.
+    /// </summary>
+    public int AgentInboxCacheSeconds { get; set; } = 10;
+
+    /// <summary>
     /// Markup the default root view puts in <c>&lt;head&gt;</c>: your Vite or
     /// bundler tags for the app that calls <c>createInertiaApp</c> with the
     /// Escalated pages. Trusted configuration, written as is.

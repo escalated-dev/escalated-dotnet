@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- **The agent ticket pages send the agent panel's optional `inbox` and `queue` props** (shared frontend `docs/agent-panel.md`, as escalated-laravel sends them). Each agent list and ticket page request runs a few extra count queries (3 counts, 5 built-in views, 4 stats and one per saved view, up to 50 views), kept per agent and queue in this process for `Escalated:Ui:AgentInboxCacheSeconds` (default 10; 0 turns the cache off), so counts can lag a change by that long. Older frontends ignore the props.
+- **A queue row's `latest_reply` is now the ticket's latest public reply.** It used to be the latest reply of any kind, so an internal note's body, time and author showed in the agent and admin lists and the agent dashboard; `last_reply_at` and `last_reply_author` follow it. Internal notes are never used.
+- `sort_by=updated_at` now sorts newest first unless `sort_dir=asc`; it used to fall back to the creation date.
+
+### Added
+- **`inbox` on `Escalated/Agent/TicketIndex` and `Escalated/Agent/TicketShow`**: `{ counts: { mine, unassigned, all }, views: [{ id, name, count, filters }], stats: { open, urgent, sla_at_risk, resolved_today } }`. Every number is a count through the ticket list's own filters (`TicketListQuery`, `TicketService.CountAsync`) and the ticket visibility filter, so it is what the agent sees by opening that list.
+  - `counts` and view counts are of unresolved, unsnoozed tickets (not resolved or closed, not snoozed), unless a view's filters name a status.
+  - `views` are the built-in views `urgent` (`priority=urgent&open=1`), `sla_at_risk` (`sla_at_risk=1`), `waiting_on_me` (assigned to the agent, `status=waiting_on_agent`), `waiting_on_customer` (assigned to the agent, `status=waiting_on_customer`) and `recently_updated` (`open=1&updated_within_hours=24&sort_by=updated_at`), then the agent's own and shared saved views, by position.
+  - `stats` are for the current queue: the queue's filters plus `status=open` (a snoozed ticket keeps its status here, so it counts, as the list that tile opens shows it); `priority=urgent` (unresolved); `sla_at_risk=1`; `status=resolved&resolved_today=1`.
+- **`queue` on both pages:** `{ key, title }`, with `key` `mine` (`assigned_to=<agent>`, or `assigned=me` / `assigned_to=me`), `unassigned` (`unassigned=1`), `all`, or `view:<id>` for a view picked with `view=<id>` or by sending exactly its filters. An unknown view id, or another agent's private view, selects nothing. The ticket page gets the queue last opened in the list (kept in an `escalated_agent_queue` cookie that only names a queue, since the pages need no session), or `all`.
+- New ticket list filters: `sla_at_risk=1` (unresolved, with an SLA breached or a first response still unsent or resolution due within 60 minutes), `resolved_today=1` (resolved since the start of today, UTC), `open=1` (not resolved, closed or snoozed) and `updated_within_hours=<1..8760>`, on the agent and admin lists (`TicketListFilters.Open`, `SlaAtRisk`, `ResolvedSince`, `UpdatedSince`). A malformed value goes back with `errors`.
+
+### Not sent
+- `is_unread` and `requester_online`: Escalated tracks no per-agent read state or customer presence, so the list rows carry neither.
+- Queue and view names are English: they are not in the package's translations yet.
+
 ## [0.2.10] - 2026-10-30
 
 ### Upgrading

@@ -108,7 +108,9 @@ public sealed class UiPresenter
         var tagRows = await _db.TicketTags.AsNoTracking().Where(tt => ids.Contains(tt.TicketId))
             .Join(_db.Tags.AsNoTracking(), tt => tt.TagId, tag => tag.Id, (tt, tag) => new { tt.TicketId, Tag = tag })
             .ToListAsync(ct);
-        var latestIds = await _db.Replies.AsNoTracking().Where(r => ids.Contains(r.TicketId))
+        // The preview, its age and author come from the latest public reply, never
+        // an internal note (escalated-laravel's latestReply).
+        var latestIds = await _db.Replies.AsNoTracking().Where(r => ids.Contains(r.TicketId) && !r.IsInternalNote)
             .GroupBy(r => r.TicketId).Select(g => g.Max(r => r.Id)).ToListAsync(ct);
         var latest = await _db.Replies.AsNoTracking().Where(r => latestIds.Contains(r.Id)).ToDictionaryAsync(r => r.TicketId, ct);
 
