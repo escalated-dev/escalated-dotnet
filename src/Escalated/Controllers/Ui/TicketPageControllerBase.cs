@@ -1,3 +1,4 @@
+using System.Globalization;
 using Escalated.Authorization;
 using Escalated.Configuration;
 using Escalated.Data;
@@ -36,6 +37,7 @@ public abstract class TicketPageControllerBase : ControllerBase
     private readonly TicketSubjectService _subjects;
     private readonly IAttachmentStorage _storage;
     private readonly UiPresence _presence;
+    private readonly TicketSnoozeService _snooze;
 
     protected TicketPageControllerBase(TicketPageServices services)
     {
@@ -48,6 +50,7 @@ public abstract class TicketPageControllerBase : ControllerBase
         _subjects = services.Subjects;
         _storage = services.Storage;
         _presence = services.Presence;
+        _snooze = services.Snooze;
     }
 
     protected EscalatedDbContext Db { get; }
@@ -453,6 +456,51 @@ public abstract class TicketPageControllerBase : ControllerBase
 
         await _macros.ApplyAsync(macro, ticket, userId, ct);
         return UiResults.Back(HttpContext, ShowUrl(ticket), success: $"Macro \"{macro.Name}\" applied.");
+    }
+
+    /// <summary>
+    /// Snoozes the ticket until <c>snoozed_until</c>, which must be in the future
+    /// (escalated-laravel's <c>tickets.snooze</c>, on the admin and agent panels).
+    /// </summary>
+    [HttpPost("tickets/" + Reference + "/snooze")]
+    public async Task<IActionResult> Snooze(string reference, CancellationToken ct)
+    {
+        var ticket = await FindAsync(reference, ct);
+        if (ticket is null) return NotFound();
+
+        var input = await UiInput.ReadAsync(Request, ct);
+        if (input.String("snoozed_until") is not { } value)
+        {
+            return UiResults.Back(HttpContext, ShowUrl(ticket),
+                errors: new Dictionary<string, string> { ["snoozed_until"] = "The snoozed until field is required." });
+        }
+
+        if (!DateTime.TryParse(value, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var until))
+        {
+            return UiResults.Back(HttpContext, ShowUrl(ticket),
+                errors: new Dictionary<string, string> { ["snoozed_until"] = "The snoozed until field must be a valid date." });
+        }
+
+        if (until <= DateTime.UtcNow)
+        {
+            return UiResults.Back(HttpContext, ShowUrl(ticket),
+                errors: new Dictionary<string, string> { ["snoozed_until"] = "The snoozed until field must be a date after now." });
+        }
+
+        await _snooze.SnoozeAsync(ticket, until, this.CurrentUserId(), ct);
+        return UiResults.Back(HttpContext, ShowUrl(ticket),
+            success: $"Ticket snoozed until {until.ToString("MMM d, yyyy h:mmtt", CultureInfo.InvariantCulture).ToLowerInvariant()} UTC.");
+    }
+
+    [HttpPost("tickets/" + Reference + "/unsnooze")]
+    public async Task<IActionResult> Unsnooze(string reference, CancellationToken ct)
+    {
+        var ticket = await FindAsync(reference, ct);
+        if (ticket is null) return NotFound();
+
+        await _snooze.UnsnoozeAsync(ticket, this.CurrentUserId(), ct);
+        return UiResults.Back(HttpContext, ShowUrl(ticket), success: "Ticket unsnoozed.");
     }
 
     /// <summary>Follows the ticket, or stops following it when already following.</summary>
