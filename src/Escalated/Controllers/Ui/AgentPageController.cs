@@ -119,9 +119,38 @@ public class AgentPageController : TicketPageControllerBase
             return row;
         }).ToList();
 
+        props["agents"] = await AssignableAgentsAsync(ticket, ct);
+
         var queue = await _inbox.RecalledAsync(HttpContext, userId, ct);
         props["queue"] = queue.Prop();
         props["inbox"] = await _inbox.InboxAsync(userId, queue, ct);
+    }
+
+    /// <summary>
+    /// The staff the ticket can be assigned to: agents and admins who can see it
+    /// (escalated-laravel's <c>AssignableAgents::for</c>). Every agent sees every
+    /// ticket unless visibility is restricted by department or account.
+    /// </summary>
+    private async Task<List<Dictionary<string, object?>>> AssignableAgentsAsync(Ticket ticket, CancellationToken ct)
+    {
+        var agents = await Present.AgentOptionsAsync(ct);
+        var access = HttpContext.RequestServices.GetService(typeof(TicketAccess)) as TicketAccess;
+        if (access is null || !access.IsRestricted)
+        {
+            return agents;
+        }
+
+        var visible = new List<Dictionary<string, object?>>();
+        foreach (var agent in agents)
+        {
+            var id = agent.GetValueOrDefault("id")?.ToString();
+            if (id is not null && await access.CanViewAsync(await access.PrincipalAsync(id), ticket.Id, ct))
+            {
+                visible.Add(agent);
+            }
+        }
+
+        return visible;
     }
 
     [HttpPost("tickets/" + Reference + "/actions/{action}")]

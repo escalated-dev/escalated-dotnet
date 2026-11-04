@@ -80,6 +80,20 @@ public sealed class UiPresenter
     /// the <c>escalated-agent</c> or <c>escalated-admin</c> role, as escalated-laravel
     /// lists the users its agent and admin gates pass.
     /// </summary>
+    /// <summary>
+    /// The business schedules a form's schedule picker offers, as escalated-laravel's
+    /// <c>BusinessSchedule::orderBy('name')->get(['id', 'name'])</c>.
+    /// </summary>
+    public async Task<List<Dictionary<string, object?>>> ScheduleOptionsAsync(CancellationToken ct = default)
+    {
+        var schedules = await _db.BusinessSchedules.AsNoTracking()
+            .OrderBy(s => s.Name).ThenBy(s => s.Id)
+            .Select(s => new { s.Id, s.Name })
+            .ToListAsync(ct);
+
+        return schedules.Select(s => new Dictionary<string, object?> { ["id"] = s.Id, ["name"] = s.Name }).ToList();
+    }
+
     public async Task<List<Dictionary<string, object?>>> AgentOptionsAsync(CancellationToken ct = default)
     {
         var ids = await _db.RoleUsers.AsNoTracking()
