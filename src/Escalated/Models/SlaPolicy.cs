@@ -31,6 +31,13 @@ public class SlaPolicy
 
     public bool BusinessHoursOnly { get; set; }
 
+    /// <summary>
+    /// The business schedule a business-hours policy counts against. Without one the
+    /// ticket department's schedule applies, then the default schedule, then the
+    /// configured hours.
+    /// </summary>
+    public int? BusinessScheduleId { get; set; }
+
     public bool IsDefault { get; set; }
 
     public bool IsActive { get; set; } = true;

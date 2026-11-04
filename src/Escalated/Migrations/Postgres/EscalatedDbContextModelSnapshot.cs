@@ -855,6 +855,9 @@ namespace Escalated.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BusinessScheduleId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -878,6 +881,8 @@ namespace Escalated.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessScheduleId");
 
                     b.HasIndex("Slug")
                         .IsUnique();
@@ -2078,6 +2083,9 @@ namespace Escalated.Migrations.Postgres
                     b.Property<bool>("BusinessHoursOnly")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("BusinessScheduleId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2112,6 +2120,8 @@ namespace Escalated.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessScheduleId");
 
                     b.HasIndex("DepartmentId", "TicketType");
 
@@ -2909,6 +2919,14 @@ namespace Escalated.Migrations.Postgres
                     b.Navigation("Object");
                 });
 
+            modelBuilder.Entity("Escalated.Models.Department", b =>
+                {
+                    b.HasOne("Escalated.Models.BusinessSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Escalated.Models.DepartmentAgent", b =>
                 {
                     b.HasOne("Escalated.Models.Department", "Department")
@@ -3132,6 +3150,11 @@ namespace Escalated.Migrations.Postgres
 
             modelBuilder.Entity("Escalated.Models.SlaPolicy", b =>
                 {
+                    b.HasOne("Escalated.Models.BusinessSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Escalated.Models.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")

@@ -148,6 +148,7 @@ public static class EscalatedModelConfiguration
         {
             e.ToTable($"{prefix}departments");
             e.HasIndex(d => d.Slug).IsUnique();
+            e.HasOne<BusinessSchedule>().WithMany().HasForeignKey(d => d.BusinessScheduleId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<SatisfactionRating>(e =>
@@ -159,6 +160,7 @@ public static class EscalatedModelConfiguration
         modelBuilder.Entity<SlaPolicy>(e =>
         {
             e.ToTable($"{prefix}sla_policies");
+            e.HasOne<BusinessSchedule>().WithMany().HasForeignKey(p => p.BusinessScheduleId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<EscalationRule>(e =>
