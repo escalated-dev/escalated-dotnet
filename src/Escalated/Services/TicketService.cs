@@ -263,8 +263,39 @@ public class TicketService
         TicketListFilters? filters = null, int page = 1, int perPage = 25,
         CancellationToken ct = default)
     {
-        var query = _db.Tickets.AsQueryable();
         filters ??= new TicketListFilters();
+        var query = Filtered(filters);
+
+        // Sort
+        query = (filters.SortBy?.ToLower(), filters.SortDir?.ToLower()) switch
+        {
+            ("priority", "asc") => query.OrderBy(t => t.Priority),
+            ("priority", _) => query.OrderByDescending(t => t.Priority),
+            ("status", "asc") => query.OrderBy(t => t.Status),
+            ("status", _) => query.OrderByDescending(t => t.Status),
+            ("updated_at", "asc") => query.OrderBy(t => t.UpdatedAt),
+            ("updated_at", _) => query.OrderByDescending(t => t.UpdatedAt),
+            (_, "asc") => query.OrderBy(t => t.CreatedAt),
+            _ => query.OrderByDescending(t => t.CreatedAt)
+        };
+
+        var totalCount = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * perPage).Take(perPage).ToListAsync(ct);
+
+        return (items, totalCount);
+    }
+
+    /// <summary>
+    /// The number of tickets <see cref="ListAsync"/> lists for these filters. The
+    /// agent panel's inbox counts through this, so a count and the list it labels
+    /// cannot disagree.
+    /// </summary>
+    public Task<int> CountAsync(TicketListFilters filters, CancellationToken ct = default) =>
+        Filtered(filters).CountAsync(ct);
+
+    private IQueryable<Ticket> Filtered(TicketListFilters filters)
+    {
+        var query = _db.Tickets.AsQueryable();
 
         if (filters.Status.HasValue)
             query = query.Where(t => t.Status == filters.Status.Value);
@@ -312,22 +343,32 @@ public class TicketService
         if (!string.IsNullOrEmpty(filters.FollowedBy))
             query = query.Where(t => _db.TicketFollowers.Any(f => f.TicketId == t.Id && f.UserId == filters.FollowedBy));
 
-        // Sort
-        query = (filters.SortBy?.ToLower(), filters.SortDir?.ToLower()) switch
+        var now = DateTime.UtcNow;
+
+        // Open: not resolved or closed, and not snoozed.
+        if (filters.Open == true)
+            query = query.Where(t => t.Status != TicketStatus.Resolved && t.Status != TicketStatus.Closed
+                && (t.SnoozedUntil == null || t.SnoozedUntil <= now));
+
+        // Open tickets whose SLA is breached, or whose first response (still unsent)
+        // or resolution falls due within the hour.
+        if (filters.SlaAtRisk == true)
         {
-            ("priority", "asc") => query.OrderBy(t => t.Priority),
-            ("priority", _) => query.OrderByDescending(t => t.Priority),
-            ("status", "asc") => query.OrderBy(t => t.Status),
-            ("status", _) => query.OrderByDescending(t => t.Status),
-            ("updated_at", "asc") => query.OrderBy(t => t.UpdatedAt),
-            (_, "asc") => query.OrderBy(t => t.CreatedAt),
-            _ => query.OrderByDescending(t => t.CreatedAt)
-        };
+            var soon = now.Add(TicketListFilters.SlaAtRiskWindow);
+            query = query.Where(t => t.Status != TicketStatus.Resolved && t.Status != TicketStatus.Closed
+                && (t.SnoozedUntil == null || t.SnoozedUntil <= now)
+                && (t.SlaFirstResponseBreached || t.SlaResolutionBreached
+                    || (t.FirstResponseAt == null && t.FirstResponseDueAt <= soon)
+                    || t.ResolutionDueAt <= soon));
+        }
 
-        var totalCount = await query.CountAsync(ct);
-        var items = await query.Skip((page - 1) * perPage).Take(perPage).ToListAsync(ct);
+        if (filters.ResolvedSince is { } resolvedSince)
+            query = query.Where(t => t.ResolvedAt >= resolvedSince);
 
-        return (items, totalCount);
+        if (filters.UpdatedSince is { } updatedSince)
+            query = query.Where(t => t.UpdatedAt >= updatedSince);
+
+        return query;
     }
 
     // Private transition methods
@@ -526,4 +567,19 @@ public class TicketListFilters
 
     /// <summary>Tickets this host user follows.</summary>
     public string? FollowedBy { get; set; }
+
+    /// <summary>Unresolved, unsnoozed tickets (not resolved or closed, not snoozed).</summary>
+    public bool? Open { get; set; }
+
+    /// <summary>Open tickets whose SLA is breached or falls due within <see cref="SlaAtRiskWindow"/>.</summary>
+    public bool? SlaAtRisk { get; set; }
+
+    /// <summary>Tickets resolved at or after this instant (UTC).</summary>
+    public DateTime? ResolvedSince { get; set; }
+
+    /// <summary>Tickets updated at or after this instant (UTC).</summary>
+    public DateTime? UpdatedSince { get; set; }
+
+    /// <summary>How close a due SLA target has to be for an open ticket to be at risk.</summary>
+    public static readonly TimeSpan SlaAtRiskWindow = TimeSpan.FromMinutes(60);
 }

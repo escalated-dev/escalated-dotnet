@@ -67,6 +67,14 @@ public abstract class TicketPageControllerBase : ControllerBase
     /// <summary>The ticket page's component name.</summary>
     protected abstract string ShowComponent { get; }
 
+    /// <summary>
+    /// The query the queue is listed by, from the request's (the agent area resolves
+    /// <c>assigned=me</c> and <c>view=&lt;id&gt;</c>). The request's own query is
+    /// still echoed as <c>filters</c>.
+    /// </summary>
+    protected virtual Task<IReadOnlyDictionary<string, string?>> ListQueryAsync(Dictionary<string, string?> query, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<string, string?>>(query);
+
     /// <summary>Adds the area's own props to the queue page.</summary>
     protected virtual Task AddIndexPropsAsync(Dictionary<string, object?> props, CancellationToken ct) => Task.CompletedTask;
 
@@ -84,31 +92,21 @@ public abstract class TicketPageControllerBase : ControllerBase
     [EscalatedPage(Negotiate = true)]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
-        var query = Request.Query;
-        string? Get(string key) => string.IsNullOrWhiteSpace(query[key]) ? null : query[key].ToString();
-
-        var filters = new TicketListFilters
+        var echo = TicketListQuery.From(Request.Query);
+        var errors = TicketListQuery.Validate(echo);
+        if (errors.Count > 0)
         {
-            Status = Get("status") is { } status && Statuses.Contains(status) ? TicketStatusExtensions.Parse(status) : null,
-            Priority = Get("priority") is { } priority && Priorities.Contains(priority) ? TicketPriorityExtensions.Parse(priority) : null,
-            TicketType = Get("ticket_type"),
-            AssignedTo = Get("assigned_to"),
-            Unassigned = Get("unassigned") is "1" or "true" ? true : null,
-            DepartmentId = int.TryParse(Get("department_id"), out var departmentId) ? departmentId : null,
-            Search = Get("search"),
-            SlaBreach = Get("sla_breached") is "1" or "true" ? true : null,
-            SortBy = Get("sort_by"),
-            SortDir = Get("sort_dir"),
-            TagIds = TagIds(query),
-            FollowedBy = Get("following") is "1" or "true" ? this.CurrentUserId() : null,
-        };
+            return UiResults.Back(HttpContext, $"{Prefix}/{Area}/tickets", errors: errors);
+        }
 
-        var page = Math.Max(1, int.TryParse(Get("page"), out var p) ? p : 1);
-        var perPage = Math.Clamp(int.TryParse(Get("per_page"), out var pp) ? pp : 25, 1, 100);
+        var query = await ListQueryAsync(echo, ct);
+        var filters = TicketListQuery.Parse(query, this.CurrentUserId());
+
+        var page = Math.Max(1, int.TryParse(TicketListQuery.Get(query, "page"), out var p) ? p : 1);
+        var perPage = Math.Clamp(int.TryParse(TicketListQuery.Get(query, "per_page"), out var pp) ? pp : 25, 1, 100);
         var (items, total) = await Tickets.ListAsync(filters, page, perPage, ct);
 
         var rows = (await Present.TicketRowsAsync(items, ct)).Cast<object?>().ToList();
-        var echo = query.ToDictionary(q => q.Key, q => (string?)q.Value.ToString());
 
         var props = new Dictionary<string, object?>
         {
@@ -121,13 +119,6 @@ public abstract class TicketPageControllerBase : ControllerBase
         return UiResults.Render(IndexComponent, props);
     }
 
-    private static int[]? TagIds(IQueryCollection query)
-    {
-        var raw = query["tag_ids"].Concat(query["tag_ids[]"]).Concat(query["tag"])
-            .SelectMany(v => (v ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries));
-        var ids = raw.Select(v => int.TryParse(v, out var id) ? id : (int?)null).Where(id => id is not null).Select(id => id!.Value).ToArray();
-        return ids.Length > 0 ? ids : null;
-    }
 
     [HttpPost("tickets/bulk")]
     [EscalatedPage(Negotiate = true)]
