@@ -58,6 +58,14 @@ public static class UiRoutes
         ["escalated.agent.tickets.custom-action"] = "{prefix}/agent/tickets/{ticket}/actions/{action}",
         ["escalated.agent.tickets.pin"] = "{prefix}/agent/tickets/{ticket}/replies/{reply}/pin",
         ["escalated.agent.tickets.presence"] = "{prefix}/agent/tickets/{ticket}/presence",
+        ["escalated.agent.tickets.read"] = "{prefix}/agent/tickets/{ticket}/read",
+        ["escalated.agent.tickets.unread"] = "{prefix}/agent/tickets/{ticket}/unread",
+        // The agent panel's data (ADR 2026-11-05-agent-panel-data).
+        ["escalated.agent.status"] = "{prefix}/agent/status",
+        ["escalated.agent.kb.search"] = "{prefix}/agent/kb/search",
+        ["escalated.agent.notifications.index"] = "{prefix}/agent/notifications",
+        ["escalated.agent.notifications.read"] = "{prefix}/agent/notifications/{id}/read",
+        ["escalated.agent.notifications.read-all"] = "{prefix}/agent/notifications/read-all",
 
         // Admin tickets
         ["escalated.admin.tickets.index"] = "{prefix}/admin/tickets",

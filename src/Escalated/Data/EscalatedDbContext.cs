@@ -118,6 +118,9 @@ public class EscalatedDbContext : DbContext
     public DbSet<Reply> Replies => Set<Reply>();
     public DbSet<Mention> Mentions => Set<Mention>();
     public DbSet<TicketFollower> TicketFollowers => Set<TicketFollower>();
+    public DbSet<TicketRead> TicketReads => Set<TicketRead>();
+    public DbSet<CustomerPresence> CustomerPresence => Set<CustomerPresence>();
+    public DbSet<AgentNotification> AgentNotifications => Set<AgentNotification>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<TicketActivity> TicketActivities => Set<TicketActivity>();
     public DbSet<TicketStatusModel> TicketStatuses => Set<TicketStatusModel>();
@@ -205,6 +208,7 @@ public class EscalatedDbContext : DbContext
         modelBuilder.Entity<WorkflowLog>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
         modelBuilder.Entity<WorkflowDelayedAction>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
         modelBuilder.Entity<TicketFollower>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
+        modelBuilder.Entity<TicketRead>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
         modelBuilder.Entity<SatisfactionRating>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
         modelBuilder.Entity<ChatSession>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));
         modelBuilder.Entity<SideConversation>().HasQueryFilter(r => !RestrictTickets || Tickets.Any(t => t.Id == r.TicketId));

@@ -39,13 +39,17 @@ public class MentionService
     private readonly IEscalatedNotificationSender? _notifications;
 
     /// <summary>Pure-extraction constructor (frontend autocomplete / unit tests).</summary>
+    private readonly AgentPanelService? _panel;
+
     public MentionService()
     {
     }
 
     /// <summary>Full pipeline constructor resolved by the DI container.</summary>
-    public MentionService(EscalatedDbContext db, IUserDirectory users, IEscalatedNotificationSender notifications, TicketAccess? access = null)
+    public MentionService(EscalatedDbContext db, IUserDirectory users, IEscalatedNotificationSender notifications, TicketAccess? access = null,
+        AgentPanelService? panel = null)
     {
+        _panel = panel;
         _db = db;
         _access = access;
         _users = users;
@@ -133,6 +137,17 @@ public class MentionService
             if (_notifications is not null && (_access is null || await _access.AgentCanViewAsync(userId, ticket.Id, ct)))
             {
                 await _notifications.SendMentionNotificationAsync(reply, ticket, userId, ct);
+            }
+
+            // The agents' in-app mention notification (ADR 2026-11-05-agent-panel-data).
+            if (_panel is not null)
+            {
+                var author = reply.AuthorId is null ? null : await _users.FindAsync(reply.AuthorId, ct);
+                await _panel.NotifyAsync(userId, "mention", ticket, new Dictionary<string, object?>
+                {
+                    ["reply_id"] = reply.Id,
+                    ["mentioned_by"] = author?.Name,
+                }, reply.AuthorId, ct);
             }
         }
     }

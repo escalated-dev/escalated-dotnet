@@ -76,6 +76,31 @@ public static class EscalatedModelConfiguration
             e.HasOne(m => m.Reply).WithMany().HasForeignKey(m => m.ReplyId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        // The agent panel's data (ADR 2026-11-05-agent-panel-data).
+        modelBuilder.Entity<TicketRead>(e =>
+        {
+            e.ToTable($"{prefix}ticket_reads");
+            e.HasIndex(r => new { r.UserId, r.TicketId }).IsUnique();
+            e.HasIndex(r => r.TicketId);
+            e.HasOne<Ticket>().WithMany().HasForeignKey(r => r.TicketId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CustomerPresence>(e =>
+        {
+            e.ToTable($"{prefix}customer_presence");
+            e.HasIndex(p => new { p.SubjectType, p.SubjectId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AgentNotification>(e =>
+        {
+            e.ToTable($"{prefix}notifications");
+            e.HasIndex(n => new { n.UserId, n.ReadAt });
+        });
+
+        modelBuilder.Entity<Ticket>().HasIndex(t => t.LastCustomerActivityAt);
+        // Existing agents are offline until they set a status.
+        modelBuilder.Entity<AgentProfile>().Property(p => p.ChatStatus).HasDefaultValue("offline");
+
         modelBuilder.Entity<TicketFollower>(e =>
         {
             e.ToTable($"{prefix}ticket_followers");

@@ -104,6 +104,29 @@ public class AgentPageController : TicketPageControllerBase
         var queue = _queue ?? await _inbox.RecalledAsync(HttpContext, this.CurrentUserId(), ct);
         props["queue"] = queue.Prop();
         props["inbox"] = await _inbox.InboxAsync(this.CurrentUserId(), queue, ct);
+        await WithPanelFieldsAsync(props, ct);
+    }
+
+    /// <summary>is_unread and the requester's presence on every row (ADR 2026-11-05-agent-panel-data), one query each for the page.</summary>
+    private async Task WithPanelFieldsAsync(Dictionary<string, object?> props, CancellationToken ct)
+    {
+        var panel = HttpContext.RequestServices.GetService(typeof(AgentPanelService)) as AgentPanelService;
+        if (panel is null || !props.TryGetValue("tickets", out var tickets) || tickets is not IDictionary<string, object?> paginator
+            || !paginator.TryGetValue("data", out var data) || data is not IEnumerable<object?> rows)
+        {
+            return;
+        }
+
+        var list = rows.OfType<IDictionary<string, object?>>().ToList();
+        var ids = list.Select(row => row.TryGetValue("id", out var id) ? id : null).OfType<int>().ToList();
+        var fields = await panel.RowFieldsAsync(this.CurrentUserId(), ids, ct);
+        foreach (var row in list)
+        {
+            if (row.TryGetValue("id", out var value) && value is int id && fields.TryGetValue(id, out var extra))
+            {
+                foreach (var pair in extra) row[pair.Key] = pair.Value;
+            }
+        }
     }
 
     protected override async Task AddShowPropsAsync(Ticket ticket, Dictionary<string, object?> props, CancellationToken ct)
@@ -125,6 +148,18 @@ public class AgentPageController : TicketPageControllerBase
         if (props.GetValueOrDefault("ticket") is Dictionary<string, object?> ticketProps)
         {
             ticketProps["requester_tickets"] = await RequesterTicketsAsync(ticket, ct);
+        }
+
+        // Opening the ticket in the agent panel is reading it; the page carries is_unread
+        // (false) and the requester's presence.
+        if (HttpContext.RequestServices.GetService(typeof(AgentPanelService)) is AgentPanelService panel)
+        {
+            await panel.MarkReadAsync(userId, ticket.Id, ct);
+            if (props.GetValueOrDefault("ticket") is Dictionary<string, object?> detail
+                && (await panel.RowFieldsAsync(userId, new[] { ticket.Id }, ct)).TryGetValue(ticket.Id, out var fields))
+            {
+                foreach (var (key, value) in fields) detail[key] = value;
+            }
         }
 
         var queue = await _inbox.RecalledAsync(HttpContext, userId, ct);

@@ -103,6 +103,19 @@ public class EscalatedHub : Hub
     public Task JoinTicketList() => SubscribeAsync("ticket-list", staffOnly: true);
 
     /// <summary>
+    /// Join the caller's own notifications feed (<c>notification.created</c>, ADR
+    /// 2026-11-05-agent-panel-data). Staff only; each agent joins only their own group.
+    /// </summary>
+    public async Task JoinNotifications()
+    {
+        if (access is null) throw new HubException("Access denied.");
+        var userId = access.UserId(Context.User);
+        if (userId is null || (!await access.IsAdminAsync(Context.User!) && !await access.IsAgentAsync(Context.User!)))
+            throw new HubException("Access denied.");
+        await Groups.AddToGroupAsync(Context.ConnectionId, Escalated.Services.AgentPanelService.NotificationGroup(userId));
+    }
+
+    /// <summary>
     /// Leave the global ticket list feed.
     /// </summary>
     public async Task LeaveTicketList()

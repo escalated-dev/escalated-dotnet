@@ -130,6 +130,8 @@ public class WidgetChatController : ControllerBase
     {
         var session = await _chatService.FindByVisitorTokenAsync(token, ct);
         if (session == null) return ChatNotFound();
+        var chatTicket = await _db.Tickets.AsNoTracking().FirstOrDefaultAsync(t => t.Id == session.TicketId, ct);
+        if (chatTicket is not null) await Escalated.Controllers.Ui.PanelPresence.SeeTicketCustomerAsync(HttpContext, chatTicket, ct);
 
         var replies = await _db.Replies
             .Where(r => r.TicketId == session.TicketId && !r.IsInternalNote && (r.Type == null || r.Type != "note"))

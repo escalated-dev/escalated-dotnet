@@ -63,6 +63,7 @@ public class CustomerPageController : ControllerBase
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
+        await PanelPresence.SeeCustomerAsync(HttpContext, ct);
         var query = Request.Query;
         string? Get(string key) => string.IsNullOrWhiteSpace(query[key]) ? null : query[key].ToString();
         var keys = new[] { "status", "priority", "ticket_type", "search", "tag", "has_attachments", "created_after", "created_before", "sort_by", "sort_dir" };
@@ -148,6 +149,7 @@ public class CustomerPageController : ControllerBase
     [HttpGet(Reference)]
     public async Task<IActionResult> Show(string reference, CancellationToken ct)
     {
+        await PanelPresence.SeeCustomerAsync(HttpContext, ct);
         var userId = this.CurrentUserId();
         var ticket = await _db.Tickets
             .Include(t => t.Replies.Where(r => !r.IsInternalNote).OrderByDescending(r => r.CreatedAt))

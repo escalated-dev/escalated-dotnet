@@ -132,7 +132,8 @@ public abstract class TicketPageControllerBase : ControllerBase
         var action = input.String("action");
         var fallback = $"{Prefix}/{Area}/tickets";
 
-        if (ids is null || ids.Count == 0 || action is not ("status" or "priority" or "assign" or "tags" or "department" or "close" or "resolve"))
+        if (ids is null || ids.Count == 0 || action is not ("status" or "priority" or "assign" or "tags" or "department" or "close" or "resolve"
+            or "mark_read" or "mark_unread"))
         {
             return UiResults.Back(HttpContext, fallback, errors: new Dictionary<string, string> { ["action"] = "Choose tickets and an action." });
         }
@@ -170,6 +171,13 @@ public abstract class TicketPageControllerBase : ControllerBase
                         break;
                     case "tags" when input.IntList("value") is { Count: > 0 } tagIds:
                         await Tickets.AddTagsAsync(ticket, tagIds.ToArray(), causer, ct);
+                        break;
+                    // The agent's own unread markers (ADR 2026-11-05-agent-panel-data).
+                    case "mark_read" when HttpContext.RequestServices.GetService(typeof(AgentPanelService)) is AgentPanelService panel:
+                        await panel.MarkReadAsync(causer, ticket.Id, ct);
+                        break;
+                    case "mark_unread" when HttpContext.RequestServices.GetService(typeof(AgentPanelService)) is AgentPanelService panel:
+                        await panel.MarkUnreadAsync(causer, ticket.Id, ct);
                         break;
                     default:
                         continue;

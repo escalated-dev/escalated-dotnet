@@ -90,6 +90,14 @@ public class Ticket
     public DateTime? ResolvedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
     public DateTime? SnoozedUntil { get; set; }
+
+    /// <summary>
+    /// The last time the customer side was active on the ticket: its creation and every
+    /// public reply from the customer side (ADR 2026-11-05-agent-panel-data). Agents'
+    /// unread markers compare with it.
+    /// </summary>
+    [JsonIgnore]
+    public DateTime? LastCustomerActivityAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DeletedAt { get; set; }

@@ -145,6 +145,7 @@ public class GuestPageController : ControllerBase
         GuestAccessEndpoints.NoStore(Response);
         var found = await ResolveAsync(token, ct);
         if (found is null) return NotFound();
+        await PanelPresence.SeeTicketCustomerAsync(HttpContext, found, ct);
 
         var ticket = await _db.Tickets
             .Include(t => t.Replies.Where(r => !r.IsInternalNote).OrderByDescending(r => r.CreatedAt))

@@ -32,6 +32,14 @@ public static partial class RoutePermissions
             E("POST", T + "/merge", "ticket.merge"),
             E("POST", T + "/split", "ticket.create"),
             E("POST", T + "/{follow,presence}", View),
+            // The agent panel's data (ADR 2026-11-05-agent-panel-data): the agent's own read
+            // markers, status and notifications need no more than the agent gate; KB search kb.view.
+            E("POST", G + "/tickets/*/{read,unread}", View),
+            E("PUT|POST", G + "/status"),
+            E("GET", G + "/kb/search", "kb.view"),
+            E("GET", G + "/notifications"),
+            E("POST", G + "/notifications/read-all"),
+            E("POST", G + "/notifications/*/read"),
             E("POST", T + "/macro", "macro.view", Edit),
             E("POST", T + "/reply", "reply.create"), // internal: reply.create_internal
             E("POST", T + "/note", "reply.create_internal"),

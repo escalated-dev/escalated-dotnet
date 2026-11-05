@@ -91,6 +91,18 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
             escalated["agent_type"] = agentType ?? "full";
         }
 
+        // The agent panel's data for staff (ADR 2026-11-05-agent-panel-data).
+        if (userId is not null && (isAgent || isAdmin)
+            && context.RequestServices.GetService(typeof(AgentPanelService)) is AgentPanelService panel)
+        {
+            escalated["agent_status"] = await panel.StatusAsync(userId, ct);
+            escalated["agent_statuses"] = AgentPanelService.Statuses;
+            if (panel.NotificationsEnabled)
+            {
+                escalated["notifications"] = new Dictionary<string, object?> { ["unread_count"] = await panel.UnreadCountAsync(userId, ct) };
+            }
+        }
+
         props["escalated"] = escalated;
     }
 
