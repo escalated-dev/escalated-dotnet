@@ -144,6 +144,8 @@ public class ChatTransferTests
         await host.SeedAsync(async db =>
         {
             db.ChatRoutingRules.Add(new ChatRoutingRule { Name = "Billing", DepartmentId = billing, AgentId = "routed", IsActive = true });
+            // Only an online agent gets a chat (their own status).
+            db.AgentProfiles.Add(new AgentProfile { UserId = "routed", ChatStatus = "online" });
             await db.SaveChangesAsync();
         });
 
