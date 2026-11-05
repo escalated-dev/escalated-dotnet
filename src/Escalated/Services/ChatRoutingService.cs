@@ -20,7 +20,10 @@ public class ChatRoutingService
     /// <summary>
     /// Resolve the best routing target for a new chat session.
     /// Evaluates active rules ordered by priority. Falls back to the
-    /// requested department if no rules match.
+    /// requested department if no rules match. A rule's agent is only
+    /// returned while their own status is <c>online</c>
+    /// (<see cref="AgentProfile.ChatStatus"/>), as escalated-laravel's chat
+    /// routing: otherwise the chat waits in the queue.
     /// </summary>
     public async Task<ChatRouteResult> ResolveAsync(int? requestedDepartmentId = null, CancellationToken ct = default)
     {
@@ -31,19 +34,26 @@ public class ChatRoutingService
 
         foreach (var rule in rules)
         {
-            if (rule.DepartmentId.HasValue && rule.DepartmentId == requestedDepartmentId)
+            if ((rule.DepartmentId.HasValue && rule.DepartmentId == requestedDepartmentId)
+                // If no specific department requested, use first matching rule
+                || !requestedDepartmentId.HasValue)
             {
-                return new ChatRouteResult(rule.DepartmentId, rule.AgentId);
-            }
-
-            // If no specific department requested, use first matching rule
-            if (!requestedDepartmentId.HasValue)
-            {
-                return new ChatRouteResult(rule.DepartmentId, rule.AgentId);
+                var agentId = await IsOnlineAsync(rule.AgentId, ct) ? rule.AgentId : null;
+                return new ChatRouteResult(rule.DepartmentId, agentId);
             }
         }
 
         return new ChatRouteResult(requestedDepartmentId, null);
+    }
+
+    /// <summary>
+    /// Whether the agent's own status (ADR 2026-11-05-agent-panel-data) is
+    /// <c>online</c>. Away, offline and agents with no profile get no new chats.
+    /// </summary>
+    public async Task<bool> IsOnlineAsync(string? agentId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(agentId)) return false;
+        return await _db.AgentProfiles.AnyAsync(p => p.UserId == agentId && p.ChatStatus == "online", ct);
     }
 
     /// <summary>

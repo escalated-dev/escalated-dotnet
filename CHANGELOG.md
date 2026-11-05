@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- **Live chat goes only to agents who are online.** Chat routing (widget chat start and department transfers) and the widget's chat availability now read the agent's own status (`AgentProfile.ChatStatus`), as escalated-laravel does: a routing rule's agent gets the chat only while `online`, otherwise it waits in the queue; availability needs an online agent with chat capacity. Away and offline agents, and agents with no profile, are skipped. Agents must set themselves Online to receive chats.
 - **Run the new `AgentPanelData` migration** (SQLite, PostgreSQL and SQL Server each have one; `MigrateEscalatedDatabaseAsync()` or `dotnet ef database update`; ADR 2026-11-05-agent-panel-data). It adds `escalated_tickets.LastCustomerActivityAt`, `escalated_agent_profiles.ChatStatus` (default `offline`) and the `escalated_ticket_reads`, `escalated_customer_presence` and `escalated_notifications` tables. Existing tickets get no customer activity, so none turn unread on upgrade.
 - **Agents get in-app notifications** (`Escalated:Ui:AgentNotifications`, on by default). Assigning a ticket to yourself creates none (it already sent no email), and the in-app `ticket_reply` notification is only for customer-side replies: another agent's reply still emails as before, but does not go into the feed.
 - **`inbox` gains `unread`** (three more count queries, cached with the rest) and the agent ticket rows gain `is_unread`, `requester_online` and `requester_last_seen_at`. Older frontends ignore them.
@@ -23,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The seven new route names are in `UiRoutes` and mapped in `RoutePermissions`.
 
 ### Not sent
-- Notification titles are English: this package sends no translated strings of its own for them. The agent status is stored but this package's live-chat routing does not read it yet.
+- Notification titles are English: this package sends no translated strings of its own for them.
 
 ## [0.2.11] - 2026-11-04
 

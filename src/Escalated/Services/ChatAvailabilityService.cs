@@ -19,14 +19,16 @@ public class ChatAvailabilityService
     }
 
     /// <summary>
-    /// Returns true if at least one agent is available and the current
-    /// time falls within business hours (when configured).
+    /// Returns true if at least one agent is online (their own status, as
+    /// escalated-laravel's chat availability reads it) with chat capacity left,
+    /// and the current time falls within business hours (when configured).
     /// </summary>
     public async Task<bool> IsAvailableAsync(int? departmentId = null, CancellationToken ct = default)
     {
-        // Check if any agents have capacity for the chat channel
+        // Check if any online agent has capacity for the chat channel
         var agentQuery = _db.AgentCapacities
-            .Where(c => c.Channel == "chat" && c.CurrentCount < c.MaxConcurrent);
+            .Where(c => c.Channel == "chat" && c.CurrentCount < c.MaxConcurrent)
+            .Where(c => _db.AgentProfiles.Any(p => p.UserId == c.UserId && p.ChatStatus == "online"));
 
         var hasAvailableAgent = await agentQuery.AnyAsync(ct);
         if (!hasAvailableAgent)
