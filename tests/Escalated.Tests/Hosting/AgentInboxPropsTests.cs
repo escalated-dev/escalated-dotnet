@@ -114,7 +114,7 @@ public class AgentInboxPropsTests
         var props = page.GetProperty("props");
         var inbox = props.GetProperty("inbox");
 
-        Assert.Equal(["counts", "views", "stats"], inbox.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(["counts", "unread", "views", "stats"], inbox.EnumerateObject().Select(p => p.Name));
         // Unresolved, unsnoozed tickets in each queue.
         Json("""{"mine":2,"unassigned":1,"all":4}""", inbox.GetProperty("counts"));
         Assert.Equal(BuiltInViews, inbox.GetProperty("views").EnumerateArray().Select(v => v.GetProperty("id").GetString()));
@@ -337,9 +337,9 @@ public class AgentInboxPropsTests
 
         Assert.Equal("Customer-visible answer", row.GetProperty("latest_reply").GetProperty("body").GetString());
         Assert.False(row.GetProperty("latest_reply").GetProperty("is_internal_note").GetBoolean());
-        // Escalated tracks no per-agent read state or customer presence.
-        Assert.False(row.TryGetProperty("is_unread", out _));
-        Assert.False(row.TryGetProperty("requester_online", out _));
+        // Per-agent read state and the customer's presence (ADR 2026-11-05-agent-panel-data).
+        Assert.True(row.TryGetProperty("is_unread", out _));
+        Assert.True(row.TryGetProperty("requester_online", out _));
     }
 
     [Fact]

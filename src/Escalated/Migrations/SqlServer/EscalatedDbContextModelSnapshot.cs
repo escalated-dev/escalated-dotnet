@@ -60,6 +60,39 @@ namespace Escalated.Migrations.SqlServer
                     b.ToTable("escalated_agent_capacity", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.AgentNotification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ReadAt");
+
+                    b.ToTable("escalated_notifications", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.AgentProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -71,6 +104,13 @@ namespace Escalated.Migrations.SqlServer
                     b.Property<string>("AgentType")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ChatStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("offline");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -845,6 +885,41 @@ namespace Escalated.Migrations.SqlServer
                     b.HasIndex("ObjectId");
 
                     b.ToTable("escalated_custom_object_records", (string)null);
+                });
+
+            modelBuilder.Entity("Escalated.Models.CustomerPresence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SubjectId")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("nvarchar(191)");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectType", "SubjectId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_customer_presence", (string)null);
                 });
 
             modelBuilder.Entity("Escalated.Models.Department", b =>
@@ -2260,6 +2335,9 @@ namespace Escalated.Migrations.SqlServer
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<DateTime?>("LastCustomerActivityAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("MergedIntoId")
                         .HasColumnType("int");
 
@@ -2330,6 +2408,8 @@ namespace Escalated.Migrations.SqlServer
                     b.HasIndex("GuestEmail");
 
                     b.HasIndex("GuestToken");
+
+                    b.HasIndex("LastCustomerActivityAt");
 
                     b.HasIndex("MergedIntoId");
 
@@ -2444,6 +2524,41 @@ namespace Escalated.Migrations.SqlServer
                     b.HasIndex("ParentTicketId", "ChildTicketId");
 
                     b.ToTable("escalated_ticket_links", (string)null);
+                });
+
+            modelBuilder.Entity("Escalated.Models.TicketRead", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex("UserId", "TicketId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_ticket_reads", (string)null);
                 });
 
             modelBuilder.Entity("Escalated.Models.TicketStatusModel", b =>
@@ -3220,6 +3335,15 @@ namespace Escalated.Migrations.SqlServer
                     b.Navigation("ChildTicket");
 
                     b.Navigation("ParentTicket");
+                });
+
+            modelBuilder.Entity("Escalated.Models.TicketRead", b =>
+                {
+                    b.HasOne("Escalated.Models.Ticket", null)
+                        .WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Escalated.Models.TicketSubjectLink", b =>

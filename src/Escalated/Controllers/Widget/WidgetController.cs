@@ -260,6 +260,7 @@ public class WidgetController : ControllerBase
         GuestAccessEndpoints.NoStore(Response);
         var ticket = await GuestTicketAsync(reference, access, HttpContext.RequestAborted);
         if (ticket == null) return NotFound(new { message = "Ticket not found." });
+        await Escalated.Controllers.Ui.PanelPresence.SeeTicketCustomerAsync(HttpContext, ticket, HttpContext.RequestAborted);
 
         await _db.Entry(ticket).Reference(t => t.Department).LoadAsync();
         var replies = await _db.Replies

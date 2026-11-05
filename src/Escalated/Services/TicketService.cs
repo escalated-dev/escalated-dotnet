@@ -75,6 +75,10 @@ public class TicketService
                 ticket.AccountId = account.Id;
             }
         }
+        // A new ticket is customer activity for the agents' unread markers (ADR
+        // 2026-11-05-agent-panel-data); an imported one is not.
+        if (!ImportContext.IsImporting) ticket.LastCustomerActivityAt = Escalated.Services.AgentPanelService.Now();
+
         _db.Tickets.Add(ticket);
         await _db.SaveChangesAsync(ct);
 
@@ -368,6 +372,11 @@ public class TicketService
         if (filters.UpdatedSince is { } updatedSince)
             query = query.Where(t => t.UpdatedAt >= updatedSince);
 
+        if (filters.UnreadFor is { } unreadFor)
+            query = query.Where(t => _db.TicketReads.Any(r => r.TicketId == t.Id && r.UserId == unreadFor && r.LastReadAt == null)
+                || (t.LastCustomerActivityAt != null
+                    && !_db.TicketReads.Any(r => r.TicketId == t.Id && r.UserId == unreadFor && r.LastReadAt >= t.LastCustomerActivityAt)));
+
         return query;
     }
 
@@ -579,6 +588,12 @@ public class TicketListFilters
 
     /// <summary>Tickets updated at or after this instant (UTC).</summary>
     public DateTime? UpdatedSince { get; set; }
+
+    /// <summary>
+    /// Tickets unread for this agent: marked unread, or with customer activity after the
+    /// agent last read them (the agent inbox's unread counts, ADR 2026-11-05-agent-panel-data).
+    /// </summary>
+    public string? UnreadFor { get; set; }
 
     /// <summary>How close a due SLA target has to be for an open ticket to be at risk.</summary>
     public static readonly TimeSpan SlaAtRiskWindow = TimeSpan.FromMinutes(60);

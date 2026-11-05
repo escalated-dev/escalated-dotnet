@@ -194,7 +194,15 @@ public sealed class AgentInbox
             ["resolved_today"] = await CountAsync(With(queue.Filters, ("status", "resolved"), ("resolved_today", 1)), ct),
         };
 
-        return new Dictionary<string, object?> { ["counts"] = counts, ["views"] = views, ["stats"] = stats };
+        // Of the same open tickets, those unread for this agent (ADR 2026-11-05-agent-panel-data).
+        var unread = new Dictionary<string, object?>
+        {
+            ["mine"] = agentId is null ? 0 : await CountUnreadAsync(Filters(("assigned_to", agentId)), agentId, ct),
+            ["unassigned"] = await CountUnreadAsync(Filters(("unassigned", 1)), agentId, ct),
+            ["all"] = await CountUnreadAsync(Filters(), agentId, ct),
+        };
+
+        return new Dictionary<string, object?> { ["counts"] = counts, ["unread"] = unread, ["views"] = views, ["stats"] = stats };
     }
 
     /// <summary>Built-in views, then the agent's own and shared saved views, by position.</summary>
@@ -241,6 +249,15 @@ public sealed class AgentInbox
 
     private Task<int> CountAsync(IReadOnlyDictionary<string, object?> filters, CancellationToken ct) =>
         _tickets.CountAsync(TicketListQuery.Parse(Strings(filters), null), ct);
+
+    /// <summary>Of the open tickets <see cref="CountOpenAsync"/> counts, those unread for the agent.</summary>
+    private Task<int> CountUnreadAsync(IReadOnlyDictionary<string, object?> filters, string? agentId, CancellationToken ct)
+    {
+        if (agentId is null) return Task.FromResult(0);
+        var parsed = TicketListQuery.Parse(Strings(With(filters, ("open", 1))), null);
+        parsed.UnreadFor = agentId;
+        return _tickets.CountAsync(parsed, ct);
+    }
 
     private static Dictionary<string, object?> SavedFilters(string json, string? agentId)
     {

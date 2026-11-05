@@ -53,6 +53,39 @@ namespace Escalated.Migrations.Sqlite
                     b.ToTable("escalated_agent_capacity", (string)null);
                 });
 
+            modelBuilder.Entity("Escalated.Models.AgentNotification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ReadAt");
+
+                    b.ToTable("escalated_notifications", (string)null);
+                });
+
             modelBuilder.Entity("Escalated.Models.AgentProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -62,6 +95,13 @@ namespace Escalated.Migrations.Sqlite
                     b.Property<string>("AgentType")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("ChatStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("offline");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -804,6 +844,39 @@ namespace Escalated.Migrations.Sqlite
                     b.HasIndex("ObjectId");
 
                     b.ToTable("escalated_custom_object_records", (string)null);
+                });
+
+            modelBuilder.Entity("Escalated.Models.CustomerPresence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SubjectId")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectType", "SubjectId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_customer_presence", (string)null);
                 });
 
             modelBuilder.Entity("Escalated.Models.Department", b =>
@@ -2161,6 +2234,9 @@ namespace Escalated.Migrations.Sqlite
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LastCustomerActivityAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("MergedIntoId")
                         .HasColumnType("INTEGER");
 
@@ -2231,6 +2307,8 @@ namespace Escalated.Migrations.Sqlite
                     b.HasIndex("GuestEmail");
 
                     b.HasIndex("GuestToken");
+
+                    b.HasIndex("LastCustomerActivityAt");
 
                     b.HasIndex("MergedIntoId");
 
@@ -2339,6 +2417,39 @@ namespace Escalated.Migrations.Sqlite
                     b.HasIndex("ParentTicketId", "ChildTicketId");
 
                     b.ToTable("escalated_ticket_links", (string)null);
+                });
+
+            modelBuilder.Entity("Escalated.Models.TicketRead", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastReadAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex("UserId", "TicketId")
+                        .IsUnique();
+
+                    b.ToTable("escalated_ticket_reads", (string)null);
                 });
 
             modelBuilder.Entity("Escalated.Models.TicketStatusModel", b =>
@@ -3099,6 +3210,15 @@ namespace Escalated.Migrations.Sqlite
                     b.Navigation("ChildTicket");
 
                     b.Navigation("ParentTicket");
+                });
+
+            modelBuilder.Entity("Escalated.Models.TicketRead", b =>
+                {
+                    b.HasOne("Escalated.Models.Ticket", null)
+                        .WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Escalated.Models.TicketSubjectLink", b =>

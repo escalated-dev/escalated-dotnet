@@ -360,6 +360,19 @@ public class UiOptions
     public int AgentInboxCacheSeconds { get; set; } = 10;
 
     /// <summary>
+    /// The agents' in-app notifications feed and bell (ADR 2026-11-05-agent-panel-data).
+    /// Off: nothing is stored, the feed routes answer 404 and the shared unread count is
+    /// left out. Default true.
+    /// </summary>
+    public bool AgentNotifications { get; set; } = true;
+
+    /// <summary>
+    /// Agent pages show a customer as online when the customer portal or the widget saw
+    /// them within this many seconds. Default 120.
+    /// </summary>
+    public int PresenceOnlineWindowSeconds { get; set; } = 120;
+
+    /// <summary>
     /// Markup the default root view puts in <c>&lt;head&gt;</c>: your Vite or
     /// bundler tags for the app that calls <c>createInertiaApp</c> with the
     /// Escalated pages. Trusted configuration, written as is.

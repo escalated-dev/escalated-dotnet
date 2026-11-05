@@ -91,6 +91,7 @@ public static class EscalatedServiceCollectionExtensions
         // pipeline instead of replacing the Workflow bridge.
         services.AddSingleton<WorkflowEventDispatcher>();
         services.AddSingleton<NotificationEventDispatcher>();
+        services.AddSingleton<AgentPanelEventDispatcher>();
         services.AddSingleton<WebhookEventDispatcher>();
         services.AddScoped<EscalatedEventDispatcher>();
         services.AddScoped<IEscalatedEventDispatcher>(sp => sp.GetRequiredService<EscalatedEventDispatcher>());
@@ -178,6 +179,7 @@ public static class EscalatedServiceCollectionExtensions
         // Register services
         services.AddScopedWithEventBus<TicketService>();
         services.AddScoped<MentionService>();
+        services.AddScoped<AgentPanelService>();
         services.AddScopedWithEventBus<SlaService>();
         services.AddScopedWithEventBus<AssignmentService>();
         services.AddScopedWithEventBus<EscalationService>();
