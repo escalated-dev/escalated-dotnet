@@ -68,7 +68,7 @@ public class AdminUsersController : ControllerBase
     /// <summary>A request for the page rather than the JSON, with the UI on.</summary>
     private bool IsPage => _options.Ui.Enabled && EscalatedPageAttribute.IsPageRequest(Request);
 
-    private string IndexUrl => $"/{_options.RoutePrefix.Trim('/')}/admin/users";
+    private string IndexUrl => EscalatedEmbed.AdminBase(_options) + "/users";
 
     /// <summary>
     /// GET /support/admin/users — paged + searchable list of host users, each

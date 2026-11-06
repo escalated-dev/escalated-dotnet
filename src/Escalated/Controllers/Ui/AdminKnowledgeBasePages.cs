@@ -135,7 +135,7 @@ public partial class AdminPageController
             errors["slug"] = "The slug has already been taken.";
         }
 
-        var formUrl = id is null ? $"{Prefix}/admin/kb-articles/create" : $"{Prefix}/admin/kb-articles/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/kb-articles/create" : $"{AdminBase}/kb-articles/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         article.Title = title!;
@@ -148,7 +148,7 @@ public partial class AdminPageController
         if (id is null) _db.Articles.Add(article);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/kb-articles") { Success = id is null ? "Article created." : "Article updated." };
+        return new UiRedirectResult($"{AdminBase}/kb-articles") { Success = id is null ? "Article created." : "Article updated." };
     }
 
     [HttpDelete("kb-articles/{id:int}")]
@@ -159,7 +159,7 @@ public partial class AdminPageController
 
         _db.Articles.Remove(article);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/kb-articles") { Success = "Article deleted." };
+        return new UiRedirectResult($"{AdminBase}/kb-articles") { Success = "Article deleted." };
     }
 
     // --- Categories ---
@@ -230,7 +230,7 @@ public partial class AdminPageController
             errors["slug"] = "The slug has already been taken.";
         }
 
-        var index = $"{Prefix}/admin/kb-categories";
+        var index = $"{AdminBase}/kb-categories";
         if (errors.Count > 0) return UiResults.Back(HttpContext, index, errors: errors);
 
         category.Name = name!;
@@ -269,6 +269,6 @@ public partial class AdminPageController
         await _db.ArticleCategories.Where(c => c.ParentId == id).ExecuteUpdateAsync(set => set.SetProperty(c => c.ParentId, (int?)null), ct);
         _db.ArticleCategories.Remove(category);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/kb-categories") { Success = "Category deleted." };
+        return new UiRedirectResult($"{AdminBase}/kb-categories") { Success = "Category deleted." };
     }
 }

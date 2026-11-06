@@ -1,4 +1,5 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<!-- Razor: Views/Shared/SupportAdmin.cshtml is the server-rendered host root view the embedded admin tests render. -->
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -9,6 +10,7 @@
     <!-- Plugins/FakePluginRuntime.cs: the assembly runs as a stand-in plugin runtime. -->
     <GenerateProgramFile>false</GenerateProgramFile>
     <StartupObject>Escalated.Tests.Plugins.TestProgram</StartupObject>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
   </PropertyGroup>
 
   <ItemGroup>

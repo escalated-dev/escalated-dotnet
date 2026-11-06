@@ -132,7 +132,7 @@ public partial class AdminPageController
             else errors["position"] = "The position must be an integer.";
         }
 
-        var formUrl = id is null ? $"{Prefix}/admin/custom-fields/create" : $"{Prefix}/admin/custom-fields/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/custom-fields/create" : $"{AdminBase}/custom-fields/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         if (id is null) field.Slug = await new CustomFieldService(_db).UniqueSlugAsync(name!, null, ct);
@@ -150,7 +150,7 @@ public partial class AdminPageController
         if (id is null) _db.CustomFields.Add(field);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/custom-fields") { Success = id is null ? "Custom field created." : "Custom field updated." };
+        return new UiRedirectResult($"{AdminBase}/custom-fields") { Success = id is null ? "Custom field created." : "Custom field updated." };
     }
 
     [HttpDelete("custom-fields/{id:int}")]
@@ -164,14 +164,14 @@ public partial class AdminPageController
         _db.CustomFields.Remove(field);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/custom-fields") { Success = "Custom field deleted." };
+        return new UiRedirectResult($"{AdminBase}/custom-fields") { Success = "Custom field deleted." };
     }
 
     [HttpPost("custom-fields/reorder")]
     public async Task<IActionResult> ReorderCustomFields(CancellationToken ct)
     {
         var input = await UiInput.ReadAsync(Request, ct);
-        var fallback = $"{Prefix}/admin/custom-fields";
+        var fallback = $"{AdminBase}/custom-fields";
         var pairs = new List<(int Id, int Position)>();
         if (input.Json("positions") is not { ValueKind: JsonValueKind.Array } positions || positions.GetArrayLength() == 0)
         {
@@ -340,7 +340,7 @@ public partial class AdminPageController
             }
         }
 
-        var formUrl = id is null ? $"{Prefix}/admin/custom-objects/create" : $"{Prefix}/admin/custom-objects/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/custom-objects/create" : $"{AdminBase}/custom-objects/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         obj.Name = name!;
@@ -350,7 +350,7 @@ public partial class AdminPageController
         if (id is null) _db.CustomObjects.Add(obj);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/custom-objects") { Success = id is null ? "Custom object created." : "Custom object updated." };
+        return new UiRedirectResult($"{AdminBase}/custom-objects") { Success = id is null ? "Custom object created." : "Custom object updated." };
     }
 
     [HttpDelete("custom-objects/{id:int}")]
@@ -363,7 +363,7 @@ public partial class AdminPageController
         _db.CustomObjects.Remove(obj);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/custom-objects") { Success = "Custom object deleted." };
+        return new UiRedirectResult($"{AdminBase}/custom-objects") { Success = "Custom object deleted." };
     }
 
     [HttpGet("custom-objects/{id:int}/records")]
@@ -398,7 +398,7 @@ public partial class AdminPageController
         if (record is null) return NotFound();
 
         var input = await UiInput.ReadAsync(Request, ct);
-        var fallback = $"{Prefix}/admin/custom-objects/{objectId}/records";
+        var fallback = $"{AdminBase}/custom-objects/{objectId}/records";
         var errors = Errors();
         if (input.Json("data") is not { ValueKind: JsonValueKind.Object } data)
         {
@@ -492,6 +492,6 @@ public partial class AdminPageController
         _db.CustomObjectRecords.Remove(row);
         await _db.SaveChangesAsync(ct);
 
-        return UiResults.Back(HttpContext, $"{Prefix}/admin/custom-objects/{id}/records", success: "Record deleted.");
+        return UiResults.Back(HttpContext, $"{AdminBase}/custom-objects/{id}/records", success: "Record deleted.");
     }
 }

@@ -125,7 +125,7 @@ public sealed class RequireTwoFactorFilter : Microsoft.AspNetCore.Mvc.Filters.IA
     public async Task OnResourceExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.ResourceExecutingContext context,
         Microsoft.AspNetCore.Mvc.Filters.ResourceExecutionDelegate next)
     {
-        var template = RoutePermissions.Template(context.ActionDescriptor.AttributeRouteInfo?.Template, _options.Value.RoutePrefix);
+        var template = RoutePermissions.Template(context.ActionDescriptor, _options.Value.RoutePrefix);
         var http = context.HttpContext;
         var userId = EscalatedUser.ResolveId(http.User, _options.Value);
         if (!_twoFactor.Enabled || template is null || userId is null || http.Items.ContainsKey("EscalatedApiToken")

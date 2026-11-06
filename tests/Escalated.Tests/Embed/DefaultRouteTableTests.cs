@@ -4,6 +4,7 @@ using Escalated.Configuration;
 using Escalated.Tests.Hosting;
 using Escalated.Ui;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -48,6 +49,38 @@ public class DefaultRouteTableTests
 
         var expected = (await File.ReadAllTextAsync(path)).ReplaceLineEndings("\n");
         Assert.Equal(expected, live);
+    }
+
+    [Fact]
+    public async Task DefaultResponsesCarryNoEmbedPropsAndNoFramingChanges()
+    {
+        await using var host = await EscalatedTestHost.StartAsync(
+            o => o.Ui.Enabled = true,
+            null,
+            app => app.Use((context, next) =>
+            {
+                context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+                return next(context);
+            }));
+        await host.GrantRoleAsync("admin-1", "escalated-admin");
+        var admin = host.ClientFor("admin-1");
+
+        var response = await admin.SendAsync(InertiaTestSupport.Visit(HttpMethod.Get, "/support/admin/tags"));
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        var escalated = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement
+            .GetProperty("props").GetProperty("escalated");
+        Assert.False(escalated.TryGetProperty("embed", out _));
+        Assert.False(escalated.TryGetProperty("navigation", out _));
+        Assert.False(response.Headers.Contains("Content-Security-Policy"));
+        Assert.Equal("SAMEORIGIN", response.Headers.GetValues("X-Frame-Options").Single());
+
+        var html = await (await admin.SendAsync(new HttpRequestMessage(HttpMethod.Get, "/support/admin/tags")
+        {
+            Headers = { { "Accept", "text/html" } },
+        })).Content.ReadAsStringAsync();
+        Assert.Contains("\"escalated.admin.tags.index\":\"/support/admin/tags\"", html);
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, (await admin.GetAsync("/admin/support/tags")).StatusCode);
     }
 
     internal static Dictionary<string, object?> Snapshot(EscalatedTestHost host)

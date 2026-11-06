@@ -120,7 +120,7 @@ public partial class AdminPageController
             if (permissions.Count != ids.Distinct().Count()) errors["permissions"] = "The selected permissions are invalid.";
         }
 
-        var formUrl = id is null ? $"{Prefix}/admin/roles/create" : $"{Prefix}/admin/roles/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/roles/create" : $"{AdminBase}/roles/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         var now = DateTime.UtcNow;
@@ -148,7 +148,7 @@ public partial class AdminPageController
         }
 
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/roles") { Success = id is null ? "Role created." : "Role updated." };
+        return new UiRedirectResult($"{AdminBase}/roles") { Success = id is null ? "Role created." : "Role updated." };
     }
 
     [HttpDelete("roles/{id:int}")]
@@ -157,7 +157,7 @@ public partial class AdminPageController
         var role = await _db.Roles.FirstOrDefaultAsync(r => r.Id == id, ct);
         if (role is null) return NotFound();
 
-        var index = $"{Prefix}/admin/roles";
+        var index = $"{AdminBase}/roles";
         if (role.IsSystem) return UiResults.Back(HttpContext, index, error: "System roles cannot be deleted.");
 
         await _db.RoleUsers.Where(ru => ru.RoleId == id).ExecuteDeleteAsync(ct);
@@ -230,7 +230,7 @@ public partial class AdminPageController
             errors["expires_in_days"] = "The expires in days must be between 1 and 365.";
         }
 
-        var back = $"{Prefix}/admin/api-tokens";
+        var back = $"{AdminBase}/api-tokens";
         if (errors.Count > 0) return UiResults.Back(HttpContext, back, errors: errors);
 
         var plain = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
@@ -261,6 +261,6 @@ public partial class AdminPageController
 
         _db.ApiTokens.Remove(token);
         await _db.SaveChangesAsync(ct);
-        return UiResults.Back(HttpContext, $"{Prefix}/admin/api-tokens", success: "Token revoked.");
+        return UiResults.Back(HttpContext, $"{AdminBase}/api-tokens", success: "Token revoked.");
     }
 }

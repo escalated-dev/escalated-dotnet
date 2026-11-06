@@ -98,7 +98,7 @@ public partial class AdminPageController
         var actions = ObjectArray(input, "actions");
         if (actions is null) errors["actions"] = "The actions field must have at least 1 item.";
 
-        var formUrl = id is null ? $"{Prefix}/admin/automations/create" : $"{Prefix}/admin/automations/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/automations/create" : $"{AdminBase}/automations/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         automation.Name = name!;
@@ -113,7 +113,7 @@ public partial class AdminPageController
         }
 
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/automations") { Success = id is null ? "Automation created." : "Automation updated." };
+        return new UiRedirectResult($"{AdminBase}/automations") { Success = id is null ? "Automation created." : "Automation updated." };
     }
 
     [HttpDelete("automations/{id:int}")]
@@ -124,7 +124,7 @@ public partial class AdminPageController
 
         _db.Automations.Remove(automation);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/automations") { Success = "Automation deleted." };
+        return new UiRedirectResult($"{AdminBase}/automations") { Success = "Automation deleted." };
     }
 
     // --- Business hours ---
@@ -266,7 +266,7 @@ public partial class AdminPageController
             errors["holidays"] = "The holidays must be a list.";
         }
 
-        var formUrl = id is null ? $"{Prefix}/admin/business-hours/create" : $"{Prefix}/admin/business-hours/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/business-hours/create" : $"{AdminBase}/business-hours/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         schedule.Name = name!;
@@ -290,7 +290,7 @@ public partial class AdminPageController
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, false), ct);
         }
 
-        return new UiRedirectResult($"{Prefix}/admin/business-hours") { Success = id is null ? "Business schedule created." : "Business schedule updated." };
+        return new UiRedirectResult($"{AdminBase}/business-hours") { Success = id is null ? "Business schedule created." : "Business schedule updated." };
     }
 
     [HttpDelete("business-hours/{id:int}")]
@@ -307,7 +307,7 @@ public partial class AdminPageController
         _db.Holidays.RemoveRange(schedule.Holidays);
         _db.BusinessSchedules.Remove(schedule);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/business-hours") { Success = "Business schedule deleted." };
+        return new UiRedirectResult($"{AdminBase}/business-hours") { Success = "Business schedule deleted." };
     }
 
     // --- Skills ---
@@ -466,7 +466,7 @@ public partial class AdminPageController
             errors["agents"] = "The agents must be a list.";
         }
 
-        var formUrl = id is null ? $"{Prefix}/admin/skills/create" : $"{Prefix}/admin/skills/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/skills/create" : $"{AdminBase}/skills/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         var now = DateTime.UtcNow;
@@ -496,7 +496,7 @@ public partial class AdminPageController
 
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/skills") { Success = id is null ? "Skill created." : "Skill updated." };
+        return new UiRedirectResult($"{AdminBase}/skills") { Success = id is null ? "Skill created." : "Skill updated." };
     }
 
     [HttpDelete("skills/{id:int}")]
@@ -513,7 +513,7 @@ public partial class AdminPageController
         _db.Skills.Remove(skill);
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/skills") { Success = "Skill deleted." };
+        return new UiRedirectResult($"{AdminBase}/skills") { Success = "Skill deleted." };
     }
 
     // --- Capacity ---
@@ -553,7 +553,7 @@ public partial class AdminPageController
         if (capacity is null) return NotFound();
 
         var input = await UiInput.ReadAsync(Request, ct);
-        var back = $"{Prefix}/admin/capacity";
+        var back = $"{AdminBase}/capacity";
         var max = input.Int("max_concurrent") ?? 0;
         if (max is < 1 or > 999)
         {
@@ -647,7 +647,7 @@ public partial class AdminPageController
 
         return UiResults.Render("Escalated/Admin/AuditLog/Index", new
         {
-            logs = UiPresenter.Paginator(rows, total, page, perPage, $"{Prefix}/admin/audit-log", filters),
+            logs = UiPresenter.Paginator(rows, total, page, perPage, $"{AdminBase}/audit-log", filters),
             filters,
             users = users.OrderBy(u => u["name"] as string, StringComparer.OrdinalIgnoreCase).ToList(),
             actions = AuditActions,

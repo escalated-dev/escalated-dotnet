@@ -249,6 +249,32 @@ public static class UiRoutes
         ["escalated.admin.workflows.logs"] = "{prefix}/admin/workflows/logs",
     };
 
+    /// <summary>
+    /// The routes with <c>{prefix}</c> filled in, as absolute paths, following the admin while it
+    /// is embedded (ADR 2026-11-05-embeddable-admin): every <c>escalated.admin.*</c> name under
+    /// <c>{prefix}/admin</c> points under the embed prefix instead (two-factor enrolment stays).
+    /// </summary>
+    public static Dictionary<string, string> Resolve(IReadOnlyDictionary<string, string> routes, Configuration.EscalatedOptions options)
+    {
+        var resolved = Resolve(routes, options.RoutePrefix);
+        if (!Configuration.EscalatedEmbed.Enabled(options))
+        {
+            return resolved;
+        }
+
+        var admin = Configuration.EscalatedEmbed.AdminBase(options);
+        foreach (var (name, path) in resolved.ToList())
+        {
+            if (name.StartsWith("escalated.admin.", StringComparison.Ordinal)
+                && Configuration.EscalatedEmbed.StandaloneAdminRest(path, options.RoutePrefix) is { } rest)
+            {
+                resolved[name] = rest.Length == 0 ? admin : admin + "/" + rest;
+            }
+        }
+
+        return resolved;
+    }
+
     /// <summary>The routes with <c>{prefix}</c> filled in, as absolute paths.</summary>
     public static Dictionary<string, string> Resolve(IReadOnlyDictionary<string, string> routes, string prefix)
     {

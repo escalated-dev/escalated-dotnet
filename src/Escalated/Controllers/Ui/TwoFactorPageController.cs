@@ -187,7 +187,7 @@ public class TwoFactorPageController : ControllerBase
 
         return (await _authorization.AuthorizeAsync(User, EscalatedPolicies.Agent)).Succeeded
             ? Prefix + "/agent"
-            : Prefix + "/admin/reports";
+            : EscalatedEmbed.AdminBase(_options) + "/reports";
     }
 
     private UiRedirectResult Invalid(string field, string message) =>

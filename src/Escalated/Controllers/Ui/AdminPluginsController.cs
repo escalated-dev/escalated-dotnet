@@ -34,7 +34,7 @@ public class AdminPluginsController : ControllerBase
         _logger = logger;
     }
 
-    private string IndexUrl => "/" + $"{_options.RoutePrefix.Trim('/')}/admin/plugins".TrimStart('/');
+    private string IndexUrl => EscalatedEmbed.AdminBase(_options) + "/plugins";
 
     private PluginActor Actor => new(this.CurrentUserId(), User);
 

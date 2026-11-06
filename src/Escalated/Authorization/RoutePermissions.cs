@@ -67,6 +67,17 @@ public static partial class RoutePermissions
         return path;
     }
 
+    /// <summary>
+    /// The template of an action as the map reads it. An embedded admin action (ADR
+    /// 2026-11-05-embeddable-admin) reads as its standalone admin template, so the same entries,
+    /// feature switches and two-factor rules apply wherever the admin is mounted.
+    /// </summary>
+    public static string? Template(Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor action, string routePrefix)
+    {
+        var embedded = action.EndpointMetadata?.OfType<Configuration.EscalatedEmbeddedAdminMetadata>().FirstOrDefault();
+        return Template(embedded?.StandaloneTemplate ?? action.AttributeRouteInfo?.Template, routePrefix);
+    }
+
     /// <summary>Whether the template is a staff route: admin, agent, the staff API, newsletters.</summary>
     public static bool IsStaffRoute(string template)
     {

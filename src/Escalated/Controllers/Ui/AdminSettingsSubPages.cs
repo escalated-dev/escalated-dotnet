@@ -54,7 +54,7 @@ public class AdminSettingsSubPagesController : ControllerBase
         _options = options.Value;
     }
 
-    private string Page(string path) => "/" + _options.RoutePrefix.Trim('/') + "/admin/settings/" + path;
+    private string Page(string path) => EscalatedEmbed.AdminBase(_options) + "/settings/" + path;
 
     private async Task<string> SettingAsync(string key, string fallback, CancellationToken ct)
     {
