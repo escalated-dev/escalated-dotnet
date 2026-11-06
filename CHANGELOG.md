@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.12] - 2026-11-05
+
 ### Upgrading
 - **Optional: embed the admin in your own admin panel (off by default; no change unless configured).** With no `Escalated:Ui:Embed` configuration every route, policy, filter, page, shared prop, header and root view is unchanged (a test compares the whole endpoint table with a snapshot taken before this change). See docs/embedding-admin.md.
 - **Live chat goes only to agents who are online.** Chat routing (widget chat start and department transfers) and the widget's chat availability now read the agent's own status (`AgentProfile.ChatStatus`), as escalated-laravel does: a routing rule's agent gets the chat only while `online`, otherwise it waits in the queue; availability needs an online agent with chat capacity. Away and offline agents, and agents with no profile, are skipped. Agents must set themselves Online to receive chats.
