@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.13] - 2026-11-05
+
+### Fixed
+- **The publish workflow's test step passes again (no runtime changes).** The v0.2.12 publish run failed because `DefaultRouteTableTests.RouteTableIsUnchangedWithoutEmbedConfiguration` compared each endpoint's metadata types with a snapshot taken from a Debug build, and the compiler adds `DebuggerStepThroughAttribute` to async action methods only in Debug. The snapshot now leaves out compiler-generated attributes (`System.Diagnostics.*`, `System.Runtime.CompilerServices.*`), so the test passes on Release builds too; routes, names, actions, order, policies, filters and every other metadata type are still compared (#262). Test-only change: the package's code is the same as 0.2.12.
+
 ## [0.2.12] - 2026-11-05
 
 ### Upgrading
