@@ -75,6 +75,28 @@ public class EmbeddedAdminGateAndFramingTests
     }
 
     [Fact]
+    public async Task IframeModeSendsEscalatedsOwnCookiesForAThirdPartyFrameOverHttps()
+    {
+        await using var iframe = await StartAsync(o => o.EmbedAdmin(prefix: Prefix, mode: EmbedOptions.IframeMode));
+        var framed = await FlashCookieAsync(iframe);
+        Assert.Contains("samesite=none", framed, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("; secure", framed, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("httponly", framed, StringComparison.OrdinalIgnoreCase);
+
+        await using var layout = await StartAsync(o => o.EmbedAdmin(prefix: Prefix));
+        Assert.Contains("samesite=lax", await FlashCookieAsync(layout), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task<string> FlashCookieAsync(Hosting.EscalatedTestHost host)
+    {
+        var client = host.ClientFor(Admin);
+        client.BaseAddress = new Uri("https://localhost/");
+        var response = await client.SendAsync(Visit(HttpMethod.Post, "/backoffice/helpdesk/tags", new { name = "Billing" }));
+        Assert.Equal(HttpStatusCode.SeeOther, response.StatusCode);
+        return response.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("escalated_flash=", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task IframeModeWithNoOriginsAllowsOnlyTheAppItself()
     {
         await using var host = await StartAsync(o => o.EmbedAdmin(prefix: Prefix, mode: EmbedOptions.IframeMode));

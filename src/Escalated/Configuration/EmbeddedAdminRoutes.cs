@@ -102,7 +102,8 @@ internal sealed class EmbeddedAdminActionDescriptorProvider : IActionDescriptorP
 /// iframe mode: <c>Content-Security-Policy: frame-ancestors 'self' &lt;origins&gt;</c> added to, and
 /// <c>X-Frame-Options</c> removed from, embedded admin responses only. The middleware is the
 /// outermost one (a startup filter), and its callback is the first registered, so it runs last,
-/// after every other middleware has set its headers: nothing the host adds can undo it. A host
+/// after every other middleware has set its headers: nothing the host adds can undo it. Over
+/// HTTPS, Escalated's own cookies on those responses go out as SameSite=None; Secure. A host
 /// CSP is kept; the directive is added as a second policy. Not installed while embedding is off
 /// or in layout mode.
 /// </summary>
@@ -122,6 +123,10 @@ internal sealed class EmbedFramingStartupFilter : IStartupFilter
                     {
                         context.Response.Headers.Remove("X-Frame-Options");
                         context.Response.Headers.Append("Content-Security-Policy", directive);
+                        if (context.Request.IsHttps)
+                        {
+                            ThirdPartyCookies(context.Response);
+                        }
                     }
 
                     return Task.CompletedTask;
@@ -132,4 +137,36 @@ internal sealed class EmbedFramingStartupFilter : IStartupFilter
 
         next(app);
     };
+
+    /// <summary>
+    /// Escalated's own cookies set by a framed response (the flash message, the import
+    /// wizard's credentials) are <c>SameSite=Lax</c>, which a cross-site frame never sends back.
+    /// On embedded HTTPS responses in iframe mode they go out as <c>SameSite=None; Secure</c>.
+    /// The host's own cookies (its sign-in) are its to configure.
+    /// </summary>
+    internal static void ThirdPartyCookies(HttpResponse response)
+    {
+        var cookies = response.Headers.SetCookie;
+        if (cookies.Count == 0)
+        {
+            return;
+        }
+
+        var rewritten = cookies.Select(cookie =>
+        {
+            if (cookie is null || !cookie.StartsWith("escalated_", StringComparison.Ordinal))
+            {
+                return cookie;
+            }
+
+            var parts = cookie.Split(';').Select(p => p.Trim())
+                .Where(p => !p.StartsWith("samesite=", StringComparison.OrdinalIgnoreCase)
+                    && !p.Equals("secure", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            parts.Add("secure");
+            parts.Add("samesite=none");
+            return string.Join("; ", parts);
+        }).ToArray();
+        response.Headers.SetCookie = rewritten;
+    }
 }

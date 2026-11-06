@@ -235,6 +235,26 @@ public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = def
 > as JSON strings. Update your `IUserDirectory` implementation to the `string`
 > signatures shown above. Integer ids keep working — pass them as strings.
 
+## Embedding the admin in your own admin panel (optional)
+
+Escalated's admin runs standalone at `/support/admin` with its own sidebar; that
+is the default and needs nothing. If your app already has an admin panel, you
+can instead mount Escalated's admin screens inside it: under your URL prefix and
+authorization policies, rendered in your Vue + Inertia layout or your Razor
+layout (or an allow-listed iframe), with its menu listed in your own sidebar.
+Nothing changes unless you turn it on:
+
+```csharp
+builder.Services.Configure<EscalatedOptions>(options => options.EmbedAdmin(
+    prefix: "admin/support",
+    policies: new[] { "BackOfficeAdmin" },
+    layout: "Layouts/AdminLayout"));
+```
+
+Escalated's admin policy, two-factor and route permissions stay in place. See
+[docs/embedding-admin.md](docs/embedding-admin.md) for the settings
+(`Escalated:Ui:Embed`, `ESCALATED_EMBED*`), the three host setups and security.
+
 ## Authorization
 
 Escalated owns no authentication. It authorizes whoever your application signed

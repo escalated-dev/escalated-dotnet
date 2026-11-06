@@ -113,6 +113,8 @@ Every page gets, as escalated-laravel shares them:
   `features.newsletters`, `guest_tickets_enabled`, `show_powered_by`,
   `knowledge_base_enabled`, `knowledge_base_public`,
   `knowledge_base_feedback_enabled`, `agent_type`, `broadcasting.channel_prefix`.
+  While the admin is embedded in your own admin panel (optional, off by
+  default), also `embed` and `navigation`; see [embedding-admin.md](embedding-admin.md).
 - `flash`: `{success, error}` from the previous request's redirect.
 - `errors`: the field errors of a failed form post, as `{field: message}`.
 
