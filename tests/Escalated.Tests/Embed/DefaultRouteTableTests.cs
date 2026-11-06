@@ -123,9 +123,17 @@ public class DefaultRouteTableTests
             ["allow_anonymous"] = endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null,
             ["filters"] = action?.FilterDescriptors.Select(f => $"{Filter(f.Filter)}@{f.Scope}").ToList() ?? new List<string>(),
             ["metadata"] = endpoint.Metadata.Select(m => m.GetType().FullName ?? m.GetType().Name)
+                .Where(n => !IsCompilerMetadata(n))
                 .Distinct().OrderBy(n => n, StringComparer.Ordinal).ToList(),
         };
     }
+
+    // Attributes the C# compiler puts on action methods differ between Debug and Release
+    // builds (DebuggerStepThrough, async state machine and nullable attributes), so they
+    // are not part of the route table.
+    private static bool IsCompilerMetadata(string typeName) =>
+        typeName.StartsWith("System.Diagnostics.", StringComparison.Ordinal)
+        || typeName.StartsWith("System.Runtime.CompilerServices.", StringComparison.Ordinal);
 
     private static string Filter(IFilterMetadata filter) => filter switch
     {
