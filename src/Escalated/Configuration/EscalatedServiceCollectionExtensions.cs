@@ -110,6 +110,15 @@ public static class EscalatedServiceCollectionExtensions
         // a multi-instance host registers a shared IGuestRateLimiter.
         services.TryAddSingleton<IGuestRateLimiter, MemoryGuestRateLimiter>();
 
+        // Embedding the admin in the host's admin panel (ADR 2026-11-05-embeddable-admin). Off by
+        // default; with it off these change no route and install no middleware. The framing
+        // headers' startup filter is registered first so its middleware is the outermost.
+        services.AddSingleton<IPostConfigureOptions<EscalatedOptions>, EmbedFromConfiguration>();
+        services.AddTransient<IStartupFilter, EmbedFramingStartupFilter>();
+        services.TryAddEnumerable(ServiceDescriptor.Transient<
+            Microsoft.AspNetCore.Mvc.Abstractions.IActionDescriptorProvider, EmbeddedAdminActionDescriptorProvider>());
+        services.AddScoped<Escalated.Ui.EscalatedAdminNavigation>();
+
         // Embedding the widget on other sites: CORS at the front of the pipeline
         // for the widget routes, guest forcing after host authentication, and
         // ESCALATED_WIDGET_ALLOWED_ORIGINS. Inert until an origin is listed.

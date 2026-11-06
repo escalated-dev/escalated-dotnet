@@ -86,7 +86,10 @@ public abstract class TicketPageControllerBase : ControllerBase
 
     protected string Prefix => "/" + Options.RoutePrefix.Trim('/');
 
-    protected string ShowUrl(Ticket ticket) => $"{Prefix}/{Area}/tickets/{Uri.EscapeDataString(ticket.Reference)}";
+    /// <summary>Where this area's pages live: <c>{Prefix}/{Area}</c>; the admin follows the embed prefix (ADR 2026-11-05-embeddable-admin).</summary>
+    protected string AreaBase => Area == "admin" ? EscalatedEmbed.AdminBase(Options) : $"{Prefix}/{Area}";
+
+    protected string ShowUrl(Ticket ticket) => $"{AreaBase}/tickets/{Uri.EscapeDataString(ticket.Reference)}";
 
     protected Task<Ticket?> FindAsync(string reference, CancellationToken ct) =>
         Db.Tickets.FirstOrDefaultAsync(t => t.Reference == reference, ct);
@@ -99,7 +102,7 @@ public abstract class TicketPageControllerBase : ControllerBase
         var errors = TicketListQuery.Validate(echo);
         if (errors.Count > 0)
         {
-            return UiResults.Back(HttpContext, $"{Prefix}/{Area}/tickets", errors: errors);
+            return UiResults.Back(HttpContext, $"{AreaBase}/tickets", errors: errors);
         }
 
         var query = await ListQueryAsync(echo, ct);
@@ -130,7 +133,7 @@ public abstract class TicketPageControllerBase : ControllerBase
         var input = await UiInput.ReadAsync(Request, ct);
         var ids = input.IntList("ticket_ids");
         var action = input.String("action");
-        var fallback = $"{Prefix}/{Area}/tickets";
+        var fallback = $"{AreaBase}/tickets";
 
         if (ids is null || ids.Count == 0 || action is not ("status" or "priority" or "assign" or "tags" or "department" or "close" or "resolve"
             or "mark_read" or "mark_unread"))

@@ -46,7 +46,7 @@ public class AdminImportPageController : ControllerBase
         _options = options.Value;
     }
 
-    private string Base => "/" + _options.RoutePrefix.Trim('/') + "/admin/import";
+    private string Base => EscalatedEmbed.AdminBase(_options) + "/import";
 
     [HttpGet]
     [EscalatedPage(Negotiate = true)]

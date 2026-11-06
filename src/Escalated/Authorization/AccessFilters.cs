@@ -46,7 +46,7 @@ public sealed class EnsureAccessFeaturesFilter : IAsyncResourceFilter
 
     public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {
-        var template = RoutePermissions.Template(context.ActionDescriptor.AttributeRouteInfo?.Template, _options.Value.RoutePrefix);
+        var template = RoutePermissions.Template(context.ActionDescriptor, _options.Value.RoutePrefix);
         var feature = template is null ? null : FeatureOf(template);
         if (feature is not null && !_features.Enabled(feature))
         {
@@ -79,7 +79,7 @@ public sealed class EnforceRoutePermissionsFilter : IAsyncResourceFilter
 
     public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {
-        var template = RoutePermissions.Template(context.ActionDescriptor.AttributeRouteInfo?.Template, _options.Value.RoutePrefix);
+        var template = RoutePermissions.Template(context.ActionDescriptor, _options.Value.RoutePrefix);
         if (!_access.Enforced || template is null || !RoutePermissions.IsStaffRoute(template))
         {
             await next();

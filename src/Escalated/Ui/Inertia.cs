@@ -1,7 +1,10 @@
 using System.Text;
 using Escalated.Configuration;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -27,6 +30,31 @@ public sealed class InertiaPage
         ["clearHistory"] = false,
         ["flash"] = Flash,
     };
+}
+
+/// <summary>
+/// The model of a Razor root view for embedded admin pages (<c>Escalated:Ui:Embed:RootView</c>,
+/// ADR 2026-11-05-embeddable-admin): write <see cref="Head"/> in <c>&lt;head&gt;</c>,
+/// <see cref="Mount"/> where the page should render, and list <see cref="Navigation"/> in your menu.
+/// </summary>
+public sealed class EscalatedEmbedRootViewModel
+{
+    public InertiaPage Page { get; init; } = new();
+
+    /// <summary>The serialized page object.</summary>
+    public string PageJson { get; init; } = "{}";
+
+    /// <summary><c>Escalated:Ui:Title</c>.</summary>
+    public string Title { get; init; } = string.Empty;
+
+    /// <summary>The route helper and <c>Escalated:Ui:HeadHtml</c>, as the default root view writes them.</summary>
+    public IHtmlContent Head { get; init; } = HtmlString.Empty;
+
+    /// <summary>The Inertia mount point carrying the page object.</summary>
+    public IHtmlContent Mount { get; init; } = HtmlString.Empty;
+
+    /// <summary>Escalated's admin menu for the signed-in user.</summary>
+    public IReadOnlyList<AdminNavigationItem> Navigation { get; init; } = Array.Empty<AdminNavigationItem>();
 }
 
 /// <summary>Request headers of the Inertia protocol.</summary>
@@ -152,10 +180,46 @@ public sealed class InertiaResult : IActionResult
             return;
         }
 
+        // A server-rendered host's root view, on embedded admin pages only (ADR 2026-11-05-embeddable-admin).
+        if (EscalatedEmbed.IsEmbeddedRequest(http) && EscalatedEmbed.RootView(options) is { } rootView)
+        {
+            await RenderRootViewAsync(context, rootView, page, json, options);
+            return;
+        }
+
         var view = services.GetRequiredService<IEscalatedUiRootView>();
         var html = await view.RenderAsync(http, page, json, ct);
         response.ContentType = "text/html; charset=utf-8";
         await response.WriteAsync(html, Encoding.UTF8, ct);
+    }
+
+    private async Task RenderRootViewAsync(ActionContext context, string rootView, InertiaPage page, string json, EscalatedOptions options)
+    {
+        var services = context.HttpContext.RequestServices;
+        var navigation = (page.Props.TryGetValue("escalated", out var shared) ? shared : null) is IDictionary<string, object?> escalated
+            && escalated.TryGetValue("navigation", out var items) && items is IReadOnlyList<AdminNavigationItem> list
+                ? list
+                : await services.GetRequiredService<EscalatedAdminNavigation>().ForAsync(context.HttpContext.User, context.HttpContext, context.HttpContext.RequestAborted);
+        var model = new EscalatedEmbedRootViewModel
+        {
+            Page = page,
+            PageJson = json,
+            Title = options.Ui.Title,
+            Head = new HtmlString(DefaultEscalatedUiRootView.Head(options, services.GetRequiredService<IOptions<UiRouteOptions>>().Value)),
+            Mount = new HtmlString(DefaultEscalatedUiRootView.Mount(options, json)),
+            Navigation = navigation,
+        };
+
+        var result = new ViewResult
+        {
+            ViewName = rootView,
+            StatusCode = StatusCode,
+            ContentType = "text/html; charset=utf-8",
+            ViewData = new ViewDataDictionary<EscalatedEmbedRootViewModel>(
+                services.GetRequiredService<IModelMetadataProvider>(), context.ModelState)
+            { Model = model },
+        };
+        await result.ExecuteResultAsync(context);
     }
 
     /// <summary>

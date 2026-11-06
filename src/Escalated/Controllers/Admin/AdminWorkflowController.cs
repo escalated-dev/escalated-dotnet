@@ -92,7 +92,7 @@ public class AdminWorkflowController : ControllerBase
     /// <summary>A request for the page rather than the JSON, with the UI on.</summary>
     private bool IsPage => _options.Ui.Enabled && EscalatedPageAttribute.IsPageRequest(Request);
 
-    private string IndexUrl => $"/{_options.RoutePrefix.Trim('/')}/admin/workflows";
+    private string IndexUrl => EscalatedEmbed.AdminBase(_options) + "/workflows";
 
     private IActionResult ToIndex(string success) => new UiRedirectResult(IndexUrl) { Success = success };
 

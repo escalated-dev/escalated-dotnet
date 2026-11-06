@@ -35,6 +35,12 @@ public static class EscalatedPolicies
 
     /// <summary>The customer portal: <c>/support/tickets*</c> and attachment downloads.</summary>
     public const string Customer = "escalated-customer";
+
+    /// <summary>
+    /// Any signed-in user Escalated can identify. Used in place of <see cref="Admin"/> on the
+    /// embedded admin routes when the host replaces the admin gate (ADR 2026-11-05-embeddable-admin).
+    /// </summary>
+    public const string User = "escalated-user";
 }
 
 /// <summary>Resolves the host user id Escalated acts as.</summary>
@@ -182,6 +188,10 @@ internal static class EscalatedAuthorizationServiceCollectionExtensions
                     new EscalatedRoleRequirement(AdminUsersController.AgentRoleSlug, AdminUsersController.AdminRoleSlug)));
 
             AddIfMissing(options, EscalatedPolicies.Customer, policy => policy
+                .RequireAuthenticatedUser()
+                .AddRequirements(new EscalatedUserRequirement()));
+
+            AddIfMissing(options, EscalatedPolicies.User, policy => policy
                 .RequireAuthenticatedUser()
                 .AddRequirements(new EscalatedUserRequirement()));
         });

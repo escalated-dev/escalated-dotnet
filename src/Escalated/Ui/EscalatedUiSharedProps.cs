@@ -7,6 +7,7 @@ using Escalated.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Escalated.Ui;
@@ -103,7 +104,34 @@ public sealed class EscalatedUiSharedProps : IEscalatedUiSharedProps
             }
         }
 
+        // Embedding the admin in the host's admin panel (ADR 2026-11-05-embeddable-admin). Neither
+        // key exists while it is off.
+        if (EscalatedEmbed.Enabled(_options))
+        {
+            escalated["embed"] = Embed(context);
+            escalated["navigation"] = await context.RequestServices.GetRequiredService<EscalatedAdminNavigation>()
+                .ForAsync(principal, context, ct);
+        }
+
         props["escalated"] = escalated;
+    }
+
+    /// <summary>The <c>escalated.embed</c> prop: <c>enabled</c> and <c>route</c> only on embedded admin responses.</summary>
+    private Dictionary<string, object?> Embed(HttpContext context)
+    {
+        var embedded = context.GetEndpoint()?.Metadata.GetMetadata<EscalatedEmbeddedAdminMetadata>();
+        var iframe = EscalatedEmbed.Mode(_options) == EmbedOptions.IframeMode;
+        var routes = context.RequestServices.GetRequiredService<IOptions<UiRouteOptions>>().Value.Routes;
+
+        return new Dictionary<string, object?>
+        {
+            ["enabled"] = embedded is not null,
+            ["mode"] = EscalatedEmbed.Mode(_options),
+            ["layout"] = EscalatedEmbed.Layout(_options),
+            ["route"] = embedded is null ? null : EscalatedAdminNavigation.RouteName(embedded, routes, _options.RoutePrefix),
+            ["base_url"] = "/" + EscalatedEmbed.Prefix(_options),
+            ["allowed_origins"] = iframe ? EscalatedEmbed.FrameAncestors(_options).ToList() : new List<string>(),
+        };
     }
 
     private async Task<Dictionary<string, object?>> UserAsync(ClaimsPrincipal principal, string userId, CancellationToken ct)

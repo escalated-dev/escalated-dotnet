@@ -133,7 +133,7 @@ public partial class AdminPageController
         var sendsSchedule = input.Has("business_schedule_id");
         var scheduleId = sendsSchedule ? await _present.BusinessScheduleIdAsync(input, errors, ct) : null;
 
-        var formUrl = id is null ? $"{Prefix}/admin/sla-policies/create" : $"{Prefix}/admin/sla-policies/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/sla-policies/create" : $"{AdminBase}/sla-policies/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         policy.Name = name!;
@@ -150,7 +150,7 @@ public partial class AdminPageController
         if (id is null) _db.SlaPolicies.Add(policy);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/sla-policies") { Success = id is null ? "SLA policy created." : "SLA policy updated." };
+        return new UiRedirectResult($"{AdminBase}/sla-policies") { Success = id is null ? "SLA policy created." : "SLA policy updated." };
     }
 
     /// <summary>
@@ -200,7 +200,7 @@ public partial class AdminPageController
         _db.SlaPolicies.Remove(policy);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/sla-policies") { Success = "SLA policy deleted." };
+        return new UiRedirectResult($"{AdminBase}/sla-policies") { Success = "SLA policy deleted." };
     }
 
     // --- Escalation rules ---
@@ -267,7 +267,7 @@ public partial class AdminPageController
         if (actions is null) errors["actions"] = "The actions field is required.";
         if (input.Has("order") && input.String("order") is not null && input.Int("order") is null) errors["order"] = "The order must be an integer.";
 
-        var formUrl = id is null ? $"{Prefix}/admin/escalation-rules/create" : $"{Prefix}/admin/escalation-rules/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/escalation-rules/create" : $"{AdminBase}/escalation-rules/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         rule.Name = name!;
@@ -281,7 +281,7 @@ public partial class AdminPageController
         if (id is null) _db.EscalationRules.Add(rule);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/escalation-rules") { Success = id is null ? "Escalation rule created." : "Escalation rule updated." };
+        return new UiRedirectResult($"{AdminBase}/escalation-rules") { Success = id is null ? "Escalation rule created." : "Escalation rule updated." };
     }
 
     [HttpDelete("escalation-rules/{id:int}")]
@@ -293,7 +293,7 @@ public partial class AdminPageController
 
         _db.EscalationRules.Remove(rule);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/escalation-rules") { Success = "Escalation rule deleted." };
+        return new UiRedirectResult($"{AdminBase}/escalation-rules") { Success = "Escalation rule deleted." };
     }
 
     // --- Canned responses ---
@@ -348,7 +348,7 @@ public partial class AdminPageController
         if (body is null) errors["body"] = "The body field is required.";
         if (category is { Length: > 50 }) errors["category"] = "The category may not be greater than 50 characters.";
 
-        var back = $"{Prefix}/admin/canned-responses";
+        var back = $"{AdminBase}/canned-responses";
         if (errors.Count > 0) return UiResults.Back(HttpContext, back, errors: errors);
 
         response.Title = title!;
@@ -371,7 +371,7 @@ public partial class AdminPageController
 
         _db.CannedResponses.Remove(response);
         await _db.SaveChangesAsync(ct);
-        return UiResults.Back(HttpContext, $"{Prefix}/admin/canned-responses", success: "Canned response deleted.");
+        return UiResults.Back(HttpContext, $"{AdminBase}/canned-responses", success: "Canned response deleted.");
     }
 
     // --- Macros ---
@@ -463,7 +463,7 @@ public partial class AdminPageController
             }
         }
 
-        var back = $"{Prefix}/admin/macros";
+        var back = $"{AdminBase}/macros";
         if (errors.Count > 0) return UiResults.Back(HttpContext, back, errors: errors);
 
         macro.Name = name!;
@@ -487,7 +487,7 @@ public partial class AdminPageController
 
         _db.Macros.Remove(macro);
         await _db.SaveChangesAsync(ct);
-        return UiResults.Back(HttpContext, $"{Prefix}/admin/macros", success: "Macro deleted.");
+        return UiResults.Back(HttpContext, $"{AdminBase}/macros", success: "Macro deleted.");
     }
 
     // --- Statuses ---
@@ -560,7 +560,7 @@ public partial class AdminPageController
         else if (color.Length > 20) errors["color"] = "The color may not be greater than 20 characters.";
         if (input.String("position") is not null && input.Int("position") is null) errors["position"] = "The position must be an integer.";
 
-        var formUrl = id is null ? $"{Prefix}/admin/statuses/create" : $"{Prefix}/admin/statuses/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/statuses/create" : $"{AdminBase}/statuses/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         var isDefault = input.Bool("is_default");
@@ -591,7 +591,7 @@ public partial class AdminPageController
         if (id is null) _db.TicketStatuses.Add(status);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/statuses") { Success = id is null ? "Status created." : "Status updated." };
+        return new UiRedirectResult($"{AdminBase}/statuses") { Success = id is null ? "Status created." : "Status updated." };
     }
 
     [HttpDelete("statuses/{id:int}")]
@@ -602,7 +602,7 @@ public partial class AdminPageController
 
         _db.TicketStatuses.Remove(status);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/statuses") { Success = "Status deleted." };
+        return new UiRedirectResult($"{AdminBase}/statuses") { Success = "Status deleted." };
     }
 
     // --- Webhooks ---
@@ -733,7 +733,7 @@ public partial class AdminPageController
         var secret = input.String("secret");
         if (secret is { Length: > 255 }) errors["secret"] = "The secret may not be greater than 255 characters.";
 
-        var formUrl = id is null ? $"{Prefix}/admin/webhooks/create" : $"{Prefix}/admin/webhooks/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/webhooks/create" : $"{AdminBase}/webhooks/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         webhook.Url = url!;
@@ -748,7 +748,7 @@ public partial class AdminPageController
         if (id is null) _db.Webhooks.Add(webhook);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/webhooks") { Success = id is null ? "Webhook created." : "Webhook updated." };
+        return new UiRedirectResult($"{AdminBase}/webhooks") { Success = id is null ? "Webhook created." : "Webhook updated." };
     }
 
     [HttpDelete("webhooks/{id:int}")]
@@ -760,7 +760,7 @@ public partial class AdminPageController
         await _db.WebhookDeliveries.Where(d => d.WebhookId == id).ExecuteDeleteAsync(ct);
         _db.Webhooks.Remove(webhook);
         await _db.SaveChangesAsync(ct);
-        return new UiRedirectResult($"{Prefix}/admin/webhooks") { Success = "Webhook deleted." };
+        return new UiRedirectResult($"{AdminBase}/webhooks") { Success = "Webhook deleted." };
     }
 
     /// <summary>Sends the delivery's event and payload to its webhook again, recording a new delivery.</summary>
@@ -771,6 +771,6 @@ public partial class AdminPageController
         if (delivery is null) return NotFound();
 
         await dispatcher.RetryDeliveryAsync(delivery, ct);
-        return UiResults.Back(HttpContext, $"{Prefix}/admin/webhooks/{delivery.WebhookId}/deliveries", success: "Webhook delivery retried.");
+        return UiResults.Back(HttpContext, $"{AdminBase}/webhooks/{delivery.WebhookId}/deliveries", success: "Webhook delivery retried.");
     }
 }

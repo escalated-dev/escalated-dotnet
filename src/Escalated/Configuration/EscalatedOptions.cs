@@ -391,6 +391,12 @@ public class UiOptions
     /// ships its own helper sets this to false.
     /// </summary>
     public bool RouteHelper { get; set; } = true;
+
+    /// <summary>
+    /// Embed the admin in your own admin panel (optional, off by default; ADR
+    /// 2026-11-05-embeddable-admin). See docs/embedding-admin.md.
+    /// </summary>
+    public EmbedOptions Embed { get; set; } = new();
 }
 
 /// <summary>Plugins (configuration section <c>Escalated:Plugins</c>).</summary>

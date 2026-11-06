@@ -480,7 +480,7 @@ public sealed class PluginRegistry
         _access.AllowsAsync(user, capability, ct);
 
     public string PageUrl(RegisteredPlugin plugin, string route) =>
-        $"/{_options.RoutePrefix.Trim('/')}/admin/plugins/{plugin.Slug}/{route.TrimStart('/')}".Replace("//", "/", StringComparison.Ordinal);
+        $"{EscalatedEmbed.AdminBase(_options)}/plugins/{plugin.Slug}/{route.TrimStart('/')}".Replace("//", "/", StringComparison.Ordinal);
 
     /// <summary>A native widget's badge, within 5 s: a number or a string, else null.</summary>
     private async Task<JsonNode?> NativeBadgeAsync(RegisteredPlugin plugin, string component, PluginActor viewer, CancellationToken ct)

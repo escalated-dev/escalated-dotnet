@@ -1,0 +1,27 @@
+@model Escalated.Ui.EscalatedEmbedRootViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@Model.Title · Back office</title>
+    <link rel="stylesheet" href="/css/backoffice.css">
+    @Model.Head
+</head>
+<body>
+    <header class="topbar">Back office</header>
+    <div class="layout">
+        <nav class="sidebar" aria-label="Back office">
+            <a href="/backoffice">Dashboard</a>
+            <p class="menu-heading">Support</p>
+            <ul>
+                @foreach (var item in Model.Navigation)
+                {
+                    <li><a href="@item.Url" class="@(item.Active ? "active" : null)" aria-current="@(item.Active ? "page" : null)">@item.Label</a></li>
+                }
+            </ul>
+        </nav>
+        <main>@Model.Mount</main>
+    </div>
+</body>
+</html>

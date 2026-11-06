@@ -36,7 +36,7 @@ public class SsoSettingsPageController : ControllerBase
         _options = options.Value;
     }
 
-    private string Page => "/" + _options.RoutePrefix.Trim('/') + "/admin/settings/sso";
+    private string Page => EscalatedEmbed.AdminBase(_options) + "/settings/sso";
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct)

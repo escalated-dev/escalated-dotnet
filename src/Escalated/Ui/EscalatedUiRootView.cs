@@ -39,25 +39,15 @@ public sealed class DefaultEscalatedUiRootView : IEscalatedUiRootView
     {
         var options = _options.Value;
         var ui = options.Ui;
-        var id = WebUtility.HtmlEncode(ui.RootElementId);
         var html = new StringBuilder();
 
         html.Append("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
         html.Append("<meta charset=\"utf-8\">\n");
         html.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
         html.Append("<title>").Append(WebUtility.HtmlEncode(ui.Title)).Append("</title>\n");
-        if (ui.RouteHelper)
-        {
-            html.Append("<script>").Append(RouteHelperScript(UiRoutes.Resolve(_routes.Value.Routes, options.RoutePrefix))).Append("</script>\n");
-        }
-        if (!string.IsNullOrEmpty(ui.HeadHtml))
-        {
-            html.Append(ui.HeadHtml).Append('\n');
-        }
+        html.Append(Head(options, _routes.Value));
         html.Append("</head>\n<body>\n");
-        html.Append("<script data-page=\"").Append(id).Append("\" type=\"application/json\">")
-            .Append(ScriptSafe(pageJson)).Append("</script>\n");
-        html.Append("<div id=\"").Append(id).Append("\" data-page=\"").Append(WebUtility.HtmlEncode(pageJson)).Append("\"></div>\n");
+        html.Append(Mount(options, pageJson));
         if (!string.IsNullOrEmpty(ui.BodyHtml))
         {
             html.Append(ui.BodyHtml).Append('\n');
@@ -65,6 +55,37 @@ public sealed class DefaultEscalatedUiRootView : IEscalatedUiRootView
         html.Append("</body>\n</html>\n");
 
         return Task.FromResult(html.ToString());
+    }
+
+    /// <summary>
+    /// What the default view writes in <c>&lt;head&gt;</c> after the title: the route helper
+    /// (following the admin while it is embedded) and <see cref="UiOptions.HeadHtml"/>.
+    /// </summary>
+    internal static string Head(EscalatedOptions options, UiRouteOptions routes)
+    {
+        var ui = options.Ui;
+        var html = new StringBuilder();
+        if (ui.RouteHelper)
+        {
+            html.Append("<script>").Append(RouteHelperScript(UiRoutes.Resolve(routes.Routes, options))).Append("</script>\n");
+        }
+        if (!string.IsNullOrEmpty(ui.HeadHtml))
+        {
+            html.Append(ui.HeadHtml).Append('\n');
+        }
+
+        return html.ToString();
+    }
+
+    /// <summary>The page object as Inertia 3's <c>&lt;script data-page&gt;</c> and as Inertia 1/2's mount element.</summary>
+    internal static string Mount(EscalatedOptions options, string pageJson)
+    {
+        var id = WebUtility.HtmlEncode(options.Ui.RootElementId);
+        var html = new StringBuilder();
+        html.Append("<script data-page=\"").Append(id).Append("\" type=\"application/json\">")
+            .Append(ScriptSafe(pageJson)).Append("</script>\n");
+        html.Append("<div id=\"").Append(id).Append("\" data-page=\"").Append(WebUtility.HtmlEncode(pageJson)).Append("\"></div>\n");
+        return html.ToString();
     }
 
     /// <summary>

@@ -69,6 +69,9 @@ public partial class AdminPageController : ControllerBase
 
     private string Prefix => "/" + _options.RoutePrefix.Trim('/');
 
+    /// <summary>Where the admin screens live: <c>{Prefix}/admin</c>, or the embed prefix (ADR 2026-11-05-embeddable-admin).</summary>
+    private string AdminBase => EscalatedEmbed.AdminBase(_options);
+
     // --- Settings ---
 
     [HttpGet("settings")]
@@ -93,7 +96,7 @@ public partial class AdminPageController : ControllerBase
             },
             supported_settings = SupportedSettings,
             departments = await _present.DepartmentOptionsAsync(ct),
-            update_url = $"{Prefix}/admin/settings",
+            update_url = $"{AdminBase}/settings",
         });
     }
 
@@ -150,7 +153,7 @@ public partial class AdminPageController : ControllerBase
             }
         }
 
-        var back = $"{Prefix}/admin/settings";
+        var back = $"{AdminBase}/settings";
         if (errors.Count > 0) return UiResults.Back(HttpContext, back, errors: errors);
 
         foreach (var (key, value) in values)
@@ -244,7 +247,7 @@ public partial class AdminPageController : ControllerBase
         var sendsSchedule = input.Has("business_schedule_id");
         var scheduleId = sendsSchedule ? await _present.BusinessScheduleIdAsync(input, errors, ct) : null;
 
-        var formUrl = id is null ? $"{Prefix}/admin/departments/create" : $"{Prefix}/admin/departments/{id}/edit";
+        var formUrl = id is null ? $"{AdminBase}/departments/create" : $"{AdminBase}/departments/{id}/edit";
         if (errors.Count > 0) return UiResults.Back(HttpContext, formUrl, errors: errors);
 
         slug = Department.GenerateSlug(slug ?? name!);
@@ -262,7 +265,7 @@ public partial class AdminPageController : ControllerBase
         if (id is null) _db.Departments.Add(department);
         await _db.SaveChangesAsync(ct);
 
-        return new UiRedirectResult($"{Prefix}/admin/departments") { Success = id is null ? "Department created." : "Department updated." };
+        return new UiRedirectResult($"{AdminBase}/departments") { Success = id is null ? "Department created." : "Department updated." };
     }
 
     /// <summary>Deletes the department; its tickets keep going with no department.</summary>
@@ -272,7 +275,7 @@ public partial class AdminPageController : ControllerBase
     {
         var department = await _db.Departments.FirstOrDefaultAsync(d => d.Id == id, ct);
         if (department is null) return NotFound();
-        var index = $"{Prefix}/admin/departments";
+        var index = $"{AdminBase}/departments";
 
         if (await _db.SlaPolicies.AnyAsync(p => p.DepartmentId == id, ct))
         {
@@ -331,7 +334,7 @@ public partial class AdminPageController : ControllerBase
         if (slug is { Length: > 100 }) errors["slug"] = "The slug may not be greater than 100 characters.";
         if (color is { Length: > 7 }) errors["color"] = "The color may not be greater than 7 characters.";
 
-        var back = $"{Prefix}/admin/tags";
+        var back = $"{AdminBase}/tags";
         if (errors.Count > 0) return UiResults.Back(HttpContext, back, errors: errors);
 
         slug = Tag.GenerateSlug(slug ?? name!);
@@ -361,6 +364,6 @@ public partial class AdminPageController : ControllerBase
         _db.Tags.Remove(tag);
         await _db.SaveChangesAsync(ct);
 
-        return UiResults.Back(HttpContext, $"{Prefix}/admin/tags", success: "Tag deleted.");
+        return UiResults.Back(HttpContext, $"{AdminBase}/tags", success: "Tag deleted.");
     }
 }
