@@ -573,7 +573,7 @@ public class SsoService
 
         var state = CryptoRandom.CreateUniqueId(32);
         var verifier = CryptoRandom.CreateUniqueId(48);
-        var challenge = Base64Url.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
+        var challenge = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
         var url = new RequestUrl(config["sso_oauth_authorize_url"]).CreateAuthorizeUrl(
             clientId: config["sso_oauth_client_id"],
             responseType: OidcConstants.ResponseTypes.Code,
