@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.14] - 2026-11-07
+
 ### Changed
 - **Dependencies:** EF Core 9.0.22 (all providers), ASP.NET Core test packages 8.0.33, Microsoft.Extensions.Localization 10.0.14, System.Security.Cryptography.Xml 10.0.14 and Duende.IdentityModel 8.1.0. Duende 8 dropped its `Base64Url` helper, so the OAuth PKCE challenge now uses `Base64UrlEncoder` from Microsoft.IdentityModel.Tokens (same unpadded base64url output). No host changes needed.
 
