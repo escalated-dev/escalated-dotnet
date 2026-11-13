@@ -1,381 +1,180 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <b>Nederlands</b> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <b>Nederlands</b> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated voor ASP.NET Core
+<h1 align="center">Escalated for ASP.NET Core</h1>
 
-[![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
-[![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  Voeg een complete helpdesk toe aan je ASP.NET Core-app.<br>
+  Tickets, SLA's, escalatieregels, een inbox voor agents en een klantenportaal, opgeslagen via EF Core in een database naar keuze.
+</p>
 
-Een volledig uitgerust, inbedbaar supportticketsysteem voor ASP.NET Core. Voeg het toe aan elke app en krijg een complete helpdesk met SLA-tracking, escalatieregels, agentworkflows en een klantenportaal. Geen externe diensten vereist.
+<p align="center">
+  <a href="https://escalated.dev"><b>Website</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Documentatie</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>Wijzigingslog</b></a>
+</p>
 
-> **[escalated.dev](https://escalated.dev)** -- Meer informatie, bekijk demo's en vergelijk Cloud- en Self-Hosted-opties.
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="De inbox voor agents van Escalated: opgeslagen weergaven met tellers, SLA-afteltimers en prioriteiten bij elk ticket" width="100%">
+</picture>
+
+## Wat het doet
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>Een inbox waarin je agents de hele dag kunnen werken</h3>
+      Gesprek, interne notities, standaardantwoorden en SLA-timers op één scherm. Tickets komen ook binnen per e-mail via Postmark, Mailgun of AWS SES.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="Een geopend ticket in de werkruimte van de agent met de antwoordeditor">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="De rapportpagina in het beheer met reactietijden, CSAT en SLA-overschrijdingen">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>SLA's en escalatieregels die je kunt zien</h3>
+      Reactie- en oplosdoelen per prioriteit met kantooruren, regels die escaleren of opnieuw toewijzen als een doel uitloopt, en rapporten over overschrijdingen.
+    </td>
+  </tr>
+</table>
 
 ## Functies
 
-- **Ticketlevenscyclus** -- Aanmaken, toewijzen, beantwoorden, oplossen, sluiten, heropenen met configureerbare statusovergangen
-- **SLA-engine** -- Respons- en oplossingsdoelen per prioriteit, berekening van kantooruren, automatische schendingsdetectie
-- **Escalatieregels** -- Voorwaardelijke regels die automatisch escaleren, herprioriteren, hertoewijzen of notificeren
-- **Automatiseringen** -- Tijdgebaseerde regels met voorwaarden en acties
-- **Agentdashboard** -- Ticketwachtrij met filters, bulkacties, interne notities, standaardantwoorden
-- **Klantenportaal** -- Zelfbediening voor ticketaanmaak, antwoorden en statustracking
-- **Beheerpaneel** -- Beheer afdelingen, SLA-beleid, escalatieregels, tags en meer
-- **Macro's en standaardantwoorden** -- Batchacties en herbruikbare antwoordsjablonen
-- **Aangepaste velden** -- Dynamische metadata met conditionele weergavelogica
-- **Kennisbank** -- Artikelen, categorieën, zoeken en feedback
-- **Bestandsbijlagen** -- Uploadondersteuning met configureerbare opslag en groottelimieten
-- **Activiteitstijdlijn** -- Volledig auditlogboek van elke actie op elk ticket
-- **Webhooks** -- HMAC-SHA256-ondertekend met herhaalpoginglogica
-- **API-tokens** -- Bearer-authenticatie met op capaciteiten gebaseerde scoping
-- **Rollen en machtigingen** -- Fijnmazig toegangsbeheer
-- **Auditlogboek** -- Alle mutaties bijgehouden met oude/nieuwe waarden
-- **Importsysteem** -- Meerstaps-wizard met pluggable adapters
-- **Zijgesprekken** -- Interne teamthreads op tickets
-- **Ticket samenvoegen en koppelen** -- Duplicaattickets samenvoegen en problemen relateren
-- **Ticket splitsen** -- Een antwoord afsplitsen naar een nieuw ticket
-- **Ticket snoozen** -- Snoozen tot een toekomstige datum met achtergrond-wekservice
-- **E-mailthreading** -- In-Reply-To/References/Message-ID-headers voor correcte threading
-- **Opgeslagen weergaven** -- Persoonlijke en gedeelde filterpresets
-- **Inbedbare widget-API** -- Publieke endpoints voor KB-zoeken, gasttickets, statusopvraag
-- **Realtime-updates** -- SignalR-hubs voor live ticketupdates (opt-in)
-- **Capaciteitsbeheer** -- Werklastlimieten per agent per kanaal
-- **Skill-gebaseerde routering** -- Agents matchen aan tickets op basis van skilltags
-- **CSAT-beoordelingen** -- Tevredenheidsenquêtes bij opgeloste tickets
-- **2FA** -- TOTP-instelling en -verificatie met herstelcodes
-- **Gasttoegang** -- Anonieme ticketaanmaak met magische tokenopzoeking
-- **Inertia.js + Vue 3 UI** -- Gedeelde frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Vereisten
+**Tickets en inbox**
+- Volledige levenscyclus met statusovergangen
+- Wachtrijfilters en bulkacties
+- Interne notities en standaardantwoorden
+- Macro's voor bulkacties met één klik
+- Nevengesprekken bij tickets
+- Tickets samenvoegen, koppelen en splitsen
+- Uitstellen met automatisch heractiveren
+- Persoonlijke en gedeelde opgeslagen weergaven
+- Tickets gekoppeld aan objecten uit je eigen app
+- Bijlagen met groottelimieten
+- Activiteitentijdlijn bij elk ticket
 
-- .NET 8.0+
-- Entity Framework Core 9.0.x (9.0.21+)
-- SQL Server, SQLite of PostgreSQL
-- Node.js 18+ (voor frontend-assets)
+</td>
+<td width="33%" valign="top">
 
-## Snelstart
+**SLA's en routering**
+- Reactie- en oplosdoelen per prioriteit
+- Kantooruren en detectie van overschrijdingen
+- Regels die escaleren, de prioriteit wijzigen of opnieuw toewijzen
+- Tijdgebaseerde automatiseringen
+- Routering op basis van vaardigheden
+- Capaciteitslimieten per agent
 
-### 1. Pakket Installeren
+</td>
+<td width="33%" valign="top">
+
+**E-mail**
+- Inkomend via Postmark, Mailgun en AWS SES
+- Verificatie van ondertekende Reply-To
+- Antwoorden alleen geaccepteerd van de aanvrager
+- Threading met Message-ID-headers
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Klanten**
+- Selfservice-klantenportaal
+- Gasttickets met opzoeken via magic token
+- Insluitbare widget-API
+- CSAT-beoordelingen op opgeloste tickets
+- Kennisbank met zoeken en feedback
+
+</td>
+<td width="33%" valign="top">
+
+**Beheer en beveiliging**
+- Afdelingen, SLA's, regels en tags
+- Rollen en rechten
+- TOTP-tweestapsverificatie met herstelcodes
+- Inloggen met SAML 2, OAuth 2 / OIDC en JWT
+- Auditlog met oude en nieuwe waarden
+- API-tokens met afgebakende rechten
+
+</td>
+<td width="33%" valign="top">
+
+**Uitbreiden en integreren**
+- HMAC-ondertekende webhooks met nieuwe pogingen
+- Aangepaste velden met voorwaardelijke weergave
+- Importwizard met verwisselbare adapters
+- Live-updates via SignalR (optioneel)
+- Gedeelde Vue 3 + Inertia-UI
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Alle functies in detail</a></sub></p>
+
+<p align="center">
+  <a href="https://dotnet.microsoft.com"><img src="https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+  <a href="https://www.sqlite.org"><img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"></a>
+</p>
+
+## Snel aan de slag
 
 ```bash
 dotnet add package Escalated
-```
-
-### 2. Services Registreren
-
-```csharp
-// Program.cs
-using Escalated.Configuration;
-
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddEscalated(builder.Configuration, options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Escalated")));
-
-builder.Services.AddControllers();
-
-var app = builder.Build();
-
-app.MapControllers();
-app.MapEscalated();
-
-app.Run();
-```
-
-### 3. Configureren
-
-```json
-// appsettings.json
-{
-  "ConnectionStrings": {
-    "Escalated": "Server=localhost;Database=MyApp;Trusted_Connection=true;"
-  },
-  "Escalated": {
-    "RoutePrefix": "support",
-    "TicketReferencePrefix": "ESC",
-    "DefaultPriority": "medium",
-    "AllowCustomerClose": true,
-    "AutoCloseResolvedAfterDays": 7,
-    "Sla": {
-      "Enabled": true,
-      "BusinessHoursOnly": false,
-      "BusinessHours": {
-        "Start": "09:00",
-        "End": "17:00",
-        "Timezone": "UTC",
-        "Days": [1, 2, 3, 4, 5]
-      }
-    },
-    "EnableRealTime": false
-  }
-}
-```
-
-### 4. Migraties Uitvoeren
-
-```bash
-dotnet ef migrations add InitialEscalated --context EscalatedDbContext
 dotnet ef database update --context EscalatedDbContext
 ```
 
-Bezoek `/support` -- het draait.
+Registreer het in `Program.cs` met `builder.Services.AddEscalated(...)` en `app.MapEscalated()` en ga daarna naar `/support`. Vereist .NET 8+ en SQL Server, SQLite of PostgreSQL. De [handleiding om te beginnen](../getting-started.md) behandelt configuratie en autorisatie, en [de Inertia-UI](../inertia-ui.md) zet de gedeelde schermen aan.
 
-## Frontend-integratie
+## Meer informatie
 
-Escalated levert een Vue-componentbibliotheek en standaardpagina's via het npm-pakket [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated). Integreer met Inertia.js voor naadloze SPA-rendering binnen uw bestaande layout.
+- [Alle functies](../features.md) · [Aan de slag](../getting-started.md) · [De Inertia-UI](../inertia-ui.md)
+- [Aanpassen, realtime en lokalisatie](../customization.md) · [Architectuur, modellen en events](../architecture.md) · [API-endpoints](../api-endpoints.md)
+- [Toegangsbeheer](../access-control.md) · [Tickettoegang en routering](../ticket-access-and-routing.md) · [Workflows](../workflows.md)
+- [Inkomende e-mail](../inbound-email.md) · [Notificatie-e-mails](../notification-emails.md) · [Gasttoegang](../guest-access.md)
+- [De widget insluiten](../embedding-the-widget.md) · [Het beheer insluiten](../embedding-admin.md) · [Agentpaneel](../agent-panel.md)
+- [Plugins](../plugins.md) · [Nieuwsbrieven](../newsletters.md) · [Ontwikkeling en testen](../development.md)
 
-```bash
-npm install @escalated-dev/escalated
-```
-
-## Architectuur
-
-```
-src/Escalated/
-  Models/           # 40+ EF Core-entiteitsmodellen
-  Data/             # EscalatedDbContext met volledige relatiemapping
-  Services/         # Bedrijfslogica (ticket, SLA, samenvoegen, splitsen, snoozen, enz.)
-  Controllers/
-    Admin/          # Beheerpaneel-API (CRUD voor alle instellingen)
-    Agent/          # Ticketwachtrij en agentacties
-    Customer/       # Zelfbedieningsportaal voor klanten
-    Widget/         # Publieke widget-API (KB-zoeken, gasttickets)
-  Middleware/       # API-tokenauthenticatie, machtigingen, snelheidsbeperking
-  Events/           # Domeingebeurtenissen (TicketCreated, SlaBreached, enz.)
-  Notifications/    # E-mailnotificatie-interfaces en -sjablonen
-  Configuration/    # DI-registratie, opties, endpointmapping
-  Hubs/             # SignalR-hub voor realtime-updates
-  Enums/            # TicketStatus, TicketPriority, ActivityType
-```
-
-## Modellen
-
-Escalated bevat 40+ EF Core-entiteiten die het volledige helpdeskdomein dekken:
-
-| Categorie | Modellen |
-|----------|--------|
-| Kern | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
-| SLA | SlaPolicy, EscalationRule, BusinessSchedule, Holiday, Automation |
-| Agents | AgentProfile, AgentCapacity, Skill, AgentSkill |
-| Berichten | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
-| Beheer | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
-| Aangepast | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
-| Import | ImportJob, ImportSourceMap |
-| Configuratie | EscalatedSettings, SavedView |
-| Kennisbank | Article, ArticleCategory |
-
-Alle modellen hebben correct geconfigureerde relaties, indexen en queryfilters in `EscalatedDbContext`.
-
-## Services
-
-| Service | Verantwoordelijkheid |
-|---------|---------------|
-| `TicketService` | Volledig ticket-CRUD, statusovergangen, antwoorden, tags, afdelingen |
-| `SlaService` | Beleidskoppeling, schendingsdetectie, waarschuwingscontrole, registratie eerste respons |
-| `AssignmentService` | Agenttoewijzing, -ontoewijzing, automatische toewijzing op werklast |
-| `EscalationService` | Evaluatie van voorwaardelijke regels, uitvoering van escalatieacties |
-| `AutomationRunner` | Evaluatie van tijdgebaseerde automatiseringen en actie-uitvoering |
-| `MacroService` | Macroactiesequenties toepassen op tickets |
-| `TicketMergeService` | Bron samenvoegen in doel met antwoordoverdracht |
-| `TicketSplitService` | Antwoord afsplitsen naar een nieuw gekoppeld ticket |
-| `TicketSnoozeService` | Snoozen/wekken met achtergrond-wekservice |
-| `WebhookDispatcher` | HMAC-ondertekende webhooklevering met herhaalpoginglogica |
-| `CapacityService` | Gelijktijdige ticketlimieten per agent |
-| `SkillRoutingService` | Agents matchen op skills aan tickettags |
-| `BusinessHoursCalculator` | Kantoortijden-datumberekening met feestdagondersteuning |
-| `TwoFactorService` | TOTP-geheimgeneratie, verificatie, herstelcodes |
-| `AuditLogService` | Entiteitsmutaties loggen en opvragen |
-| `KnowledgeBaseService` | Artikel-/categorie-CRUD, zoeken, feedback |
-| `SavedViewService` | Persoonlijke en gedeelde filterpresets |
-| `SideConversationService` | Interne threadgesprekken op tickets |
-| `ImportService` | Meerstapsimport met pluggable adapters |
-| `SettingsService` | Sleutel-waarde instellingenopslag |
-
-## Gebeurtenissen
-
-Elke ticketactie verstuurt een domeingebeurtenis:
-
-| Gebeurtenis | Wanneer |
-|-------|------|
-| `TicketCreatedEvent` | Nieuw ticket aangemaakt |
-| `TicketStatusChangedEvent` | Statusovergang |
-| `TicketAssignedEvent` | Agent toegewezen |
-| `TicketUnassignedEvent` | Agent verwijderd |
-| `ReplyCreatedEvent` | Publiek antwoord toegevoegd |
-| `InternalNoteAddedEvent` | Agentnotitie toegevoegd |
-| `SlaBreachedEvent` | SLA-deadline overschreden |
-| `SlaWarningEvent` | SLA-deadline nadert |
-| `TicketEscalatedEvent` | Ticket geëscaleerd |
-| `TicketResolvedEvent` | Ticket opgelost |
-| `TicketClosedEvent` | Ticket gesloten |
-| `TicketReopenedEvent` | Ticket heropend |
-| `TicketPriorityChangedEvent` | Prioriteit gewijzigd |
-| `DepartmentChangedEvent` | Afdeling gewijzigd |
-| `TagAddedEvent` | Tag toegevoegd |
-| `TagRemovedEvent` | Tag verwijderd |
-
-Implementeer `IEscalatedEventDispatcher` om deze gebeurtenissen in uw hostapplicatie te ontvangen:
-
-```csharp
-public class MyEventHandler : IEscalatedEventDispatcher
-{
-    public async Task DispatchAsync<TEvent>(TEvent @event, CancellationToken ct) where TEvent : class
-    {
-        if (@event is TicketCreatedEvent created)
-        {
-            // Handle new ticket
-        }
-    }
-}
-
-// Register in DI
-services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
-```
-
-## API-endpoints
-
-### Klant
-
-| Methode | Route | Beschrijving |
-|--------|-------|-------------|
-| GET | `/support/tickets` | Klanttickets weergeven |
-| POST | `/support/tickets` | Ticket aanmaken |
-| GET | `/support/tickets/{id}` | Ticket bekijken |
-| POST | `/support/tickets/{id}/reply` | Ticket beantwoorden |
-| POST | `/support/tickets/{id}/close` | Ticket sluiten |
-| POST | `/support/tickets/{id}/reopen` | Ticket heropenen |
-
-### Agent
-
-| Methode | Route | Beschrijving |
-|--------|-------|-------------|
-| GET | `/support/agent/tickets` | Ticketwachtrij met filters |
-| GET | `/support/agent/tickets/{id}` | Ticketdetail |
-| POST | `/support/agent/tickets/{id}/reply` | Beantwoorden |
-| POST | `/support/agent/tickets/{id}/note` | Interne notitie |
-| POST | `/support/agent/tickets/{id}/assign` | Agent toewijzen |
-| POST | `/support/agent/tickets/{id}/status` | Status wijzigen |
-| POST | `/support/agent/tickets/{id}/priority` | Prioriteit wijzigen |
-| POST | `/support/agent/tickets/{id}/macro` | Macro toepassen |
-| POST | `/support/agent/tickets/bulk` | Bulkacties |
-| GET | `/support/agent/tickets/dashboard` | Agentwerklast |
-
-### Beheer
-
-| Methode | Route | Beschrijving |
-|--------|-------|-------------|
-| GET/POST | `/support/admin/departments` | Afdelingen beheren |
-| GET/POST | `/support/admin/tags` | Tags beheren |
-| GET/POST | `/support/admin/sla-policies` | SLA-beleid beheren |
-| GET/POST | `/support/admin/escalation-rules` | Escalatieregels beheren |
-| GET/POST | `/support/admin/webhooks` | Webhooks beheren |
-| GET/POST | `/support/admin/api-tokens` | API-tokens beheren |
-| GET/POST | `/support/admin/macros` | Macro's beheren |
-| GET/POST | `/support/admin/automations` | Automatiseringen beheren |
-| GET/POST | `/support/admin/custom-fields` | Aangepaste velden beheren |
-| GET/POST | `/support/admin/business-hours` | Kantooruren |
-| GET/POST | `/support/admin/skills` | Skills beheren |
-| GET/POST | `/support/admin/roles` | Rollen beheren |
-| GET | `/support/admin/audit-logs` | Auditlogs opvragen |
-| GET/POST | `/support/admin/settings` | App-instellingen |
-| POST | `/support/admin/tickets/{id}/merge` | Tickets samenvoegen |
-| POST | `/support/admin/tickets/{id}/split` | Ticket splitsen |
-| POST | `/support/admin/tickets/{id}/snooze` | Ticket snoozen |
-| POST | `/support/admin/tickets/{id}/link` | Tickets koppelen |
-
-### Widget (Publiek)
-
-| Methode | Route | Beschrijving |
-|--------|-------|-------------|
-| GET | `/support/widget/kb/search` | Kennisbank doorzoeken |
-| POST | `/support/widget/tickets` | Gastticket aanmaken |
-| GET | `/support/widget/tickets/{token}` | Opzoeken via gasttoken |
-| POST | `/support/widget/tickets/{token}/reply` | Gastantwoord |
-| POST | `/support/widget/tickets/{token}/rate` | CSAT-beoordeling indienen |
-| POST | `/support/widget/kb/articles/{id}/feedback` | Artikelfeedback |
-
-## Realtime-updates
-
-Activeer SignalR voor live ticketupdates:
-
-```json
-{
-  "Escalated": {
-    "EnableRealTime": true
-  }
-}
-```
-
-```csharp
-// Program.cs
-app.MapHub<EscalatedHub>("/support/hub");
-```
-
-Clients treden toe tot ticketspecifieke groepen om updates te ontvangen:
-
-```javascript
-connection.invoke("JoinTicket", ticketId);
-connection.on("TicketUpdated", (data) => { /* handle */ });
-```
-
-## Middleware
-
-### API-tokenauthenticatie
-
-Bescherm API-endpoints met Bearer-tokenauthenticatie:
-
-```csharp
-app.UseMiddleware<ApiTokenAuthMiddleware>();
-```
-
-Tokens worden opgeslagen als SHA-256-hashes. Maak tokens aan via het beheer-API-endpoint.
-
-### Snelheidsbeperking
-
-```csharp
-app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
-```
-
-## Testen
-
-```bash
-dotnet test
-```
-
-Tests gebruiken xUnit met Moq en de EF Core InMemory-provider. Dekking omvat:
-- Ticket-CRUD en statusovergangen
-- SLA-schendingsdetectie en waarschuwingen
-- Ticket splitsen, samenvoegen en snoozen
-- Toewijzing en werklastberekening
-- Webhookabonnement-matching
-- 2FA-geheimgeneratie en -verificatie
-- Capaciteitsbeheer
-- Modelvalidatie en enum-gedrag
-
-## Ook Beschikbaar Voor
-
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer-pakket
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails-engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Herbruikbare Django-app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7-pakket
-- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core-pakket (u bent hier)
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI-componenten
-
-Dezelfde architectuur, dezelfde Vue-UI -- voor elk groot backend-framework.
+Escalated is ook beschikbaar voor [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [Spring](https://github.com/escalated-dev/escalated-spring), [WordPress](https://github.com/escalated-dev/escalated-wordpress) en [Filament](https://github.com/escalated-dev/escalated-filament). De UI staat in [escalated](https://github.com/escalated-dev/escalated).
 
 ## Licentie
 
-MIT
+MIT. Copyright (c) 2026 Escalated.dev. Zie [LICENSE](../../LICENSE).

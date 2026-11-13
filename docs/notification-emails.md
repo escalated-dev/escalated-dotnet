@@ -59,7 +59,7 @@ Every email threads on the ticket:
 - Other notices point `In-Reply-To` and `References` at the anchor.
 
 With `InboundSecret` set, `Reply-To` is the signed `reply+{id}.{hmac8}@{Domain}`
-address, which [inbound email](../README.md#inbound-email) resolves to the ticket.
+address, which [inbound email](inbound-email.md) resolves to the ticket.
 
 ## Your own delivery
 
