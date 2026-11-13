@@ -1,6 +1,6 @@
 # Workflows
 
-Workflows are admin-defined, event-driven rules: when a [canonical event](../README.md#webhook-events)
+Workflows are admin-defined, event-driven rules: when a [canonical event](architecture.md#webhook-events)
 fires on a ticket and the Workflow's conditions match, its actions run in order.
 The wire format is the shared one in escalated-developer-context
 `domain-model/workflow-admin-contract.md`, so the shared admin builder works

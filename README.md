@@ -1,891 +1,180 @@
-<p align="center">
-  <a href="docs/translations/README.ar.md">العربية</a> •
-  <a href="docs/translations/README.de.md">Deutsch</a> •
-  <b>English</b> •
-  <a href="docs/translations/README.es.md">Español</a> •
-  <a href="docs/translations/README.fr.md">Français</a> •
-  <a href="docs/translations/README.it.md">Italiano</a> •
-  <a href="docs/translations/README.ja.md">日本語</a> •
-  <a href="docs/translations/README.ko.md">한국어</a> •
-  <a href="docs/translations/README.nl.md">Nederlands</a> •
-  <a href="docs/translations/README.pl.md">Polski</a> •
-  <a href="docs/translations/README.pt-BR.md">Português (BR)</a> •
-  <a href="docs/translations/README.ru.md">Русский</a> •
-  <a href="docs/translations/README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="docs/translations/README.ar.md">العربية</a> ·
+  <a href="docs/translations/README.de.md">Deutsch</a> ·
+  <b>English</b> ·
+  <a href="docs/translations/README.es.md">Español</a> ·
+  <a href="docs/translations/README.fr.md">Français</a> ·
+  <a href="docs/translations/README.it.md">Italiano</a> ·
+  <a href="docs/translations/README.ja.md">日本語</a> ·
+  <a href="docs/translations/README.ko.md">한국어</a> ·
+  <a href="docs/translations/README.nl.md">Nederlands</a> ·
+  <a href="docs/translations/README.pl.md">Polski</a> ·
+  <a href="docs/translations/README.pt-BR.md">Português (BR)</a> ·
+  <a href="docs/translations/README.ru.md">Русский</a> ·
+  <a href="docs/translations/README.tr.md">Türkçe</a> ·
   <a href="docs/translations/README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated for ASP.NET Core
+<h1 align="center">Escalated for ASP.NET Core</h1>
 
-[![Tests](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml/badge.svg)](https://github.com/escalated-dev/escalated-dotnet/actions/workflows/test.yml)
-[![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Views](https://hits.sh/github.com/escalated-dev/escalated-dotnet.svg?style=flat&label=views&color=007ec6)](https://hits.sh/github.com/escalated-dev/escalated-dotnet/)
+<p align="center">
+  Add a complete helpdesk to your ASP.NET Core app.<br>
+  Tickets, SLAs, escalation rules, an agent inbox and a customer portal, stored through EF Core in a database you choose.
+</p>
 
-A full-featured, embeddable support ticket system for ASP.NET Core. Drop it into any app -- get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+<p align="center">
+  <a href="https://escalated.dev"><b>Website</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Docs</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="CHANGELOG.md"><b>Changelog</b></a>
+</p>
 
-> **[escalated.dev](https://escalated.dev)** -- Learn more, view demos, and compare Cloud vs Self-Hosted options.
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="The Escalated agent inbox: saved views with counts, SLA countdowns and priorities on every ticket" width="100%">
+</picture>
+
+## What it does
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>An inbox your agents can work in all day</h3>
+      Conversation, internal notes, canned replies and SLA timers on one screen. Tickets also arrive by email through Postmark, Mailgun or AWS SES.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="A ticket open in the agent workspace with the reply composer">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="The admin reports page with response times, CSAT and SLA breaches">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>SLAs and escalation rules you can see</h3>
+      Response and resolution targets per priority with business hours, rules that escalate or reassign when they slip, and reports on breaches.
+    </td>
+  </tr>
+</table>
 
 ## Features
 
-- **Ticket lifecycle** -- Create, assign, reply, resolve, close, reopen with configurable status transitions
-- **SLA engine** -- Per-priority response and resolution targets, business hours calculation, automatic breach detection
-- **Escalation rules** -- Condition-based rules that auto-escalate, reprioritize, reassign, or notify
-- **Automations** -- Time-based rules with conditions and actions
-- **Agent dashboard** -- Ticket queue with filters, bulk actions, internal notes, canned responses
-- **Customer portal** -- Self-service ticket creation, replies, and status tracking
-- **Admin panel** -- Manage departments, SLA policies, escalation rules, tags, and more
-- **Macros and canned responses** -- Batch actions and reusable reply templates
-- **Custom fields** -- Dynamic metadata with conditional display logic
-- **Knowledge base** -- Articles, categories, search, and feedback
-- **File attachments** -- Upload support with configurable storage and size limits
-- **Activity timeline** -- Full audit log of every action on every ticket
-- **Webhooks** -- HMAC-SHA256 signed with retry logic
-- **API tokens** -- Bearer auth with ability-based scoping
-- **Roles and permissions** -- Fine-grained access control, enforced behind the install-level `ESCALATED_ROLES_PERMISSIONS` switch ([access control](docs/access-control.md))
-- **Audit logging** -- All mutations tracked with old/new values
-- **Import system** -- Multi-step wizard with pluggable adapters
-- **Side conversations** -- Internal team threads on tickets
-- **Ticket merging and linking** -- Merge duplicate tickets and relate issues
-- **Ticket subjects** -- Attach host-app entities (Project, Customer, asset) a ticket is about
-- **Ticket splitting** -- Split a reply into a new ticket
-- **Ticket snooze** -- Snooze until a future date with auto-wake background service
-- **Email threading** -- In-Reply-To/References/Message-ID headers for proper threading
-- **Inbound email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To verification, and replies accepted only from the ticket's requester
-- **Saved views** -- Personal and shared filter presets
-- **Embeddable widget API** -- Public endpoints for KB search, guest tickets, status lookup
-- **Real-time updates** -- SignalR hubs for live ticket updates (opt-in)
-- **Capacity management** -- Per-agent workload limits by channel
-- **Skill-based routing** -- Match agents to tickets by skill tags
-- **CSAT ratings** -- Satisfaction surveys on resolved tickets
-- **2FA** -- TOTP enrolment for staff, a challenge after sign-in and recovery codes, behind the install-level `ESCALATED_TWO_FACTOR` switch ([access control](docs/access-control.md))
-- **Single sign-on** -- SAML 2, OAuth 2 / OIDC and JWT sign-in behind the install-level `ESCALATED_SSO` switch ([access control](docs/access-control.md))
-- **Guest access** -- Anonymous ticket creation with magic token lookup
-- **Inertia.js + Vue 3 UI** -- Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Requirements
+**Tickets and inbox**
+- Full lifecycle with status transitions
+- Queue filters and bulk actions
+- Internal notes and canned responses
+- Macros for one-click batch actions
+- Side conversations on tickets
+- Merge, link and split tickets
+- Snooze with automatic wake-up
+- Personal and shared saved views
+- Ticket subjects from your own app
+- Attachments with size limits
+- Activity timeline on every ticket
 
-- .NET 8.0+
-- Entity Framework Core 9.0.x (9.0.21+)
-- SQL Server, SQLite, or PostgreSQL
-- Node.js 18+ (for frontend assets)
+</td>
+<td width="33%" valign="top">
 
-## Quick Start
+**SLAs and routing**
+- Per-priority response and resolution targets
+- Business hours and breach detection
+- Rules that escalate, reprioritize or reassign
+- Time-based automations
+- Skill-based routing
+- Per-agent capacity limits
 
-### 1. Install the Package
+</td>
+<td width="33%" valign="top">
+
+**Email**
+- Inbound from Postmark, Mailgun and AWS SES
+- Signed Reply-To verification
+- Replies accepted only from the requester
+- Threading with Message-ID headers
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Customers**
+- Self-service customer portal
+- Guest tickets with magic-token lookup
+- Embeddable widget API
+- CSAT ratings on resolved tickets
+- Knowledge base with search and feedback
+
+</td>
+<td width="33%" valign="top">
+
+**Admin and security**
+- Departments, SLAs, rules and tags
+- Roles and permissions
+- TOTP two-factor with recovery codes
+- SAML 2, OAuth 2 / OIDC and JWT sign-in
+- Audit log with old and new values
+- API tokens with scoped abilities
+
+</td>
+<td width="33%" valign="top">
+
+**Extend and integrate**
+- HMAC-signed webhooks with retries
+- Custom fields with conditional display
+- Import wizard with pluggable adapters
+- Live updates over SignalR (opt-in)
+- Shared Vue 3 + Inertia UI
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="docs/features.md">Every feature in detail</a></sub></p>
+
+<p align="center">
+  <a href="https://dotnet.microsoft.com"><img src="https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+  <a href="https://www.sqlite.org"><img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"></a>
+</p>
+
+## Quick start
 
 ```bash
 dotnet add package Escalated
+dotnet ef database update --context EscalatedDbContext
 ```
 
-### 2. Register Services
+Register it in `Program.cs` with `builder.Services.AddEscalated(...)` and `app.MapEscalated()`, then visit `/support`. Needs .NET 8+ and SQL Server, SQLite or PostgreSQL. The [getting started guide](docs/getting-started.md) covers configuration and authorization, and [the Inertia UI](docs/inertia-ui.md) turns on the shared screens.
 
-```csharp
-// Program.cs
-using Escalated.Configuration;
+## Learn more
 
-var builder = WebApplication.CreateBuilder(args);
+- [All features](docs/features.md) · [Getting started](docs/getting-started.md) · [The Inertia UI](docs/inertia-ui.md)
+- [Customization, real-time and localization](docs/customization.md) · [Architecture, models and events](docs/architecture.md) · [API endpoints](docs/api-endpoints.md)
+- [Access control](docs/access-control.md) · [Ticket access and routing](docs/ticket-access-and-routing.md) · [Workflows](docs/workflows.md)
+- [Inbound email](docs/inbound-email.md) · [Notification emails](docs/notification-emails.md) · [Guest access](docs/guest-access.md)
+- [Embedding the widget](docs/embedding-the-widget.md) · [Embedding the admin](docs/embedding-admin.md) · [Agent panel](docs/agent-panel.md)
+- [Plugins](docs/plugins.md) · [Newsletters](docs/newsletters.md) · [Development and testing](docs/development.md)
 
-builder.Services.AddEscalated(builder.Configuration, options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Escalated")));
-
-// Your authentication: ASP.NET Core Identity, OpenID Connect, JWT bearer, cookies.
-// Escalated authorizes whoever it signs in (see Authorization below).
-builder.Services.AddAuthentication(/* ... */);
-
-builder.Services.AddControllers();
-
-var app = builder.Build();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapEscalated();
-
-app.Run();
-```
-
-### 3. Configure
-
-```json
-// appsettings.json
-{
-  "ConnectionStrings": {
-    "Escalated": "Server=localhost;Database=MyApp;Trusted_Connection=true;"
-  },
-  "Escalated": {
-    "RoutePrefix": "support",
-    "TicketReferencePrefix": "ESC",
-    "DefaultPriority": "medium",
-    "AllowCustomerClose": true,
-    "AutoCloseResolvedAfterDays": 7,
-    "Sla": {
-      "Enabled": true,
-      "BusinessHoursOnly": false,
-      "BusinessHours": {
-        "Start": "09:00",
-        "End": "17:00",
-        "Timezone": "UTC",
-        "Days": [1, 2, 3, 4, 5]
-      }
-    },
-    "EnableRealTime": false,
-    "Email": {
-      "Domain": "support.yourapp.com",
-      "InboundSecret": "a-long-random-value"
-    }
-  }
-}
-```
-
-The `Email.InboundSecret` is symmetric -- it signs outbound `Reply-To` addresses *and* verifies inbound webhook requests, so forged emails targeting a stolen reply address are rejected via timing-safe HMAC.
-
-Guests verify their email with an emailed code before they open a ticket, start a chat or look a ticket up, and get an expiring access grant; see [docs/guest-access.md](docs/guest-access.md). That needs working outbound mail.
-
-Notification emails (new ticket, replies, assignment, status, escalation, SLA breach, mentions) go out once `Email.Smtp.Host` is set; until then nothing is sent and that is logged once. See [docs/notification-emails.md](docs/notification-emails.md) for the recipients, settings and threading.
-
-### 4. Create the tables
-
-The package ships its migrations for SQLite, PostgreSQL and SQL Server. Apply them at startup:
-
-```csharp
-var app = builder.Build();
-await app.Services.MigrateEscalatedDatabaseAsync();
-```
-
-or from the command line with `dotnet ef database update --context EscalatedDbContext`.
-A database created earlier with `EnsureCreated()` is adopted: the baseline is recorded
-as applied and only later migrations run.
-
-Visit `/support` -- you're live.
-
-### Separate databases
-
-`EscalatedDbContext` has its own connection string, so Escalated's tables go
-wherever `ConnectionStrings:Escalated` points. Nothing requires that to be your
-application's database — it can be a schema shared with a legacy system, a
-separate reporting store, or simply a database you would rather not mix support
-data into:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=MyApp;Trusted_Connection=true;",
-    "Escalated": "Server=support-db;Database=Support;Trusted_Connection=true;"
-  }
-}
-```
-
-Nothing else changes. `AddEscalated` already resolves that string, and
-`dotnet ef database update --context EscalatedDbContext` migrates only that
-database — your own `DbContext` keeps its own migrations.
-
-The two connections need not even be the same provider:
-
-```csharp
-builder.Services.AddEscalated(builder.Configuration, options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Escalated")));
-```
-
-#### Your users stay where they are
-
-Escalated owns no `User` entity. The admin users page reads your users through
-`IUserDirectory`, which you implement against **your** `DbContext`, with your
-query, on your connection:
-
-```csharp
-builder.Services.AddSingleton<IUserDirectory, MyUserDirectory>();
-```
-
-Registered before `AddEscalated`, your implementation wins; without one, a
-`NullUserDirectory` returns an empty page rather than querying a database that
-may have no users table in it.
-
-That is also why no Escalated entity declares a foreign key to your users:
-`Ticket.RequesterId`, `Ticket.AssignedTo` and `Reply.AuthorId` are plain
-unconstrained columns, so the two databases need never meet. Tests fail the
-build if an entity, a foreign key or any raw SQL in the package names a
-host-owned table.
-
-No query joins the two, because no database can join across two connections. The
-cost is that Escalated cannot filter or sort its tables by a column that lives on
-your user — assignment, skill routing and agent load all resolve ids from
-Escalated's tables first, then ask your directory for the people.
-
-### Host user keys (UUID / string support)
-
-Escalated stores references to your app's users (ticket requester, assignee,
-reply author, etc.) as **strings**, so it works whether your user primary key
-is an `int`, a `Guid`, or any other string. A numeric id is simply stored and
-exchanged as its string form.
-
-Your `IUserDirectory` implementation therefore exchanges user ids as `string`:
-
-```csharp
-public Task<UserDirectoryEntry?> FindAsync(string id, CancellationToken ct = default)
-{
-    // look up your user by its (string) id and return:
-    //   new UserDirectoryEntry(user.Id.ToString(), user.Name, user.Email)
-}
-```
-
-> **Upgrade note:** earlier versions used `int` here (`FindAsync(int id)` and
-> `UserDirectoryEntry(int Id, ...)`); admin user APIs also now return user ids
-> as JSON strings. Update your `IUserDirectory` implementation to the `string`
-> signatures shown above. Integer ids keep working — pass them as strings.
-
-## Embedding the admin in your own admin panel (optional)
-
-Escalated's admin runs standalone at `/support/admin` with its own sidebar; that
-is the default and needs nothing. If your app already has an admin panel, you
-can instead mount Escalated's admin screens inside it: under your URL prefix and
-authorization policies, rendered in your Vue + Inertia layout or your Razor
-layout (or an allow-listed iframe), with its menu listed in your own sidebar.
-Nothing changes unless you turn it on:
-
-```csharp
-builder.Services.Configure<EscalatedOptions>(options => options.EmbedAdmin(
-    prefix: "admin/support",
-    policies: new[] { "BackOfficeAdmin" },
-    layout: "Layouts/AdminLayout"));
-```
-
-Escalated's admin policy, two-factor and route permissions stay in place. See
-[docs/embedding-admin.md](docs/embedding-admin.md) for the settings
-(`Escalated:Ui:Embed`, `ESCALATED_EMBED*`), the three host setups and security.
-
-## Authorization
-
-Escalated owns no authentication. It authorizes whoever your application signed
-in, reading them from `HttpContext.User`. Register your authentication and call
-`UseAuthentication()` and `UseAuthorization()` before `MapControllers()`.
-
-Every controller requires one of three policies:
-
-| Policy | Surface | Default rule |
-|--------|---------|--------------|
-| `EscalatedPolicies.Admin` (`escalated-admin`) | `/support/admin/*`, `/admin/newsletters*` | Signed in and holds the `escalated-admin` role |
-| `EscalatedPolicies.Agent` (`escalated-agent`) | `/support/agent/*` | Signed in and holds `escalated-agent` or `escalated-admin` |
-| `EscalatedPolicies.Customer` (`escalated-customer`) | `/support/tickets*`, `/support/attachments/*` | Signed in |
-
-The widget, guest, inbound email, newsletter tracking and newsletter ESP webhook
-endpoints are public, as is `/support/api/v1/auth/*`. They authenticate with guest
-tokens, shared secrets or your `ApiAuth` callbacks instead.
-
-Nothing is allowed by default. An anonymous request gets 401, and a signed-in user
-without the role gets 403. An application with no authentication configured gets
-an ASP.NET Core configuration error, not an open endpoint.
-
-### Granting access
-
-The roles are rows in Escalated's `RoleUsers` table: the same ones the admin users
-page grants and revokes (`PATCH /support/admin/users/{id}/role`). Grant the first
-admin directly:
-
-```csharp
-var admin = new Role { Name = "Escalated Admin", Slug = AdminUsersController.AdminRoleSlug, IsSystem = true };
-db.Roles.Add(admin);
-await db.SaveChangesAsync();
-
-db.RoleUsers.Add(new RoleUser { RoleId = admin.Id, UserId = "your-user-id" });
-await db.SaveChangesAsync();
-```
-
-Or replace a policy with your own rule. A policy registered under the same name,
-before or after `AddEscalated`, takes precedence:
-
-```csharp
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(EscalatedPolicies.Admin, p => p.RequireRole("SupportLead"));
-    options.AddPolicy(EscalatedPolicies.Agent, p => p.RequireRole("SupportLead", "SupportAgent"));
-});
-```
-
-With roles and permissions on (`ESCALATED_ROLES_PERMISSIONS`, off by default),
-every admin and agent route also needs a permission from the roles the user
-holds, and the newsletter pages check `newsletters.manage` / `newsletters.send`.
-See [access control](docs/access-control.md). With it off, the policies above
-decide everything.
-
-### Who a request acts as
-
-The acting user is always the signed-in user: the requester of a ticket a customer
-creates, the author of a reply, the causer recorded on ticket activity, the owner
-of a mention inbox. Escalated reads the id from the `NameIdentifier` claim, then
-`sub`, then `id`. If your user id lives in another claim, set a resolver:
-
-```csharp
-builder.Services.Configure<EscalatedOptions>(o =>
-    o.UserIdResolver = user => user.FindFirst("employee_id")?.Value);
-```
-
-Ids in the query string or the request body (`requesterId`, `agentId`, `userId`,
-`currentUserId`, `authorId`, `causerId`, `createdBy`) are not read. A customer
-sees and acts on only the tickets they requested. Staff can download any
-attachment; a customer can download only attachments on their own tickets, and
-never one on an internal note.
-
-## Ticket subjects
-
-A ticket has a **requester** (the person who raised it) and a **subject line**
-(free text). Sometimes a ticket is also *about* one or more host-app entities —
-a Project, a Customer, an asset — that aren't people. Attach them as ticket
-**subjects** so agents see what the ticket concerns and can jump straight to it
-in your app.
-
-Implement `ITicketSubject` on any attachable host model:
-
-```csharp
-public class Project : ITicketSubject
-{
-    public string TicketSubjectTitle() => Name;
-
-    public string? TicketSubjectSubtitle() => Customer == null ? null : $"Project · {Customer.Name}";
-
-    public string? TicketSubjectUrl() => $"/projects/{Id}";
-
-    public string? TicketSubjectColor() => "#2563eb";
-
-    public string? TicketSubjectIcon() => "folder";
-}
-```
-
-Register a resolver so Escalated can load host models by stored `(type, id)`:
-
-```csharp
-builder.Services.AddSingleton<ITicketSubjectResolver, MyTicketSubjectResolver>();
-```
-
-Attach, detach, or sync subjects programmatically via `TicketSubjectService`, or
-through the admin API when types are allowlisted in config:
-
-```json
-"Escalated": {
-  "TicketSubjects": {
-    "Types": [
-      "App.Models.Project",
-      "App.Models.Customer"
-    ]
-  }
-}
-```
-
-Each attached subject is serialized on ticket responses as
-`{ type, id, role, title, subtitle, url, color, icon, missing }`. When the
-resolver cannot find a host record, `missing` is `true` and `title` falls back
-to `TypeName#id`. `subject_id` is stored as a string, so integer, UUID, or
-string-keyed host models all work.
-
-Admin endpoints:
-
-```
-POST   /support/admin/tickets/{id}/subjects       { "type", "id", "role?" }
-DELETE /support/admin/tickets/{ticketId}/subjects/{subjectLinkId}
-```
-
-Programmatic attach works for any type when the allowlist is empty; the admin
-API only accepts allowlisted types.
-
-## Inbound email
-
-Point your Postmark, Mailgun, or AWS SES (via SNS HTTP subscription) inbound webhook at:
-
-```
-POST /support/webhook/email/inbound?adapter=postmark
-POST /support/webhook/email/inbound?adapter=mailgun
-POST /support/webhook/email/inbound?adapter=ses
-```
-
-The adapter can be selected via the query parameter or the `X-Escalated-Adapter` header. Your provider must attach the shared secret as an `X-Escalated-Inbound-Secret` header.
-
-The service resolves inbound messages to existing tickets. With `InboundSecret` set (the endpoint requires it), only the signed `Reply-To` address (`reply+{id}.{hmac8}@domain`) that outbound notifications carry identifies a ticket. Without a secret, the canonical `Message-ID` headers and subject-reference tags are used instead.
-
-A matched message becomes a reply only when its `From` address (case-insensitive) is the ticket's requester: the guest email, the contact's email, or the requester user's email as returned by your `IUserDirectory`. The reply is posted as that requester, and only such a reply reopens a resolved or closed ticket. Staff identity is never taken from the `From` header, so agents reply in the app, not by email. Anything else with real content (no match, or a sender who is not the requester) creates a new ticket; SNS subscription confirmations and empty body+subject messages are skipped.
-
-See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provider setup, the response shape, and a ready-to-paste curl test recipe.
-
-## Frontend Integration
-
-Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package. Integrate with Inertia.js for seamless SPA rendering inside your existing layout.
-
-```bash
-npm install @escalated-dev/escalated
-```
-
-This package serves those pages over Inertia once `Escalated:Ui:Enabled` is `true`. It is **off by default** (escalated-laravel defaults it on), so an API-only host is unchanged. See [docs/inertia-ui.md](docs/inertia-ui.md) for the settings, the root view, the shared props and the pages served.
-
-## Architecture
-
-```
-src/Escalated/
-  Models/           # 40+ EF Core entity models
-  Data/             # EscalatedDbContext with full relationship mapping
-  Services/         # Business logic (ticket, SLA, merge, split, snooze, etc.)
-  Controllers/
-    Admin/          # Admin panel API (CRUD for all settings)
-    Agent/          # Agent ticket queue and actions
-    Customer/       # Customer self-service portal
-    Widget/         # Public widget API (KB search, guest tickets)
-  Middleware/       # API token auth, permissions, rate limiting
-  Events/           # Domain events (TicketCreated, SlaBreached, etc.)
-  Notifications/    # Email notification interfaces and templates
-  Configuration/    # DI registration, options, endpoint mapping
-  Hubs/             # SignalR hub for real-time updates
-  Enums/            # TicketStatus, TicketPriority, ActivityType
-```
-
-## Models
-
-Escalated includes 40+ EF Core entities covering the full helpdesk domain:
-
-| Category | Models |
-|----------|--------|
-| Core | Ticket, Reply, Attachment, TicketActivity, TicketStatusModel, TicketLink, TicketTag, Tag, Department, SatisfactionRating |
-| SLA | SlaPolicy, EscalationRule, BusinessSchedule, Holiday, Automation |
-| Agents | AgentProfile, AgentCapacity, Skill, AgentSkill |
-| Messaging | CannedResponse, Macro, SideConversation, SideConversationReply, InboundEmail |
-| Admin | Role, Permission, ApiToken, Webhook, WebhookDelivery, Plugin, AuditLog |
-| Custom | CustomField, CustomFieldValue, CustomObject, CustomObjectRecord |
-| Import | ImportJob, ImportSourceMap |
-| Config | EscalatedSettings, SavedView |
-| Knowledge Base | Article, ArticleCategory |
-
-All models have proper relationships, indexes, and query filters configured in `EscalatedDbContext`.
-
-## Services
-
-| Service | Responsibility |
-|---------|---------------|
-| `TicketService` | Full ticket CRUD, status transitions, replies, tags, departments |
-| `SlaService` | Policy attachment, breach detection, warning checks, first response recording |
-| `AssignmentService` | Agent assignment, unassignment, auto-assign by workload |
-| `EscalationService` | Evaluate condition-based rules, execute escalation actions |
-| `AutomationRunner` | Time-based automation evaluation and action execution |
-| `MacroService` | Apply macro action sequences to tickets |
-| `TicketMergeService` | Merge source into target with reply transfer |
-| `TicketSplitService` | Split a reply into a new linked ticket |
-| `TicketSnoozeService` | Snooze/unsnooze with background wake service |
-| `WebhookDispatcher` | HMAC-signed webhook delivery with retry logic |
-| `CapacityService` | Per-agent concurrent ticket limits |
-| `SkillRoutingService` | Match agents by skills to ticket tags |
-| `BusinessHoursCalculator` | Business hours date math with holiday support |
-| `TwoFactorService` | TOTP secret generation, verification, recovery codes |
-| `AuditLogService` | Log and query entity mutations |
-| `KnowledgeBaseService` | Article/category CRUD, search, feedback |
-| `SavedViewService` | Personal and shared filter presets |
-| `SideConversationService` | Internal threaded conversations on tickets |
-| `ImportService` | Multi-step import with pluggable adapters |
-| `SettingsService` | Key-value settings store |
-
-## Events
-
-Every ticket action dispatches a domain event:
-
-| Event | When |
-|-------|------|
-| `TicketCreatedEvent` | New ticket created |
-| `TicketStatusChangedEvent` | Status transition |
-| `TicketAssignedEvent` | Agent assigned |
-| `TicketUnassignedEvent` | Agent removed |
-| `ReplyCreatedEvent` | Public reply added |
-| `InternalNoteAddedEvent` | Agent note added |
-| `SlaBreachedEvent` | SLA deadline missed |
-| `SlaWarningEvent` | SLA deadline approaching |
-| `TicketEscalatedEvent` | Ticket escalated |
-| `TicketResolvedEvent` | Ticket resolved |
-| `TicketClosedEvent` | Ticket closed |
-| `TicketReopenedEvent` | Ticket reopened |
-| `TicketPriorityChangedEvent` | Priority changed |
-| `DepartmentChangedEvent` | Department changed |
-| `TagAddedEvent` | Tag added |
-| `TagRemovedEvent` | Tag removed |
-| `TicketCustomActionTriggeredEvent` | Agent triggered a custom ticket action |
-
-Every event is delivered, in order, to subscribed outbound webhooks, to matching
-Workflows, and then to each `IEscalatedEventDispatcher` your host application
-registers. Implement one to receive these events:
-
-```csharp
-public class MyEventHandler : IEscalatedEventDispatcher
-{
-    public async Task DispatchAsync<TEvent>(TEvent @event, CancellationToken ct) where TEvent : class
-    {
-        if (@event is TicketCreatedEvent created)
-        {
-            // Handle new ticket
-        }
-    }
-}
-
-// Register in DI, before or after AddEscalated
-services.AddSingleton<IEscalatedEventDispatcher, MyEventHandler>();
-```
-
-Registering a dispatcher adds a listener. It does not replace Escalated's own
-handling, so webhooks and Workflows keep running, and you can register several.
-
-### Webhook events
-
-Webhooks subscribe to event names (or `*` for all of them):
-
-| Webhook event | Domain event |
-|---------------|--------------|
-| `ticket.created` | `TicketCreatedEvent` |
-| `ticket.updated` | `TicketUpdatedEvent` |
-| `ticket.status_changed` | `TicketStatusChangedEvent` |
-| `ticket.resolved` | `TicketResolvedEvent` |
-| `ticket.closed` | `TicketClosedEvent` |
-| `ticket.reopened` | `TicketReopenedEvent` |
-| `ticket.assigned` | `TicketAssignedEvent` |
-| `ticket.unassigned` | `TicketUnassignedEvent` |
-| `ticket.escalated` | `TicketEscalatedEvent` |
-| `ticket.priority_changed` | `TicketPriorityChangedEvent` |
-| `ticket.department_changed` | `DepartmentChangedEvent` |
-| `ticket.tag_added` | `TagAddedEvent` |
-| `ticket.tag_removed` | `TagRemovedEvent` |
-| `reply.created` | `ReplyCreatedEvent` |
-| `note.created` | `InternalNoteAddedEvent` |
-| `sla.breached` | `SlaBreachedEvent` |
-| `sla.warning` | `SlaWarningEvent` |
-| `chat.started` | `ChatSessionStartedEvent` |
-| `chat.assigned` | `ChatSessionAcceptedEvent` (an agent accepted, or routing assigned one at start) |
-| `chat.message` | `ChatMessageEvent` |
-| `chat.ended` | `ChatSessionEndedEvent` |
-
-These are the shared event vocabulary (escalated-developer-context ADR
-2026-10-21, `EventNames.Canonical`). Workflow triggers use the same names. Names
-from earlier releases are still read: a webhook subscribed to `ticket.tagged`,
-`ticket.untagged` or `internal_note.added`, or a Workflow saved with
-`ticket.replied`, keeps working and receives the canonical name
-(`EventNames.Legacy`). Creating a webhook stores canonical names.
-
-Workflows are managed under `support/admin/workflows`; see [docs/workflows.md](docs/workflows.md).
-
-Each delivery is a signed `POST` (`X-Escalated-Event`, and `X-Escalated-Signature`
-when the webhook has a secret) with the body
-`{ "event", "payload", "timestamp" }`. `payload.ticket` carries `id`,
-`reference`, `subject`, `status` and `priority`; reply events add `payload.reply`,
-tag events `payload.tag`, and `ticket.assigned` adds `payload.agent_id`. Chat
-events carry `payload.chat` (`session_id`, `ticket_id`, `status`, `agent_id`,
-`department_id`; `chat.message` adds `reply_id` and `author_type`), never the
-visitor's token or email. Every
-attempt is recorded as a `WebhookDelivery`.
-
-## Custom Ticket Actions
-
-Host applications can add custom buttons to the agent ticket screen and handle
-clicks via the event dispatcher. Register actions in configuration:
-
-```json
-{
-  "Escalated": {
-    "TicketActions": [
-      {
-        "Key": "sync-crm",
-        "Label": "Sync CRM",
-        "Variant": "primary",
-        "Confirmation": "Sync this ticket to the CRM?",
-        "Metadata": { "icon": "refresh-cw" }
-      }
-    ]
-  }
-}
-```
-
-Visible actions are exposed on the agent ticket response as `custom_actions`
-(each with a `url` and `method`). Triggering one
-(`POST /support/agent/tickets/{id}/actions/{action}`) validates the action is
-visible (404) and enabled (403), records an internal note for auditability, and
-dispatches `TicketCustomActionTriggeredEvent` to your `IEscalatedEventDispatcher`:
-
-```csharp
-if (@event is TicketCustomActionTriggeredEvent triggered && triggered.Action == "sync-crm")
-{
-    // triggered.Ticket, triggered.UserId, triggered.Payload, triggered.Metadata
-}
-```
-
-For dynamic per-ticket visibility, register your own `ITicketActionRegistry`.
-
-## Plugins
-
-Admin > Plugins (`Escalated/Admin/Plugins/Index`) lists native plugins
-(`IEscalatedPlugin` classes registered with `services.AddEscalatedPlugin<T>()`)
-and, with `Escalated:Plugins:Runtime:Enabled`, SDK plugins (`@escalated-dev/plugin-sdk`)
-run by `@escalated-dev/plugin-runtime` over JSON-RPC on stdio. Active plugins get
-the canonical events, filters, admin pages (`Escalated/Plugin/Page`), endpoints
-under `{prefix}/api/plugins/{slug}`, webhooks under `{prefix}/webhooks/plugins/{slug}`,
-a store and config, and menus, slots and widgets on the shared screens. See
-[docs/plugins.md](docs/plugins.md).
-
-## API Endpoints
-
-### Customer
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/support/tickets` | List customer tickets |
-| POST | `/support/tickets` | Create ticket |
-| GET | `/support/tickets/{id}` | View ticket |
-| POST | `/support/tickets/{id}/reply` | Reply to ticket |
-| POST | `/support/tickets/{id}/close` | Close ticket |
-| POST | `/support/tickets/{id}/reopen` | Reopen ticket |
-
-### Agent
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/support/agent/tickets` | Ticket queue with filters |
-| GET | `/support/agent/tickets/{id}` | Ticket detail |
-| POST | `/support/agent/tickets/{id}/reply` | Reply |
-| POST | `/support/agent/tickets/{id}/note` | Internal note |
-| POST | `/support/agent/tickets/{id}/assign` | Assign agent |
-| POST | `/support/agent/tickets/{id}/status` | Change status |
-| POST | `/support/agent/tickets/{id}/priority` | Change priority |
-| POST | `/support/agent/tickets/{id}/macro` | Apply macro |
-| POST | `/support/agent/tickets/bulk` | Bulk actions |
-| GET | `/support/agent/tickets/dashboard` | Agent workload |
-
-### Admin
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET/POST | `/support/admin/departments` | Manage departments |
-| GET/POST | `/support/admin/tags` | Manage tags |
-| GET/POST | `/support/admin/sla-policies` | Manage SLA policies |
-| GET/POST | `/support/admin/escalation-rules` | Manage escalation rules |
-| GET/POST | `/support/admin/webhooks` | Manage webhooks |
-| GET/POST | `/support/admin/api-tokens` | Manage API tokens |
-| GET/POST | `/support/admin/macros` | Manage macros |
-| GET/POST | `/support/admin/automations` | Manage automations |
-| GET/POST | `/support/admin/custom-fields` | Manage custom fields |
-| GET/POST | `/support/admin/business-hours` | Business schedules |
-| GET/POST | `/support/admin/skills` | Manage skills |
-| GET/POST | `/support/admin/roles` | Manage roles |
-| GET | `/support/admin/audit-logs` | Query audit logs |
-| GET/POST | `/support/admin/settings` | App settings |
-| GET/PUT | `/support/admin/settings/public-tickets` | Runtime guest-policy mode (unassigned / guest_user / prompt_signup). See [docs.escalated.dev/public-tickets](https://docs.escalated.dev/public-tickets). |
-| POST | `/support/admin/tickets/{id}/merge` | Merge tickets |
-| POST | `/support/admin/tickets/{id}/split` | Split ticket |
-| POST | `/support/admin/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/support/admin/tickets/{id}/link` | Link tickets |
-
-### Widget (Public)
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/support/widget/config` | Widget settings and departments |
-| GET | `/support/widget/embed.js` | Standalone widget script |
-| GET | `/support/widget/articles?q=` | Search knowledge base (`{ articles: [{ title, slug, excerpt }] }`) |
-| GET | `/support/widget/articles/{slug}` | Published article (`{ title, slug, body, category }`) |
-| GET | `/support/widget/kb/search` | Search knowledge base (older shape) |
-| POST | `/support/widget/tickets` | Create guest ticket (`department_id` or `departmentId`) |
-| GET | `/support/widget/tickets/{token}` | Lookup by guest token |
-| POST | `/support/widget/tickets/{token}/reply` | Guest reply |
-| POST | `/support/widget/tickets/{token}/rate` | Submit CSAT rating |
-| POST | `/support/widget/kb/articles/{id}/feedback` | Article feedback |
-| GET | `/support/widget/chat/availability` | Whether live chat is available |
-| POST | `/support/widget/chat/start` | Start a chat; `id` is the visitor's chat token |
-| GET | `/support/widget/chat/{id}/messages` | Chat transcript (polled) |
-| POST | `/support/widget/chat/{id}/messages` | Visitor message `{ body }` |
-| POST | `/support/widget/chat/{id}/typing` | Visitor typing indicator |
-| POST | `/support/widget/chat/{id}/end` | End the chat |
-| POST | `/support/widget/chat/{id}/rate` | Rate an ended chat `{ rating: 1-5, comment? }` |
-
-Chat routes take the token returned as `id` by `chat/start`; numeric session ids
-are answered with 404.
-
-To put the widget on another site, list that site's origin and add the script
-tag there; see [embedding the widget](docs/embedding-the-widget.md).
-
-## Real-time Updates
-
-Enable SignalR for live ticket updates:
-
-```json
-{
-  "Escalated": {
-    "EnableRealTime": true
-  }
-}
-```
-
-```csharp
-// Program.cs
-app.MapHub<EscalatedHub>("/support/hub");
-```
-
-Clients join ticket-specific groups to receive updates:
-
-```javascript
-connection.invoke("JoinTicket", ticketId);
-connection.on("TicketUpdated", (data) => { /* handle */ });
-```
-
-## Middleware
-
-### API Token Authentication
-
-Protect API endpoints with bearer token authentication:
-
-```csharp
-app.UseMiddleware<ApiTokenAuthMiddleware>();
-```
-
-Tokens are stored as SHA-256 hashes. Create tokens via the admin API endpoint.
-
-### Rate Limiting
-
-```csharp
-app.UseMiddleware<EscalatedRateLimitMiddleware>(60, 60); // 60 requests per 60 seconds
-```
-
-### Guest endpoint rate limits
-
-The public guest endpoints are rate-limited per client IP out of the box, with
-no middleware to add: `POST /support/widget/tickets` allows 5 tickets per IP per
-minute and `POST /support/widget/tickets/{token}/reply` 10 replies, each with its
-own counter. Every guest route (widget, guest pages and the mobile guest API) also
-shares a per-IP budget of 60 requests a minute. A request over the limit gets `429`
-with `Retry-After`. Replies are counted before the guest token is checked, so
-wrong-token guesses count too.
-
-```json
-"Escalated": {
-  "GuestRateLimit": { "Enabled": true, "TicketsPerMinute": 5, "RepliesPerMinute": 10, "VerificationsPerMinute": 10, "RequestsPerMinute": 60 }
-}
-```
-
-The client IP is `HttpContext.Connection.RemoteIpAddress`. **Behind a reverse
-proxy or load balancer, configure `ForwardedHeadersOptions` with your trusted
-proxies and call `app.UseForwardedHeaders()`**, or every guest shares the proxy's
-address. Counters are kept in memory per process; a multi-instance deployment
-should register its own shared `IGuestRateLimiter` (e.g. Redis-backed). Set
-`Enabled` to `false` only when you already throttle these routes upstream.
-
-## Localization
-
-Escalated for ASP.NET Core consumes its translation catalog from the
-central [`Escalated.Locale`](https://www.nuget.org/packages/Escalated.Locale)
-NuGet package. `AddEscalated()` registers a chained
-`IStringLocalizer` stack that resolves keys in this order:
-
-1. **Plugin-local overrides** -- `.resx` files under
-   `src/Escalated/Resources/Overrides/`. Empty by default.
-2. **Optional shared provider** -- a host that installs `Escalated.Locale`
-   can supply its `LocaleProvider` localizer.
-3. **Embedded catalog** -- the JSON files under `Resources/locales/` are
-   shipped inside the Escalated assembly and work without the optional package.
-
-Lookup uses `CurrentUICulture`, its parent cultures, and then English. For
-example, `fr-CA` reads the French catalog. Missing keys return the key with
-`ResourceNotFound` set. `GetAllStrings(true)` merges this fallback chain;
-`GetAllStrings(false)` reads only the selected culture's own catalog, with
-English used for invariant culture.
-
-Catalog keys use dotted paths, such as `nav.admin`. Shared messages use named
-placeholders; pass a dictionary to name their values explicitly:
-
-```csharp
-localizer["bulk.updated", new Dictionary<string, object?> { ["count"] = 3 }];
-```
-
-Positional arguments use the placeholder order in the English message. `.resx`
-overrides retain standard .NET composite formatting. Formatting follows
-`CurrentCulture`; unformatted lookups retain the catalog's placeholders.
-
-Changes to the vendored catalogs ship with a new plugin build. Drop a resx into
-`Resources/Overrides/` for wording specific to your plugin or host resource
-type. See `src/Escalated/Resources/Overrides/README.md` for naming conventions.
-
-## Testing
-
-```bash
-dotnet test
-```
-
-Integration tests use SQLite by default. CI runs the suite against PostgreSQL 17
-as well; isolated unit tests also use Moq and EF Core InMemory.
-
-To run the PostgreSQL profile against a disposable local test database:
-
-```bash
-ESCALATED_TEST_DATABASE=postgres \
-ESCALATED_TEST_CONNECTION="Host=127.0.0.1;Port=5432;Database=escalated_test;Username=postgres;Password=postgres" \
-dotnet test
-```
-
-The demo host has a separate project, so validate it explicitly:
-
-```bash
-dotnet build docker/host-app/EscalatedDemoHost.csproj
-```
-
-CI audits direct and transitive packages for both the solution and demo host.
-Known advisories and failures to obtain vulnerability data fail that job. Run
-the same checks locally with:
-
-```bash
-dotnet restore Escalated.sln -p:NuGetAuditMode=all -warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905
-dotnet restore docker/host-app/EscalatedDemoHost.csproj -p:NuGetAuditMode=all -warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905
-```
-
-Coverage includes:
-- Ticket CRUD and status transitions
-- SLA breach detection and warnings
-- Ticket split, merge, and snooze
-- Assignment and workload calculation
-- Webhook subscription matching
-- 2FA secret generation and verification
-- Capacity management
-- Model validation and enum behavior
-
-## Also Available For
-
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** -- Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** -- Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** -- Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** -- AdonisJS v7 package
-- **[Escalated for ASP.NET Core](https://github.com/escalated-dev/escalated-dotnet)** -- ASP.NET Core package (you are here)
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** -- Vue 3 + Inertia.js UI components
-
-Same architecture, same Vue UI -- for every major backend framework.
-
-## Newsletters (optional, partial port)
-
-Models + renderer for the admin-only newsletter broadcast feature. EF Core migration not bundled — host integrators generate one with `dotnet ef migrations add NewsletterSystem` after referencing this package.
-
-```csharp
-using Escalated.Services.Newsletter;
-
-var renderer = new NewsletterRenderer(new NewsletterRendererOptions
-{
-    BaseUrl = "https://support.example.com",
-    DefaultTheme = "default",
-    TrackingEnabled = true,
-    ThemesDir = Path.Combine(env.ContentRootPath, "Views/NewsletterThemes"),
-    MarkdownToHtml = md => Markdig.Markdown.ToHtml(md),
-    Brand = new NewsletterBrand
-    {
-        Name = "Acme",
-        Accent = "#2563eb",
-        PhysicalAddress = "Acme Inc. · 123 Main St",
-    },
-});
-
-var html = renderer.Render(delivery, newsletter, contact, template);
-```
-
-Ships: `Models/Newsletter/*.cs` (5 EF Core entities), `Models/Contact.cs` (gains `MarketingOptOutAt`), `Services/Newsletter/NewsletterRenderer.cs` (full renderer), `Views/NewsletterThemes/{default,branded}.html` (starter themes).
-
-Follow-up PR: EF Core migration in-package, planner/dispatcher/tracker services using `EscalatedDbContext`, ASP.NET controllers.
+Escalated is also available for [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [Spring](https://github.com/escalated-dev/escalated-spring), [WordPress](https://github.com/escalated-dev/escalated-wordpress) and [Filament](https://github.com/escalated-dev/escalated-filament). The UI lives in [escalated](https://github.com/escalated-dev/escalated).
 
 ## License
 
-MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).
-
-## Configurable ticket access and routing
-
-Opt-in department visibility, host-resolved account identity, account/type rule conditions and targeted SLA policies are described in [Ticket access and routing](docs/ticket-access-and-routing.md). All restrictions are disabled by default.
+MIT. Copyright (c) 2026 Escalated.dev. See [LICENSE](LICENSE).
