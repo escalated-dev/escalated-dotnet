@@ -259,6 +259,7 @@ public static class EscalatedServiceCollectionExtensions
         services.AddScoped<PermissionSeeder>();
         services.AddHostedService<PermissionSeederHostedService>();
         services.AddScoped<EnsureAccessFeaturesFilter>();
+        services.AddScoped<StaffUserResolutionFilter>();
         services.AddScoped<EnforceRoutePermissionsFilter>();
         services.AddScoped<RequireTwoFactorFilter>();
         services.TryAddSingleton<Escalated.Controllers.Ui.TwoFactorThrottle>();
@@ -268,6 +269,8 @@ public static class EscalatedServiceCollectionExtensions
         {
             // A switched-off feature's routes 404 first; then the two-factor challenge; then each
             // staff route's permission.
+            // A staff route whose user cannot be identified fails with a clear error first.
+            options.Filters.AddService<StaffUserResolutionFilter>(-2500);
             options.Filters.AddService<EnsureAccessFeaturesFilter>(-2000);
             options.Filters.AddService<RequireTwoFactorFilter>(-1500);
             options.Filters.AddService<EnforceRoutePermissionsFilter>(-1000);
@@ -318,8 +321,16 @@ public static class EscalatedServiceCollectionExtensions
         // The SLA check's heartbeat, shown to admins (the scheduler prop) and reported by
         // the escalated-scheduler health check when the recurring jobs stop running.
         services.AddScoped<SchedulerHeartbeat>();
-        services.AddHealthChecks().AddCheck<EscalatedSchedulerHealthCheck>(
-            EscalatedSchedulerHealthCheck.Name, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded);
+        services.AddHealthChecks()
+            .AddCheck<EscalatedSchedulerHealthCheck>(
+                EscalatedSchedulerHealthCheck.Name, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded)
+            .AddCheck<EscalatedSetupHealthCheck>(
+                EscalatedSetupHealthCheck.Name, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded);
+
+        // The setup check (admins and agents who can get in, the host's user directory),
+        // logged at startup and reported by the escalated-setup health check.
+        services.AddScoped<EscalatedSetupCheck>();
+        services.AddHostedService<EscalatedSetupCheckHostedService>();
 
         // Applies the data retention periods daily (every period defaults to never).
         services.AddHostedService<RetentionPurgeBackgroundService>();

@@ -262,6 +262,21 @@ holds, and the newsletter pages check `newsletters.manage` / `newsletters.send`.
 See [access control](access-control.md). With it off, the policies above
 decide everything.
 
+### Checking the setup
+
+When the app starts, Escalated logs a warning (`Escalated setup: ...`) for each of
+these, and the `escalated-setup` health check reports Degraded with the same text
+until they are fixed (`app.MapHealthChecks("/health")` to see it):
+
+- no `IUserDirectory` is registered, so users show by id and the admin users page is
+  empty;
+- Escalated's default `escalated-admin` policy is in use and nobody holds the
+  `escalated-admin` role, so nobody can open the admin;
+- Escalated's default `escalated-agent` policy is in use and nobody holds
+  `escalated-agent` or `escalated-admin`.
+
+A policy you registered yourself is not checked.
+
 ### Staff-only installs
 
 By default the customer portal and the knowledge base accept any signed-in user
@@ -305,6 +320,13 @@ of a mention inbox. Escalated reads the id from the `NameIdentifier` claim, then
 builder.Services.Configure<EscalatedOptions>(o =>
     o.UserIdResolver = user => user.FindFirst("employee_id")?.Value);
 ```
+
+If a request passes a staff policy (`escalated-admin`, `escalated-agent`, or
+`escalated-user` on an embedded admin) but no user id can be read from it, which
+happens when you replaced a policy (for example with `RequireRole`) and your user id
+lives in a claim Escalated does not read, the request fails with
+`EscalatedUserNotResolvedException`, whose message says how to fix it, instead of
+acting as nobody. Escalated's default policies refuse such a request with 403.
 
 Ids in the query string or the request body (`requesterId`, `agentId`, `userId`,
 `currentUserId`, `authorId`, `causerId`, `createdBy`) are not read. A customer
