@@ -5,6 +5,10 @@ the one your ASP.NET Core app serves: a store, a marketing site or a customer
 portal loads one script from your app. Nothing changes until you list the sites
 that may do this.
 
+An install that never uses the widget can leave its routes out entirely with
+`Escalated:Widget:Enabled: false` (or `ESCALATED_WIDGET_ENABLED=false`); see
+[guest access switches](guest-access.md#switches).
+
 ## 1. Allow the embedding sites
 
 In configuration (`appsettings.json`):

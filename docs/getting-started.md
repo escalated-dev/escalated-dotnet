@@ -226,6 +226,38 @@ holds, and the newsletter pages check `newsletters.manage` / `newsletters.send`.
 See [access control](access-control.md). With it off, the policies above
 decide everything.
 
+### Staff-only installs
+
+By default the customer portal and the knowledge base accept any signed-in user
+(the knowledge base also anonymous visitors, while the `knowledge_base_public`
+setting is on), and the widget and guest routes are public. In an install where
+only staff use Escalated, someone you never gave Escalated access could still list
+and raise tickets there. To close that:
+
+```json
+{
+  "Escalated": {
+    "Routes": { "CustomerPolicies": [ "escalated-agent" ] },
+    "Widget": { "Enabled": false },
+    "GuestAccess": { "RoutesEnabled": false }
+  }
+}
+```
+
+- `Escalated:Routes:CustomerPolicies` lists authorization policies every customer
+  portal route (`/support`, `/support/create`, `/support/{reference}*`, the JSON
+  `/support/tickets*`) and every knowledge base page (`/support/kb*`) must pass as
+  well as `escalated-customer`. Any policy name works: Escalated's
+  `escalated-agent`, or one of your own. A signed-in user who fails one gets 403;
+  an anonymous visitor is challenged, so the knowledge base stops being public.
+  Default empty, which changes nothing.
+- `Escalated:Widget:Enabled` (`ESCALATED_WIDGET_ENABLED`) and
+  `Escalated:GuestAccess:RoutesEnabled` (`ESCALATED_GUEST_ROUTES`) set to `false`
+  leave the widget and guest routes out of the route table. Both default to `true`.
+  See [guest access switches](guest-access.md#switches).
+
+Escalated has no Slack inbound or cloud webhook routes, so there is nothing else to switch off.
+
 ### Who a request acts as
 
 The acting user is always the signed-in user: the requester of a ticket a customer

@@ -119,6 +119,11 @@ public static class EscalatedServiceCollectionExtensions
             Microsoft.AspNetCore.Mvc.Abstractions.IActionDescriptorProvider, EmbeddedAdminActionDescriptorProvider>());
         services.AddScoped<Escalated.Ui.EscalatedAdminNavigation>();
 
+        // Optional public routes (widget, guest) left out when switched off, and the host's
+        // extra customer portal policies (Escalated:Routes:CustomerPolicies).
+        services.TryAddEnumerable(ServiceDescriptor.Transient<
+            Microsoft.AspNetCore.Mvc.Abstractions.IActionDescriptorProvider, OptionalRoutesActionDescriptorProvider>());
+
         // Embedding the widget on other sites: CORS at the front of the pipeline
         // for the widget routes, guest forcing after host authentication, and
         // ESCALATED_WIDGET_ALLOWED_ORIGINS. Inert until an origin is listed.
