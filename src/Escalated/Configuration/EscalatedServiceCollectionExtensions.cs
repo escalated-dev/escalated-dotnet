@@ -315,6 +315,12 @@ public static class EscalatedServiceCollectionExtensions
         services.AddHostedService<SlaMonitorBackgroundService>();
         services.AddHostedService<EscalationBackgroundService>();
 
+        // The SLA check's heartbeat, shown to admins (the scheduler prop) and reported by
+        // the escalated-scheduler health check when the recurring jobs stop running.
+        services.AddScoped<SchedulerHeartbeat>();
+        services.AddHealthChecks().AddCheck<EscalatedSchedulerHealthCheck>(
+            EscalatedSchedulerHealthCheck.Name, Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded);
+
         // Applies the data retention periods daily (every period defaults to never).
         services.AddHostedService<RetentionPurgeBackgroundService>();
 

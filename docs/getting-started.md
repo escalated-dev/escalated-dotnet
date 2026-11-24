@@ -97,6 +97,42 @@ as applied and only later migrations run.
 
 Visit `/support` -- you're live.
 
+### Required: schedule the recurring jobs
+
+Time-based work only happens when a job runs it. `AddEscalated()` registers each job
+as a hosted service, so they start with your app and need no scheduler:
+
+| Job (hosted service) | Interval | What it does |
+|---|---|---|
+| `SlaMonitorBackgroundService` | every minute | SLA warnings and breaches; records the heartbeat |
+| `EscalationBackgroundService` | every 5 minutes | Escalation rules |
+| `AutomationBackgroundService` | every 5 minutes | Automations |
+| `WorkflowDelayedActionBackgroundService` | every minute | Delayed workflow actions |
+| `TicketSnoozeBackgroundService` | every minute | Wakes snoozed tickets |
+| `ChatCleanupBackgroundService` | every minute | Closes idle and abandoned chats |
+| `RetentionPurgeBackgroundService` | daily | Data retention purges |
+
+They only run while the app process runs. On IIS, turn off the application pool's
+idle time-out (or use the AlwaysRunning start mode), or they stop between requests.
+If you remove these hosted services, for example to run them in a separate worker
+process, call each one's `RunOnceAsync(ct)` on the interval above.
+
+Each completed SLA check records a heartbeat (the `scheduler_sla_check_at` row in
+the settings table, shared by every instance). When it is missing or older than 15
+minutes:
+
+- the admin Settings, Reports and Reports dashboard pages get a `scheduler` prop
+  with `healthy: false` and the frontend shows a warning naming the jobs above. The
+  same object (`{healthy, last_run_at, message, commands: [{command, interval}]}`)
+  is served as JSON at `GET /support/admin/settings/scheduler`;
+- the `escalated-scheduler` health check reports Degraded. Map health checks to see
+  it: `app.MapHealthChecks("/health");`
+- a warning is logged (at most once every 15 minutes per process) whenever the
+  status is read.
+
+Right after the first start the heartbeat is missing until the first SLA check
+finishes, a few seconds later.
+
 ### Separate databases
 
 `EscalatedDbContext` has its own connection string, so Escalated's tables go

@@ -8175,6 +8175,47 @@
       ]
     },
     {
+      "pattern": "support/admin/settings/scheduler",
+      "methods": [
+        "GET"
+      ],
+      "name": null,
+      "action": "Escalated.Controllers.Admin.AdminSettingsController.Scheduler",
+      "order": 0,
+      "authorize": [
+        "policy=escalated-admin;roles=;schemes="
+      ],
+      "allow_anonymous": false,
+      "filters": [
+        "Microsoft.AspNetCore.Mvc.ModelBinding.UnsupportedContentTypeFilter#-3000@10",
+        "service:Escalated.Authorization.EnsureAccessFeaturesFilter#-2000@10",
+        "Microsoft.AspNetCore.Mvc.Infrastructure.ClientErrorResultFilterFactory#-2000@30",
+        "Microsoft.AspNetCore.Mvc.Infrastructure.ModelStateInvalidFilterFactory#-2000@30",
+        "service:Escalated.Authorization.RequireTwoFactorFilter#-1500@10",
+        "service:Escalated.Authorization.EnforceRoutePermissionsFilter#-1000@10",
+        "Escalated.Widget.WidgetGuestFilter@10",
+        "service:Escalated.Authorization.TicketAccessFilter#0@10",
+        "Microsoft.AspNetCore.Mvc.ApiControllerAttribute@20"
+      ],
+      "metadata": [
+        "Escalated.Widget.WidgetGuestFilter",
+        "Microsoft.AspNetCore.Authorization.AuthorizeAttribute",
+        "Microsoft.AspNetCore.Mvc.ActionConstraints.HttpMethodActionConstraint",
+        "Microsoft.AspNetCore.Mvc.ApiControllerAttribute",
+        "Microsoft.AspNetCore.Mvc.ControllerAttribute",
+        "Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor",
+        "Microsoft.AspNetCore.Mvc.HttpGetAttribute",
+        "Microsoft.AspNetCore.Mvc.Infrastructure.ClientErrorResultFilterFactory",
+        "Microsoft.AspNetCore.Mvc.Infrastructure.ModelStateInvalidFilterFactory",
+        "Microsoft.AspNetCore.Mvc.ModelBinding.UnsupportedContentTypeFilter",
+        "Microsoft.AspNetCore.Mvc.RouteAttribute",
+        "Microsoft.AspNetCore.Mvc.ServiceFilterAttribute",
+        "Microsoft.AspNetCore.Routing.HttpMethodMetadata",
+        "Microsoft.AspNetCore.Routing.RouteEndpointBuilder+RouteDiagnosticsMetadata",
+        "Microsoft.AspNetCore.Routing.RouteNameMetadata"
+      ]
+    },
+    {
       "pattern": "support/admin/settings/sso",
       "methods": [
         "GET"
