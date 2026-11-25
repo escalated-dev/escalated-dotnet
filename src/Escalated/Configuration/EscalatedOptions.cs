@@ -157,6 +157,30 @@ public class EscalatedOptions
 
     /// <summary><c>Escalated:Sso</c>: the install-level rules around single sign-on, used while <c>Access.Sso</c> is on.</summary>
     public SsoOptions Sso { get; set; } = new();
+
+    /// <summary>
+    /// <c>Escalated:Routes</c>: extra authorization on route groups (see
+    /// <see cref="EscalatedRouteOptions"/>).
+    /// </summary>
+    public EscalatedRouteOptions Routes { get; set; } = new();
+}
+
+/// <summary>
+/// Extra authorization on Escalated's route groups (configuration section <c>Escalated:Routes</c>).
+/// </summary>
+public class EscalatedRouteOptions
+{
+    /// <summary>
+    /// Authorization policies every customer portal route (<c>{prefix}</c>, <c>{prefix}/create</c>,
+    /// <c>{prefix}/{reference}/*</c>, the JSON <c>support/tickets*</c> API) and every knowledge base
+    /// page (<c>support/kb*</c>) must also pass, on top of the <c>escalated-customer</c> policy
+    /// (escalated-laravel's <c>escalated.routes.customer_middleware</c>). Default empty: nothing
+    /// changes. With a policy listed, the knowledge base is no longer public either: an anonymous
+    /// visitor is challenged and a signed-in user who fails the policy gets 403. Name a staff policy
+    /// (for example <c>escalated-agent</c>) to keep people you never gave Escalated access out of the
+    /// portal; see "Staff-only installs" in <c>docs/getting-started.md</c>.
+    /// </summary>
+    public List<string> CustomerPolicies { get; set; } = new();
 }
 
 /// <summary>
@@ -536,6 +560,18 @@ public class GuestAccessOptions
 
     /// <summary>Codes one mailbox may be sent per hour, from all IPs. Default 10.</summary>
     public int ChallengesPerMailboxPerHour { get; set; } = 10;
+
+    /// <summary>
+    /// Register the guest routes at all: the guest pages and their verification and lookup
+    /// (<c>support/guest*</c>) and the mobile guest API (<c>support/api/v1/mobile/guest*</c>).
+    /// Unset: <c>ESCALATED_GUEST_ROUTES</c>, else true. False: none of those routes exist, whatever
+    /// the <c>guest_tickets_enabled</c> setting says. True: the setting still switches them at
+    /// runtime (404 while it is off), as before. escalated-laravel's <c>escalated.guest.routes_enabled</c>.
+    /// </summary>
+    public bool? RoutesEnabled { get; set; }
+
+    /// <summary>Whether the guest routes are registered (see <see cref="RoutesEnabled"/>).</summary>
+    public bool RoutesRegistered => RoutesEnabled ?? RouteSwitch.FromEnvironment("ESCALATED_GUEST_ROUTES");
 }
 
 /// <summary>
@@ -555,6 +591,33 @@ public class WidgetOptions
 
     /// <summary>Seconds a browser may cache a preflight answer. Default 600.</summary>
     public int PreflightMaxAge { get; set; } = 600;
+
+    /// <summary>
+    /// Register the widget routes at all (<c>support/widget*</c>: the widget API, its live chat
+    /// and <c>embed.js</c>). Unset: <c>ESCALATED_WIDGET_ENABLED</c>, else true. False: none of
+    /// those routes exist. True: the <c>widget_enabled</c> setting still switches them at
+    /// runtime, as before. escalated-laravel's <c>escalated.widget.enabled</c>.
+    /// </summary>
+    public bool? Enabled { get; set; }
+
+    /// <summary>Whether the widget routes are registered (see <see cref="Enabled"/>).</summary>
+    public bool RoutesRegistered => Enabled ?? RouteSwitch.FromEnvironment("ESCALATED_WIDGET_ENABLED");
+}
+
+/// <summary>Reads the on/off environment variables behind the route switches, which default to on.</summary>
+public static class RouteSwitch
+{
+    /// <summary>False only when <paramref name="name"/> is set to 0, false, no or off.</summary>
+    public static bool FromEnvironment(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        return value.Trim().ToLowerInvariant() is not ("0" or "false" or "no" or "off");
+    }
 }
 
 public class NewsletterOptions

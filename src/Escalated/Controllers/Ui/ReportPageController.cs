@@ -7,6 +7,7 @@ using Escalated.Ui;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Escalated.Controllers.Ui;
 
@@ -125,6 +126,7 @@ public partial class ReportPageController : ControllerBase
                 ["breakdown"] = ratings.GroupBy(r => r.Rating).OrderBy(g => g.Key)
                     .ToDictionary(g => g.Key.ToString(CultureInfo.InvariantCulture), g => g.Count()),
             },
+            scheduler = await SchedulerAsync(ct),
         });
     }
 
@@ -150,8 +152,13 @@ public partial class ReportPageController : ControllerBase
             sla_compliance = SlaCompliance(tickets),
             csat_average = CsatAverage(await RatingsAsync(start, end, ct)),
             agent_performance = await AgentPerformanceAsync(tickets, ct),
+            scheduler = await SchedulerAsync(ct),
         });
     }
+
+    /// <summary>The <c>scheduler</c> prop: whether the recurring jobs are running.</summary>
+    private Task<Services.SchedulerStatus> SchedulerAsync(CancellationToken ct) =>
+        HttpContext.RequestServices.GetRequiredService<Services.SchedulerHeartbeat>().StatusAsync(ct);
 
     [HttpGet("agents")]
     public async Task<IActionResult> Agents(CancellationToken ct)

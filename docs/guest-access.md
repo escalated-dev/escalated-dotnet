@@ -171,6 +171,19 @@ every chat route answers 404 and the visitor starts a new chat.
 | `widget_enabled` | on | Every widget route answers 403; `/config` answers `{ "enabled": false }` |
 | `guest_tickets_enabled` | on | Guest ticket creation, `ticket`/`lookup` codes and lookups answer 403; `/config` reports `false` |
 
+Those settings switch the routes at runtime; the routes still exist. To leave them out
+of the route table altogether, use the configuration switches (read at startup):
+
+| Configuration | Environment variable | Default | Effect when `false` |
+|---|---|---|---|
+| `Escalated:Widget:Enabled` | `ESCALATED_WIDGET_ENABLED` | `true` | No `support/widget*` route is registered: no widget API, widget chat or `embed.js` |
+| `Escalated:GuestAccess:RoutesEnabled` | `ESCALATED_GUEST_ROUTES` | `true` | No `support/guest*` or `support/api/v1/mobile/guest*` route is registered |
+
+The configuration value wins over the environment variable. With a switch on, the
+setting above still turns the feature off at runtime, as before. An install whose
+portal is for staff only should turn both off; see
+[Staff-only installs](getting-started.md#staff-only-installs).
+
 ## Existing tokens
 
 The permanent tokens issued before this release no longer open tickets. Set

@@ -164,6 +164,10 @@ dotnet ef database update --context EscalatedDbContext
 
 Register it in `Program.cs` with `builder.Services.AddEscalated(...)` and `app.MapEscalated()`, then visit `/support`. Needs .NET 8+ and SQL Server, SQLite or PostgreSQL. The [getting started guide](docs/getting-started.md) covers configuration and authorization, and [the Inertia UI](docs/inertia-ui.md) turns on the shared screens.
 
+### Required: schedule the recurring jobs
+
+SLA checks, escalation rules, automations, delayed workflow actions and snooze wake-ups only run on a timer. `AddEscalated()` runs them for you as hosted services, so there is nothing to schedule as long as they stay registered and the app process keeps running (on IIS, turn off the application pool's idle time-out). Admins see a warning on the Settings and Reports pages, and the `escalated-scheduler` health check turns Degraded, when the SLA check has not run for 15 minutes. The [jobs and their intervals](docs/getting-started.md#required-schedule-the-recurring-jobs) are listed in the guide.
+
 ## Learn more
 
 - [All features](docs/features.md) · [Getting started](docs/getting-started.md) · [The Inertia UI](docs/inertia-ui.md)

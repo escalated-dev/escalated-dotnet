@@ -97,6 +97,42 @@ as applied and only later migrations run.
 
 Visit `/support` -- you're live.
 
+### Required: schedule the recurring jobs
+
+Time-based work only happens when a job runs it. `AddEscalated()` registers each job
+as a hosted service, so they start with your app and need no scheduler:
+
+| Job (hosted service) | Interval | What it does |
+|---|---|---|
+| `SlaMonitorBackgroundService` | every minute | SLA warnings and breaches; records the heartbeat |
+| `EscalationBackgroundService` | every 5 minutes | Escalation rules |
+| `AutomationBackgroundService` | every 5 minutes | Automations |
+| `WorkflowDelayedActionBackgroundService` | every minute | Delayed workflow actions |
+| `TicketSnoozeBackgroundService` | every minute | Wakes snoozed tickets |
+| `ChatCleanupBackgroundService` | every minute | Closes idle and abandoned chats |
+| `RetentionPurgeBackgroundService` | daily | Data retention purges |
+
+They only run while the app process runs. On IIS, turn off the application pool's
+idle time-out (or use the AlwaysRunning start mode), or they stop between requests.
+If you remove these hosted services, for example to run them in a separate worker
+process, call each one's `RunOnceAsync(ct)` on the interval above.
+
+Each completed SLA check records a heartbeat (the `scheduler_sla_check_at` row in
+the settings table, shared by every instance). When it is missing or older than 15
+minutes:
+
+- the admin Settings, Reports and Reports dashboard pages get a `scheduler` prop
+  with `healthy: false` and the frontend shows a warning naming the jobs above. The
+  same object (`{healthy, last_run_at, message, commands: [{command, interval}]}`)
+  is served as JSON at `GET /support/admin/settings/scheduler`;
+- the `escalated-scheduler` health check reports Degraded. Map health checks to see
+  it: `app.MapHealthChecks("/health");`
+- a warning is logged (at most once every 15 minutes per process) whenever the
+  status is read.
+
+Right after the first start the heartbeat is missing until the first SLA check
+finishes, a few seconds later.
+
 ### Separate databases
 
 `EscalatedDbContext` has its own connection string, so Escalated's tables go
@@ -226,6 +262,53 @@ holds, and the newsletter pages check `newsletters.manage` / `newsletters.send`.
 See [access control](access-control.md). With it off, the policies above
 decide everything.
 
+### Checking the setup
+
+When the app starts, Escalated logs a warning (`Escalated setup: ...`) for each of
+these, and the `escalated-setup` health check reports Degraded with the same text
+until they are fixed (`app.MapHealthChecks("/health")` to see it):
+
+- no `IUserDirectory` is registered, so users show by id and the admin users page is
+  empty;
+- Escalated's default `escalated-admin` policy is in use and nobody holds the
+  `escalated-admin` role, so nobody can open the admin;
+- Escalated's default `escalated-agent` policy is in use and nobody holds
+  `escalated-agent` or `escalated-admin`.
+
+A policy you registered yourself is not checked.
+
+### Staff-only installs
+
+By default the customer portal and the knowledge base accept any signed-in user
+(the knowledge base also anonymous visitors, while the `knowledge_base_public`
+setting is on), and the widget and guest routes are public. In an install where
+only staff use Escalated, someone you never gave Escalated access could still list
+and raise tickets there. To close that:
+
+```json
+{
+  "Escalated": {
+    "Routes": { "CustomerPolicies": [ "escalated-agent" ] },
+    "Widget": { "Enabled": false },
+    "GuestAccess": { "RoutesEnabled": false }
+  }
+}
+```
+
+- `Escalated:Routes:CustomerPolicies` lists authorization policies every customer
+  portal route (`/support`, `/support/create`, `/support/{reference}*`, the JSON
+  `/support/tickets*`) and every knowledge base page (`/support/kb*`) must pass as
+  well as `escalated-customer`. Any policy name works: Escalated's
+  `escalated-agent`, or one of your own. A signed-in user who fails one gets 403;
+  an anonymous visitor is challenged, so the knowledge base stops being public.
+  Default empty, which changes nothing.
+- `Escalated:Widget:Enabled` (`ESCALATED_WIDGET_ENABLED`) and
+  `Escalated:GuestAccess:RoutesEnabled` (`ESCALATED_GUEST_ROUTES`) set to `false`
+  leave the widget and guest routes out of the route table. Both default to `true`.
+  See [guest access switches](guest-access.md#switches).
+
+Escalated has no Slack inbound or cloud webhook routes, so there is nothing else to switch off.
+
 ### Who a request acts as
 
 The acting user is always the signed-in user: the requester of a ticket a customer
@@ -237,6 +320,13 @@ of a mention inbox. Escalated reads the id from the `NameIdentifier` claim, then
 builder.Services.Configure<EscalatedOptions>(o =>
     o.UserIdResolver = user => user.FindFirst("employee_id")?.Value);
 ```
+
+If a request passes a staff policy (`escalated-admin`, `escalated-agent`, or
+`escalated-user` on an embedded admin) but no user id can be read from it, which
+happens when you replaced a policy (for example with `RequireRole`) and your user id
+lives in a claim Escalated does not read, the request fails with
+`EscalatedUserNotResolvedException`, whose message says how to fix it, instead of
+acting as nobody. Escalated's default policies refuse such a request with 403.
 
 Ids in the query string or the request body (`requesterId`, `agentId`, `userId`,
 `currentUserId`, `authorId`, `causerId`, `createdBy`) are not read. A customer

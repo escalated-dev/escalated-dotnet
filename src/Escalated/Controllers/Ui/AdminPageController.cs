@@ -10,6 +10,7 @@ using Escalated.Widget;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Escalated.Controllers.Ui;
@@ -97,6 +98,8 @@ public partial class AdminPageController : ControllerBase
             supported_settings = SupportedSettings,
             departments = await _present.DepartmentOptionsAsync(ct),
             update_url = $"{AdminBase}/settings",
+            // Whether the recurring jobs are running; the page warns when healthy is false.
+            scheduler = await HttpContext.RequestServices.GetRequiredService<Services.SchedulerHeartbeat>().StatusAsync(ct),
         });
     }
 

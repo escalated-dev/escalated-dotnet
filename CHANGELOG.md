@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Switch off the widget and guest routes.** `Escalated:Widget:Enabled` (`ESCALATED_WIDGET_ENABLED`) and `Escalated:GuestAccess:RoutesEnabled` (`ESCALATED_GUEST_ROUTES`), both default `true`, leave every `support/widget*` route, or every `support/guest*` and `support/api/v1/mobile/guest*` route, out of the route table when `false`. The `widget_enabled` and `guest_tickets_enabled` settings still switch them at runtime while they are on. No change unless configured.
+- **Guard the customer portal and knowledge base** with `Escalated:Routes:CustomerPolicies`: authorization policies the customer routes and the knowledge base pages must pass on top of `escalated-customer` (default empty, no change). With a policy listed the knowledge base is no longer public. See "Staff-only installs" in docs/getting-started.md.
+- **Scheduler heartbeat.** Each SLA check records `scheduler_sla_check_at` in the settings table. When it is missing or older than 15 minutes the admin Settings, Reports and Reports dashboard pages get `scheduler: {healthy: false, last_run_at, message, commands}`, `GET support/admin/settings/scheduler` returns the same object, the new `escalated-scheduler` health check reports Degraded and a warning is logged. The README now lists the recurring jobs (already run as hosted services by `AddEscalated()`).
+- **Setup check.** Missing `IUserDirectory`, and nobody holding the admin or agent role under the default policies, are logged at startup and reported by the new `escalated-setup` health check.
+
+### Changed
+- A request that passes a staff policy but has no user id Escalated can read (a host policy replaced the default and the id lives in another claim) now fails with `EscalatedUserNotResolvedException`, which names the claims read and `UserIdResolver`, instead of acting as nobody.
+- `GET support/admin/settings` no longer returns the internal heartbeat row.
+
 ## [0.2.14] - 2026-11-07
 
 ### Changed

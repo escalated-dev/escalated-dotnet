@@ -12,7 +12,8 @@ namespace Escalated.Services;
 ///
 /// Without a hosted monitor these checks never run, so breaches are silently
 /// never detected. Mirrors the loop shape of
-/// <see cref="TicketSnoozeBackgroundService"/>.
+/// <see cref="TicketSnoozeBackgroundService"/>. Each completed sweep records the
+/// <see cref="SchedulerHeartbeat"/>.
 /// </summary>
 public class SlaMonitorBackgroundService : BackgroundService
 {
@@ -55,6 +56,18 @@ public class SlaMonitorBackgroundService : BackgroundService
 
         var warned = await sla.CheckWarningsAsync(ct: ct);
         var breached = await sla.CheckBreachesAsync(ct);
+
+        // The heartbeat the admin pages and the escalated-scheduler health check read.
+        var heartbeat = scope.ServiceProvider.GetService<SchedulerHeartbeat>()
+            ?? ActivatorUtilities.CreateInstance<SchedulerHeartbeat>(scope.ServiceProvider);
+        try
+        {
+            await heartbeat.RecordAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Could not record the SLA check heartbeat");
+        }
 
         if (warned > 0 || breached > 0)
             _logger.LogInformation("SLA monitor issued {Warned} warnings and {Breached} breaches", warned, breached);

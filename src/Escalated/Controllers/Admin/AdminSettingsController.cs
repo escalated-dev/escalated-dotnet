@@ -412,8 +412,18 @@ public class AdminSettingsController : ControllerBase
     public async Task<IActionResult> GetSettings()
     {
         var settings = await _settingsService.GetAllAsync();
+        // Internal state, not a setting.
+        settings.Remove(SchedulerHeartbeat.SettingKey);
         return Ok(settings);
     }
+
+    /// <summary>
+    /// Whether the recurring jobs are running: <c>{healthy, last_run_at, message, commands}</c>,
+    /// the same object the admin pages send as their <c>scheduler</c> prop.
+    /// </summary>
+    [HttpGet("settings/scheduler")]
+    public async Task<IActionResult> Scheduler([FromServices] SchedulerHeartbeat heartbeat, CancellationToken ct) =>
+        Ok(await heartbeat.StatusAsync(ct));
 
     [HttpPost("settings")]
     public async Task<IActionResult> SaveSettings([FromBody] Dictionary<string, string?> settings)
