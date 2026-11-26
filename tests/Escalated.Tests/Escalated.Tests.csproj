@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.22" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.33" />
     <!-- Access/SsoTests: an ASP.NET Core Identity host for the SSO defaults. -->
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.33" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.34" />
   </ItemGroup>
 
   <ItemGroup>
