@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.15] - 2026-11-25
+
 ### Added
 - **Switch off the widget and guest routes.** `Escalated:Widget:Enabled` (`ESCALATED_WIDGET_ENABLED`) and `Escalated:GuestAccess:RoutesEnabled` (`ESCALATED_GUEST_ROUTES`), both default `true`, leave every `support/widget*` route, or every `support/guest*` and `support/api/v1/mobile/guest*` route, out of the route table when `false`. The `widget_enabled` and `guest_tickets_enabled` settings still switch them at runtime while they are on. No change unless configured.
 - **Guard the customer portal and knowledge base** with `Escalated:Routes:CustomerPolicies`: authorization policies the customer routes and the knowledge base pages must pass on top of `escalated-customer` (default empty, no change). With a policy listed the knowledge base is no longer public. See "Staff-only installs" in docs/getting-started.md.
