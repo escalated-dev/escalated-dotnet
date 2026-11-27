@@ -75,7 +75,7 @@ jobs:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
           if [ -z "${NUGET_API_KEY}" ]; then
-            echo "skipping: NUGET_API_KEY not configured"
+            echo "::warning title=NuGet publish skipped::NUGET_API_KEY is not configured, so nothing was published."
             exit 0
           fi
           dotnet nuget push "artifacts/*.nupkg" \
